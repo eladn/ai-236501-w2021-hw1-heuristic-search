@@ -1,0 +1,561 @@
+import os
+import sys
+import shutil
+from typing import *
+from collections import OrderedDict
+import subprocess
+import time
+import numpy as np
+import importlib
+
+from .tests_consts import *
+
+__all__ = ['timeout_exec', 'TestResult', 'is_dir_contains_files', 'iterate_inner_directories',
+           'make_dirs_if_not_exist', 'dyn_load_module', 'Submission',
+           'SolverFactory', 'ProblemFactory', 'SubmissionTest', 'SubmissionTestsSuit']
+
+
+# I tried to limit the execution time for each test separately.
+# For that end, I tried to use `timeout_exec()` which is implemented
+# in `tests_utils.py`. I've tries different implementations for this
+# mechanism. All implementations used threading. None of them worked.
+# Using these methods always creates serious bugs - simple asserts fail.
+# I believe it creates a race. It is strange because these threads
+# are not executed in parallel - the main thread just waits for some
+# worker thread to complete its execution. I couldn't understand
+# what race does it make. Probably the Python interpreter is just
+# not meant for concurrency.
+# Now I do it using the timeout mechanism of `subprocess` package.
+def timeout_exec(func, args=(), kwargs=None, timeout_duration=10, default=None):
+    """This function will spawn a thread and run the given function
+    using the args, kwargs and return the given default value if the
+    timeout_duration is exceeded.
+    """
+    if kwargs is None:
+        kwargs = {}
+    import multiprocessing.pool
+    # originally it was `ThreadPool` (rather than `Pool` which uses processes)
+    pool = multiprocessing.pool.Pool(processes=1)
+    async_result = pool.apply_async(func, args, kwargs)
+    try:
+        res = async_result.get(timeout_duration)
+        return res
+    except multiprocessing.TimeoutError as e:
+        pool.close()
+        return default
+    except Exception as e:
+        raise e
+
+
+def is_dir_contains_files(dir_path: str, files: List[str]):
+    return all(os.path.isfile(os.path.join(dir_path, filename)) for filename in files)
+
+
+def iterate_inner_directories(dir_path: str, depth_limit: int = 3):
+    yield ''
+    if depth_limit <= 0:
+        return
+    for inner_dir in os.listdir(dir_path):
+        if inner_dir[0] != '_' and os.path.isdir(os.path.join(dir_path, inner_dir)):
+            for inner_inner_dir in iterate_inner_directories(os.path.join(dir_path, inner_dir), depth_limit-1):
+                yield os.path.join(inner_dir, inner_inner_dir)
+
+
+def make_dirs_if_not_exist(path, inner_dir):
+    if not inner_dir.strip():
+        return
+    if os.path.exists(os.path.join(path, inner_dir)):
+        return
+    upper_level_dir = os.path.dirname(inner_dir)
+    make_dirs_if_not_exist(path, upper_level_dir)
+    os.mkdir(os.path.join(path, inner_dir))
+
+
+def dyn_load_module(module_name: str, module_init_file_path: str, sys_module=None):
+    if sys_module is None:
+        sys_module = sys
+    import importlib.util
+    module_spec = importlib.util.spec_from_file_location(module_name, module_init_file_path)
+    module = importlib.util.module_from_spec(module_spec)
+    sys_module.modules[module_spec.name] = module
+    module_spec.loader.exec_module(module)
+    assert module_name in globals()
+
+
+class SolverFactory(NamedTuple):
+    name: str
+    heuristic_name: Optional[str] = None
+    params: Tuple = ()
+
+    def create_instance(self):
+        framework_module = importlib.import_module('framework')
+        deliveries_module = importlib.import_module('deliveries')
+        solver_ctor = framework_module.__dict__[self.name]
+        use_heuristic = self.name == 'AStar' or self.name == 'GreedyStochastic'
+        assert not use_heuristic or self.heuristic_name is not None
+        assert use_heuristic or self.heuristic_name is None
+        solver_ctor_args = tuple(self.params)
+        if use_heuristic:
+            assert self.heuristic_name in framework_module.__dict__ or self.heuristic_name in deliveries_module.__dict__
+            if self.heuristic_name in framework_module.__dict__:
+                heuristic_ctor = framework_module.__dict__[self.heuristic_name]
+            else:
+                heuristic_ctor = deliveries_module.__dict__[self.heuristic_name]
+            solver_ctor_args = (heuristic_ctor,) + solver_ctor_args
+        solver_instance = solver_ctor(*solver_ctor_args)
+        return solver_instance
+
+    def get_full_name(self):
+        all_params = ()
+        if self.heuristic_name:
+            all_params = all_params + (self.heuristic_name, )
+        all_params = all_params + self.params
+        params_str = ''
+        all_params = [str(param) for param in all_params]
+        if len(all_params) > 0:
+            params_str = '<' + ('; '.join(all_params)) + '>'
+        return self.name + params_str
+
+
+class ProblemFactory(NamedTuple):
+    name: str
+    input_name: Optional[str] = None
+    params: Tuple = ()
+    inner_problem_solver: Optional[SolverFactory] = None
+
+    def create_instance(self, roads):
+        deliveries_module = importlib.import_module('deliveries')
+        problem_ctor = deliveries_module.__dict__[self.name]
+        use_problem_input = self.name == 'RelaxedDeliveriesProblem' or self.name == 'StrictDeliveriesProblem'
+        use_roads_in_problem_ctor = self.name == 'MapProblem' or self.name == 'StrictDeliveriesProblem'
+        assert not use_problem_input or self.input_name is not None
+        assert use_problem_input or self.input_name is None
+        problem_ctor_args = tuple(self.params)
+        problem_ctor_kwargs = {}
+        if self.inner_problem_solver is not None:
+            inner_problem_solver_instance = self.inner_problem_solver.create_instance()
+            # problem_ctor_kwargs['inner_problem_solver'] = inner_problem_solver_instance
+            problem_ctor_args = (inner_problem_solver_instance,) + problem_ctor_args
+        if use_roads_in_problem_ctor:
+            problem_ctor_args = (roads,) + problem_ctor_args
+        if use_problem_input:
+            DeliveriesProblemInput = deliveries_module.__dict__['DeliveriesProblemInput']
+            problem_input = DeliveriesProblemInput.load_from_file(self.input_name + '.in', roads)
+            problem_ctor_args = (problem_input,) + problem_ctor_args
+        problem_instance = problem_ctor(*problem_ctor_args, **problem_ctor_kwargs)
+        return problem_instance
+
+    def get_full_name(self):
+        all_params = ()
+
+        if self.input_name is not None:
+            all_params = all_params + ('input=' + self.input_name, )
+        if self.inner_problem_solver is not None:
+            all_params = all_params + ('inner_problem_solver=' + self.inner_problem_solver.get_full_name(), )
+        all_params = all_params + self.params
+
+        params_str = ''
+        all_params = [str(param) for param in all_params]
+        if len(all_params) > 0:
+            params_str = '<' + ('; '.join(all_params)) + '>'
+
+        return self.name + params_str
+
+
+class SubmissionTest(NamedTuple):
+    index: int
+    problem_factory: ProblemFactory
+    solver_factory: SolverFactory
+    execution_timeout: int
+    execute_in_submission_test_env: bool = True
+
+    def run_test(self, roads, store_execution_log: bool = False):
+        self.init_numpy_seed()
+        problem_instance = self.problem_factory.create_instance(roads)
+        solver_instance = self.solver_factory.create_instance()
+        if store_execution_log:
+            solver_instance.store_execution_log = True
+        res = solver_instance.solve_problem(problem_instance)
+        execution_log = solver_instance.last_execution_log.to_log_format() if store_execution_log else None
+        return TestResult.from_search_result(res), res, execution_log
+
+    def calc_seed(self) -> int:
+        return hash((NUMPY_RANDOM_SEED_BASE + self.index, self.index)) % (2 ** 32)
+
+    def init_numpy_seed(self):
+        # Make `np.random` behave deterministic.
+        numpy_random_seed = self.calc_seed()
+        np.random.seed(numpy_random_seed)
+
+    def get_name(self) -> str:
+        return '{idx}:{solver_name}({problem_name})'.format(
+            idx=self.index,
+            solver_name=self.solver_factory.get_full_name(),
+            problem_name=self.problem_factory.get_full_name()
+        )
+
+
+class TestResult(NamedTuple):
+    dev: int
+    cost: Optional[float]
+    path: Tuple[int]
+
+    @staticmethod
+    def from_search_result(search_result):
+        # assert isinstance(search_result, SearchResult)
+        if search_result.final_search_node is None:
+            return TestResult(dev=search_result.nr_expanded_states, cost=None, path=())
+        path = tuple(int(str(state)) for state in search_result.make_path())
+        return TestResult(dev=search_result.nr_expanded_states, cost=search_result.final_search_node.cost, path=path)
+
+    def serialize(self) -> str:
+        return 'dev:{dev} -- cost:{cost} -- path:{path}'.format(
+            dev=self.dev, cost=self.cost, path=self.path
+        )
+
+    @staticmethod
+    def deserialize(serialized: str) -> Optional['TestResult']:
+        import regex
+        positive_integer_pattern = '(([1-9][0-9]*)|0)'
+        list_of_positive_integers_pattern = '(((' + positive_integer_pattern + '([\\ ]*,[\\ ]*))*)' + positive_integer_pattern + ')'
+        positive_float_pattern = '(' + positive_integer_pattern + '(\\.[0-9]*)?)'
+        dev_pattern = 'dev:(?P<dev>' + positive_integer_pattern + ')'
+        cost_pattern = 'cost:(?P<cost>' + positive_float_pattern + ')'
+        path_pattern = 'path:\\((?P<path>' + list_of_positive_integers_pattern + ')\\)'
+        test_result_pattern = '^' + ('[\\ ]+\\-\\-[\\ ]+'.join([dev_pattern, cost_pattern, path_pattern])) + '$'
+
+        serialized = serialized.strip()
+        test_result_parser = regex.compile(test_result_pattern)
+        parsed_test_result = test_result_parser.match(serialized)
+
+        try:
+            assert parsed_test_result
+            assert len(parsed_test_result.capturesdict()['dev']) == 1
+            dev = int(parsed_test_result.capturesdict()['dev'][0])
+            assert len(parsed_test_result.capturesdict()['cost']) == 1
+            cost = float(parsed_test_result.capturesdict()['cost'][0])
+            assert len(parsed_test_result.capturesdict()['path']) == 1
+            path = tuple(int(s) for s in parsed_test_result.capturesdict()['path'][0].split(','))
+            return TestResult(dev=dev, cost=cost, path=path)
+        except:
+            return None
+
+    @staticmethod
+    def load_from_file(tests_result_file_path: str) -> Optional['TestResult']:
+        if not os.path.isfile(tests_result_file_path):
+            return None
+        with open(tests_result_file_path, 'r') as result_file:
+            tests_results = [
+                TestResult.deserialize(line)
+                for line in result_file.readlines()
+                if line.strip() != ''
+            ]
+            assert len(tests_results) <= 1
+            if len(tests_results) < 1:
+                return None
+            return tests_results[0]
+
+    # TODO: remove this method.
+    @staticmethod
+    def read_tests_results_file(tests_results_file_path: str) -> Optional[List['TestResult']]:
+        if not os.path.isfile(tests_results_file_path):
+            return None
+        with open(tests_results_file_path, 'r') as results_file:
+            tests_results = [
+                TestResult.deserialize(line)
+                for line in results_file.readlines()
+                if line.strip() != ''
+            ]
+            return tests_results
+
+    def __eq__(self, other):
+        assert isinstance(other, TestResult)
+        return self.dev == other.dev \
+               and abs(self.cost - other.cost) < 0.0001 \
+               and len(self.path) == len(other.path) \
+               and all(s1 == s2 for s1, s2 in zip(self.path, other.path))
+
+    def is_acceptable(self, staff_test_result: 'TestResult'):
+        assert isinstance(staff_test_result, TestResult)
+        return max(self.dev, staff_test_result.dev) <= min(self.dev, staff_test_result.dev) * 1.15 \
+               and abs(self.cost - staff_test_result.cost) < 0.01 \
+               and len(self.path) == len(staff_test_result.path) \
+               and all(s1 == s2 for s1, s2 in zip(self.path, staff_test_result.path))
+
+
+class SubmissionTestsSuit:
+    def __init__(self):
+        self._tests_by_idx_mapping: OrderedDict[int, SubmissionTest] = OrderedDict()
+
+    def __iter__(self):
+        for test in self._tests_by_idx_mapping.values():
+            yield test
+
+    def __len__(self):
+        return len(self._tests_by_idx_mapping)
+
+    def get_test_by_idx(self, test_idx: int):
+        return self._tests_by_idx_mapping[test_idx]
+
+    def filter_tests_by_idx(self, indeces: List[int]) -> 'SubmissionTestsSuit':
+        new_tests_suit = SubmissionTestsSuit()
+        for idx in indeces:
+            new_tests_suit._tests_by_idx_mapping[idx] = self.get_test_by_idx(idx)
+        return new_tests_suit
+
+    def create_test(self, **kwargs):
+        if 'index' not in kwargs:
+            new_test_idx = len(self._tests_by_idx_mapping)
+            kwargs = {'index': new_test_idx, **kwargs}
+        assert kwargs['index'] not in self._tests_by_idx_mapping.keys()
+        new_test = SubmissionTest(**kwargs)
+        self._tests_by_idx_mapping[new_test.index] = new_test
+
+    def calc_overall_tests_execution_time(self) -> int:
+        return sum(TEST_TIME_OVERHEAD_EST_IN_SECONDS + test.execution_timeout for test in self._tests_by_idx_mapping.values())
+
+    def get_tests_names(self) -> List[str]:
+        return [test.get_name() for test in self._tests_by_idx_mapping.values()]
+
+    def create_astar_tests_for_weights_in_range(
+            self,
+            heuristic_name: str,
+            problem_factory: ProblemFactory,
+            execution_timeout: Union[int, Tuple[int, int]],
+            n: int = 7):
+        weights = np.linspace(0.5, 1, n)
+        if isinstance(execution_timeout, tuple):
+            execution_timeouts = np.linspace(execution_timeout[0], execution_timeout[1], n)
+        else:
+            execution_timeouts = np.ones(n) * execution_timeout
+        for w, cur_execution_timeout in zip(weights, execution_timeouts):
+            astar_importer = SolverFactory(name='AStar', heuristic_name=heuristic_name, params=(w,))
+            self.create_test(
+                problem_factory=problem_factory,
+                solver_factory=astar_importer,
+                execution_timeout=cur_execution_timeout)
+
+    def update_timeouts(self, new_timeouts_per_test):
+        for test_idx, new_timeout in new_timeouts_per_test.items():
+            old_test = self._tests_by_idx_mapping[test_idx]
+            dct = old_test._asdict()
+            dct['execution_timeout'] = new_timeout
+            new_test = type(old_test)(**dct)
+            self._tests_by_idx_mapping[test_idx] = new_test
+
+
+class Submission:
+    main_submission_path: str
+    main_submission_directory_name: str
+    ids: List[str]
+    code_dirs: List[str]
+    code_dir: Optional[str]
+    code_path: Optional[str]
+    followed_assignment_instructions: bool
+    test_environment_path: str
+
+    def __init__(self, main_submission_path: str):
+        self.main_submission_path = main_submission_path
+        self.main_submission_directory_name = os.path.basename(main_submission_path.rstrip('/').rstrip('\\'))
+        self.ids = tuple(int(stud_id) for stud_id in self.main_submission_directory_name.split('-'))
+        self.code_dirs = self.find_code_dirs()
+        self.code_dir = self.code_dirs[0] if len(self.code_dirs) > 0 else None
+        self.code_path = os.path.join(self.main_submission_path, self.code_dir) if self.code_dir is not None else None
+        self.followed_assignment_instructions = self.check_if_followed_assignment_instructions()
+        self.test_environment_path = os.path.join(TESTS_ENVIRONMENTS_PATH, self.main_submission_directory_name)
+        self.test_logs_dir_path = os.path.join(TESTS_LOGS_PATH, self.main_submission_directory_name)
+
+    @property
+    def test_results_file_path(self) -> str:
+        return os.path.join(self.test_logs_dir_path, 'test-results.txt')
+
+    def check_if_followed_assignment_instructions(self):
+        return self.code_dir == 'AI1' and \
+               is_dir_contains_files(self.code_path, VITAL_REQUIRED_SUBMISSION_CODE_FILES) and \
+               is_dir_contains_files(self.code_path, NONVITAL_REQUIRED_SUBMISSION_CODE_FILES) and \
+               not is_dir_contains_files(self.code_path, FILES_ASKED_NOT_TO_SUBMIT)
+
+    def find_code_dirs(self):
+        return [
+                code_dir.rstrip('/').rstrip('\\')
+                for code_dir in iterate_inner_directories(self.main_submission_path, depth_limit=3)
+                if is_dir_contains_files(os.path.join(self.main_submission_path, code_dir),
+                                         VITAL_REQUIRED_SUBMISSION_CODE_FILES)
+            ]
+
+    def make_clean_tests_environment(self, test_environment_path: str = None, override_if_exists: bool = True):
+        if test_environment_path is None:
+            test_environment_path = self.test_environment_path
+        if os.path.exists(test_environment_path):
+            if not override_if_exists:
+                return
+            shutil.rmtree(test_environment_path)
+        os.mkdir(test_environment_path)
+        if os.path.exists(self.test_logs_dir_path):
+            shutil.rmtree(self.test_logs_dir_path)
+        os.mkdir(self.test_logs_dir_path)
+        for submitted_file in VITAL_REQUIRED_SUBMISSION_CODE_FILES:
+            make_dirs_if_not_exist(test_environment_path, os.path.dirname(submitted_file))
+            shutil.copy2(os.path.join(self.code_path, submitted_file),
+                         os.path.join(test_environment_path, os.path.dirname(submitted_file)))
+        for submitted_file in NONVITAL_REQUIRED_SUBMISSION_CODE_FILES:
+            if not os.path.isfile(os.path.join(self.code_path, submitted_file)):
+                continue
+            make_dirs_if_not_exist(test_environment_path, os.path.dirname(submitted_file))
+            shutil.copy2(os.path.join(self.code_path, submitted_file),
+                         os.path.join(test_environment_path, os.path.dirname(submitted_file)))
+        for file in FILES_TO_COPY_FROM_CLEAN_SUPPLIED_CODE:
+            make_dirs_if_not_exist(test_environment_path, os.path.dirname(file))
+            shutil.copy2(os.path.join(CLEAN_SUPPLIED_CODE_ENV_PATH, file),
+                         os.path.join(test_environment_path, os.path.dirname(file)))
+        for test_file in TEST_SCRIPT_FILES:
+            make_dirs_if_not_exist(test_environment_path, os.path.dirname(test_file))
+            shutil.copy2(os.path.join(CHECK_AUTOMATION_CODE_PATH, test_file),
+                         os.path.join(test_environment_path, os.path.dirname(test_file)))
+
+    def run_tests_suit_in_tests_environment(
+            self, tests_suit: SubmissionTestsSuit, store_execution_log: bool = False) -> Dict[int, float]:
+        self.make_clean_tests_environment()
+
+        execution_time_per_test = {}
+
+        class TestExecAttempt(NamedTuple):
+            test: SubmissionTest
+            attempt_nr: int
+
+        tests_to_run = [
+            TestExecAttempt(test=test, attempt_nr=1)
+            for test in tests_suit if test.execute_in_submission_test_env
+        ]
+        tests_to_run.reverse()
+        while len(tests_to_run) > 0:
+            cur_test_to_run, cur_test_attempt_nr = tests_to_run.pop()
+            test_str = 'test-{test_idx}'.format(test_idx=cur_test_to_run.index)
+            test_out_path = os.path.join(self.test_logs_dir_path, test_str)
+
+            output_files_exts = ['res', 'out', 'err', 'exec_time', 'exec_log']
+            for ext in output_files_exts:
+                file_to_delete = test_out_path + '.' + ext
+                if os.path.isfile(file_to_delete):
+                    os.remove(file_to_delete)
+
+            run_args = [
+                PYTHON_INTERPRETER_FOR_SUBMISSIONS_TESTS,
+                TEST_SCRIPT_FILENAME,
+                test_out_path + '.res',
+                str(cur_test_to_run.index)
+            ]
+            if store_execution_log:
+                run_args.append(test_out_path + '.exec_log')
+            timeout = cur_test_to_run.execution_timeout
+            if store_execution_log:
+                # It takes time just to store the execution log.
+                # TODO [staff]: maybe we would like another mechanism to limit the timeout here.
+                timeout *= 10
+
+            start_time = time.time()
+            try:
+                submission_test_process = subprocess.run(
+                    run_args,
+                    cwd=self.test_environment_path,
+                    capture_output=True,
+                    timeout=timeout
+                )
+                end_time = time.time()
+                exec_time = end_time - start_time
+                execution_time_per_test[cur_test_to_run.index] = exec_time
+                with open(test_out_path + '.out', 'wb') as test_run_stdout:
+                    test_run_stdout.write(submission_test_process.stdout)
+                with open(test_out_path + '.err', 'wb') as test_run_stderr:
+                    test_run_stderr.write(submission_test_process.stderr)
+                with open(test_out_path + '.exec_time', 'w') as test_exec_time_file:
+                    test_exec_time_file.write('execution time: {} sec.\n'.format(exec_time))
+            except subprocess.TimeoutExpired:
+                end_time = time.time()
+                exec_time = end_time - start_time
+                execution_time_per_test[cur_test_to_run.index] = exec_time
+                with open(test_out_path + '.err', 'w') as test_run_stderr:
+                    test_run_stderr.write('error: timeout reached during tests subprocess execution.')
+                with open(test_out_path + '.exec_time', 'w') as test_exec_time_file:
+                    test_exec_time_file.write('execution time: {} sec.\n'.format(exec_time))
+                if cur_test_attempt_nr < NR_ATTEMPTS_PER_TEST:
+                    tests_to_run.insert(0, TestExecAttempt(test=cur_test_to_run, attempt_nr=(cur_test_attempt_nr + 1)))
+                time.sleep(0.5)
+        return execution_time_per_test
+
+    def _load_modules_from_test_env(self):
+        """Not used."""
+        self.make_clean_tests_environment()
+        assert os.getcwd() in sys.path
+        sys.path.remove(os.getcwd())
+        sys.path.append(self.test_environment_path)
+        os.chdir(self.test_environment_path)
+
+        try:
+            framework_path = os.path.join(self.test_environment_path, "framework/__init__.py")
+            deliveries_path = os.path.join(self.test_environment_path, "deliveries/__init__.py")
+
+            # make `os`, `sys` packages unusable.
+            # local_modules = dict(sys.modules)
+            # local_sys_module = sys
+            # del os
+            # sys.modules['os'] = None
+            # sys.modules['sys'] = None
+            # del sys
+
+            dyn_load_module("framework", framework_path)
+            dyn_load_module("deliveries", deliveries_path)
+
+            # from framework import *
+            # from deliveries import *
+
+        except:
+            pass  # TODO
+
+    @staticmethod
+    def load_all_submissions(ids_filter: Optional[Collection[int]] = None) -> List['Submission']:
+        if ids_filter is not None:
+            ids_filter = {int(identifier) for identifier in ids_filter}
+        all_submissions_dirs = [
+            os.path.join(SUBMISSIONS_PATH, submission_directory)
+            for submission_directory in os.listdir(SUBMISSIONS_PATH)
+            if os.path.isdir(os.path.join(SUBMISSIONS_PATH, submission_directory)) \
+               and all(identifier.isdigit() for identifier in submission_directory.split('-')) \
+               and (ids_filter is None or any(
+                int(identifier) in ids_filter for identifier in submission_directory.split('-')))]
+        all_submissions = [Submission(submission_dir) for submission_dir in all_submissions_dirs]
+        return all_submissions
+
+    def load_tests_results(self, tests_suit: SubmissionTestsSuit) -> 'SubmissionTestsResults':
+        all_results = []
+        for test in tests_suit:
+            test_result_filename = 'test-{idx}.res'.format(idx=test.index)
+            test_result_file_path = os.path.join(self.test_logs_dir_path, test_result_filename)
+            test_result = TestResult.load_from_file(test_result_file_path)
+            all_results.append(test_result)
+        return SubmissionTestsResults(all_results)
+
+    def remove_all_files(self):
+        shutil.rmtree(self.main_submission_path)
+        if os.path.isdir(self.test_logs_dir_path):
+            shutil.rmtree(self.test_logs_dir_path)
+        if os.path.isdir(self.test_environment_path):
+            shutil.rmtree(self.test_environment_path)
+
+
+class SubmissionTestsResults(List[Optional[TestResult]]):
+    def __init__(self, tests_results: List[Optional[TestResult]]):
+        super(SubmissionTestsResults, self).__init__(tests_results)
+        self._pass_vector = None
+
+    def calc_pass_vector(self, staff_solution_tests_results: 'SubmissionTestsResults'):
+        assert len(staff_solution_tests_results) == len(self)
+        self._pass_vector = np.array(list(
+             int(isinstance(test_result, TestResult) and test_result.is_acceptable(staff_test_result))
+             for test_result, staff_test_result in zip(self, staff_solution_tests_results)
+        ), dtype=np.int)
+
+    @property
+    def pass_vector(self):
+        assert self._pass_vector is not None
+        return self._pass_vector

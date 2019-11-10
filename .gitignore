@@ -1,0 +1,8 @@
+
+\.idea/
+
+deliveries/__pycache__/
+
+framework/__pycache__/
+
+*.pyc
