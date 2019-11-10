@@ -23,12 +23,16 @@ class SearchNodesPriorityQueue:
 
     def push_node(self, node: SearchNode):
         assert node.state not in self._state_to_search_node_mapping
-        self._nodes_queue[node] = (node.expanding_priority, node.get_canonical_hash())
+        self._nodes_queue[node] = (node.expanding_priority, hash(node.state))
         self._state_to_search_node_mapping[node.state] = node
 
     def pop_next_node(self) -> SearchNode:
         node, _ = self._nodes_queue.popitem()
         del self._state_to_search_node_mapping[node.state]
+        return node
+
+    def peek_next_node(self) -> SearchNode:
+        node, _ = self._nodes_queue.peekitem()
         return node
 
     def extract_node(self, node: SearchNode):
@@ -69,6 +73,9 @@ class SearchNodesCollection:
     def get_node_by_state(self, state: GraphProblemState) -> Optional[SearchNode]:
         return self._state_to_search_node_mapping.get(state, None)
 
+    def __len__(self):
+        return len(self._state_to_search_node_mapping)
+
 
 class BestFirstSearch(GraphProblemSolver):
     """
@@ -98,6 +105,7 @@ class BestFirstSearch(GraphProblemSolver):
         self.open: SearchNodesPriorityQueue = None
         self.close: Optional[SearchNodesCollection] = None
         self.use_close = use_close
+        self.max_nr_stored_states = 0
 
     def solve_problem(self, problem: GraphProblem) -> SearchResult:
         """
@@ -106,6 +114,10 @@ class BestFirstSearch(GraphProblemSolver):
 
         final_search_node = None
         nr_expanded_states = 0
+        max_nr_stored_states = 0
+
+        def _get_current_nr_stored_states() -> int:
+            return len(self.open) + (len(self.close) if self.close is not None else 0)
 
         self.open = SearchNodesPriorityQueue()
         if self.use_close:
@@ -115,9 +127,11 @@ class BestFirstSearch(GraphProblemSolver):
         self._init_solver(problem)
 
         with Timer(print_title=False) as timer:
-            initial_search_node = SearchNode(problem.initial_state, None, 0)
+            initial_search_node = SearchNode(
+                state=problem.initial_state, parent_search_node=None, operator_cost=problem.get_zero_cost())
             initial_search_node.expanding_priority = self._calc_node_expanding_priority(initial_search_node)
             self.open.push_node(initial_search_node)
+            max_nr_stored_states = max(max_nr_stored_states, _get_current_nr_stored_states())
 
             while True:
                 next_node_to_expand = self._extract_next_search_node_to_expand()
@@ -132,16 +146,23 @@ class BestFirstSearch(GraphProblemSolver):
                     break
 
                 # Iterate over next states and perform the update step for each.
-                for successor_state, operator_cost in problem.expand_state_with_costs(next_node_to_expand.state):
-                    successor_node = SearchNode(successor_state, next_node_to_expand, operator_cost)
+                for operator_result in problem.expand_state_with_costs(next_node_to_expand.state):
+                    assert isinstance(operator_result, OperatorResult)
+                    successor_node = SearchNode(
+                        state=operator_result.successor_state,
+                        parent_search_node=next_node_to_expand,
+                        operator_cost=operator_result.operator_cost,
+                        operator_name=operator_result.operator_name)
                     successor_node.expanding_priority = self._calc_node_expanding_priority(successor_node)
                     self._open_successor_node(problem, successor_node)
+                    max_nr_stored_states = max(max_nr_stored_states, _get_current_nr_stored_states())
 
         return SearchResult(
             solver=self,
             problem=problem,
             final_search_node=final_search_node,
             nr_expanded_states=nr_expanded_states,
+            max_nr_stored_states=max_nr_stored_states,
             solving_time=timer.elapsed
         )
 
