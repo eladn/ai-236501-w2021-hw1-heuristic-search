@@ -10,7 +10,7 @@ imported when writing (from another file):
 __all__ = ['GraphProblemState', 'GraphProblem', 'GraphProblemStatesPath', 'SearchNode',
            'SearchResult', 'GraphProblemSolver',
            'HeuristicFunction', 'HeuristicFunctionType', 'NullHeuristic',
-           'GraphProblemError']
+           'GraphProblemError', 'Cost', 'ExtendedCost', 'OperatorResult']
 
 
 class GraphProblemError(Exception):
@@ -53,6 +53,32 @@ class GraphProblemState(abc.ABC):
         """
 
 
+class ExtendedCost(abc.ABC):
+    """
+    Used as an interface for a cost type.
+    Custom cost type is needed when a problem has multiple cost functions that
+     each one of them should individually accumulated during the search.
+    The `g_cost` is a single float scalar that should be eventually optimized
+     by the search algorithm. The `g_cost` can be, for example, just one of the
+     accumulated cost functions, or any function of these.
+    """
+
+    @abc.abstractmethod
+    def get_g_cost(self) -> float: ...
+
+    @abc.abstractmethod
+    def __add__(self, other) -> 'ExtendedCost': ...
+
+
+Cost = Union[float, ExtendedCost]
+
+
+class OperatorResult(NamedTuple):
+    successor_state: GraphProblemState
+    operator_cost: Cost
+    operator_name: Optional[str] = None
+
+
 class GraphProblem(abc.ABC):
     """
     This class defines an *interface* used to represent a states-space, as learnt in class.
@@ -68,13 +94,14 @@ class GraphProblem(abc.ABC):
         self.initial_state = initial_state
 
     @abc.abstractmethod
-    def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[Tuple[GraphProblemState, float]]:
+    def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
         This is an abstract method that must be implemented by the inheritor class.
-        This method represents the `Succ: S -> P(S)` function learnt in class.
+        This method represents the `Succ: S -> P(S)` function (as learnt in class) of the problem.
         It receives a state and iterates over the successor states.
         Notice that this is an *Iterator*. Hence it should be implemented using the `yield` keyword.
-        For each successor, a pair of the successor state and the operator cost is yielded.
+        For each successor, an object of type `OperatorResult` is yielded. This object describes the
+            successor state, the cost of the applied operator and its name.
         """
         ...
 
@@ -85,6 +112,9 @@ class GraphProblem(abc.ABC):
         It receives a state and returns whether this state is a goal.
         """
         ...
+
+    def get_zero_cost(self) -> Cost:
+        return 0.0
 
     def solution_additional_str(self, result: 'SearchResult') -> str:
         """
@@ -122,15 +152,15 @@ class SearchNode:
 
     def __init__(self, state: GraphProblemState,
                  parent_search_node: Optional['SearchNode'] = None,
-                 operator_cost: float = 0,
+                 operator_cost: Cost = 0.0, operator_name: Optional[str] = None,
                  expanding_priority: Optional[float] = None):
         self.state: GraphProblemState = state
         self.parent_search_node: SearchNode = parent_search_node
-        self.operator_cost: float = operator_cost
-        self.cost: Optional[float] = None
+        self.operator_cost: Cost = operator_cost
+        self.operator_name: Optional[str] = operator_name
         self.expanding_priority: Optional[float] = expanding_priority
 
-        self.cost = operator_cost
+        self.cost: Cost = operator_cost
         if self.parent_search_node is not None:
             self.cost += self.parent_search_node.cost
 
@@ -154,12 +184,13 @@ class SearchNode:
         path.reverse()
         return GraphProblemStatesPath(path)
 
-    def get_canonical_hash(self) -> int:
-        if self.state.__class__.__name__ == 'MapState':
-            return hash(self.state.junction_id)
-        elif self.state.__class__.__name__ == 'RelaxedDeliveriesState' or self.state.__class__.__name__ == 'StrictDeliveriesState':
-            return hash((self.state.current_location, self.state.dropped_so_far, self.state.fuel_as_int))
-        raise GraphProblemError()
+    @property
+    def g_cost(self) -> float:
+        if isinstance(self.cost, float):
+            return self.cost
+        else:
+            assert isinstance(self.cost, ExtendedCost)
+            return self.cost.get_g_cost()
 
 
 class SearchResult(NamedTuple):
@@ -176,6 +207,8 @@ class SearchResult(NamedTuple):
     final_search_node: Optional[SearchNode]
     """The number of expanded states during the search."""
     nr_expanded_states: int
+    """The maximum number of states that have been stored in open & close states during the search."""
+    max_nr_stored_states: int
     """The time (in seconds) took to solve."""
     solving_time: float
 
@@ -184,28 +217,22 @@ class SearchResult(NamedTuple):
         Enhanced string formatting for the search result.
         """
 
-        res_str = '{problem_name: <35}' \
-                   '   {solver_name: <27}' \
-                   '   time: {solving_time:6.2f}' \
-                   '   #dev: {nr_expanded_states: <5}'.format(
-            problem_name=self.problem.name,
-            solver_name=self.solver.solver_name,
-            solving_time=self.solving_time,
-            nr_expanded_states=self.nr_expanded_states
-        )
+        res_str = f'{self.problem.name: <35}' \
+                  f'   {self.solver.solver_name: <27}' \
+                  f'   time: {self.solving_time:6.2f}' \
+                  f'   #dev: {self.nr_expanded_states: <5}' \
+                  f'   |space|: {self.max_nr_stored_states: <6}'
 
         # no solution found by solver
         if self.final_search_node is None:
             return res_str + '   NO SOLUTION FOUND !!!'
 
         path = self.make_path()
-        res_str += '   total_cost: {cost:11.5f}' \
-                   '   |path|: {path_len: <3}' \
-                   '   path: {path}'.format(
-            cost=self.final_search_node.cost,
-            path_len=len(path),
-            path=str(path)
-        )
+        res_str += f'   total_g_cost: {self.final_search_node.g_cost:11.5f}'
+        if not isinstance(self.final_search_node.cost, float):
+            res_str += f'   total_cost: {self.final_search_node.cost}'
+        res_str += f'   |path|: {len(path): <3}' \
+                   f'   path: {str(path)}'
 
         additional_str = self.problem.solution_additional_str(self)
         if additional_str:
