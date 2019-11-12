@@ -1,5 +1,6 @@
 import abc
 from typing import Iterator, Tuple, Optional, Type, NamedTuple, Union, Callable
+from itertools import islice
 
 
 """
@@ -7,7 +8,7 @@ We define `__all__` variable in order to set which names will be
 imported when writing (from another file):
 >>> from framework.graph_search.graph_problem_interface import *
 """
-__all__ = ['GraphProblemState', 'GraphProblem', 'GraphProblemStatesPath', 'SearchNode',
+__all__ = ['GraphProblemState', 'GraphProblem', 'GraphProblemStatesPath', 'SearchNode', 'StatesPathNode',
            'SearchResult', 'GraphProblemSolver',
            'HeuristicFunction', 'HeuristicFunctionType', 'NullHeuristic',
            'GraphProblemError', 'Cost', 'ExtendedCost', 'OperatorResult']
@@ -79,6 +80,14 @@ class OperatorResult(NamedTuple):
     operator_name: Optional[str] = None
 
 
+class StatesPathNode(NamedTuple):
+    state: GraphProblemState
+    last_operator_cost: Cost
+    cumulative_cost: Cost
+    cumulative_g_cost: Cost
+    last_operator_name: Optional[str] = None
+
+
 class GraphProblem(abc.ABC):
     """
     This class defines an *interface* used to represent a states-space, as learnt in class.
@@ -125,7 +134,7 @@ class GraphProblem(abc.ABC):
         return ''
 
 
-class GraphProblemStatesPath(Tuple[GraphProblemState]):
+class GraphProblemStatesPath(Tuple[StatesPathNode]):
     """
     This class represents a path of states.
     It is just a tuple of GraphProblemState objects.
@@ -139,7 +148,14 @@ class GraphProblemStatesPath(Tuple[GraphProblemState]):
         return all(s1 == s2 for s1, s2 in zip(self, other))
 
     def __str__(self):
-        return '[' + (', '.join(str(state) for state in self)) + ']'
+        if len(self) == 0:
+            return '[]'
+        return '[' + str(self[0].state) + \
+               ''.join(f'  ={"" if action.last_operator_name is None else f"=({action.last_operator_name})="}=>  ' + str(action.state)
+                       for action in islice(self, 1, None))\
+               + ']'
+
+        # return '[' + (' ==> '.join(str(state) for state in self)) + ']'
 
 
 class SearchNode:
@@ -180,7 +196,10 @@ class SearchNode:
         :return: A path of *states* represented by the nodes
         in the path from the root to this node.
         """
-        path = [node.state for node in self.traverse_back_to_root()]
+        path = [StatesPathNode(state=node.state, last_operator_cost=node.operator_cost,
+                               cumulative_cost=node.cost, cumulative_g_cost=node.g_cost,
+                               last_operator_name=node.operator_name)
+                for node in self.traverse_back_to_root()]
         path.reverse()
         return GraphProblemStatesPath(path)
 
@@ -203,14 +222,17 @@ class SearchResult(NamedTuple):
     solver: 'GraphProblemSolver'
     """The problem that the solver has attempted to solve."""
     problem: GraphProblem
-    """The node that represents the goal found. Set to `None` if no result had been found."""
-    final_search_node: Optional[SearchNode]
+    """States path (including the applied operators) from the initial state to the final found goal state.
+    Set to `None` if no result had been found."""
+    solution_path: Optional[GraphProblemStatesPath]
     """The number of expanded states during the search."""
     nr_expanded_states: int
     """The maximum number of states that have been stored in open & close states during the search."""
     max_nr_stored_states: int
     """The time (in seconds) took to solve."""
     solving_time: float
+    """Number of iterations (for an iterative algorithm like iterative-deepening)"""
+    nr_iterations: Optional[int] = None
 
     def __str__(self):
         """
@@ -224,15 +246,14 @@ class SearchResult(NamedTuple):
                   f'   |space|: {self.max_nr_stored_states: <6}'
 
         # no solution found by solver
-        if self.final_search_node is None:
+        if not self.is_solution_found:
             return res_str + '   NO SOLUTION FOUND !!!'
 
-        path = self.make_path()
-        res_str += f'   total_g_cost: {self.final_search_node.g_cost:11.5f}'
-        if not isinstance(self.final_search_node.cost, float):
-            res_str += f'   total_cost: {self.final_search_node.cost}'
-        res_str += f'   |path|: {len(path): <3}' \
-                   f'   path: {str(path)}'
+        res_str += f'   total_g_cost: {self.solution_g_cost:11.5f}'
+        if not isinstance(self.solution_cost, float):
+            res_str += f'   total_cost: {self.solution_cost}'
+        res_str += f'   |path|: {len(self.solution_path): <3}' \
+                   f'   path: {str(self.solution_path)}'
 
         additional_str = self.problem.solution_additional_str(self)
         if additional_str:
@@ -240,8 +261,21 @@ class SearchResult(NamedTuple):
 
         return res_str
 
-    def make_path(self):
-        return self.final_search_node.make_states_path()
+    @property
+    def is_solution_found(self) -> bool:
+        return self.solution_path is not None
+
+    @property
+    def solution_cost(self) -> Optional[Cost]:
+        return None if self.solution_path is None else self.solution_path[-1].cumulative_cost
+
+    @property
+    def solution_g_cost(self) -> Optional[Cost]:
+        return None if self.solution_path is None else self.solution_path[-1].cumulative_g_cost
+
+    @property
+    def solution_final_state(self) -> Optional[GraphProblemState]:
+        return None if self.solution_path is None else self.solution_path[-1].state
 
 
 class GraphProblemSolver(abc.ABC):

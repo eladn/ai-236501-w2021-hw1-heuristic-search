@@ -160,7 +160,7 @@ class BestFirstSearch(GraphProblemSolver):
         return SearchResult(
             solver=self,
             problem=problem,
-            final_search_node=final_search_node,
+            solution_path=final_search_node.make_states_path(),
             nr_expanded_states=nr_expanded_states,
             max_nr_stored_states=max_nr_stored_states,
             solving_time=timer.elapsed

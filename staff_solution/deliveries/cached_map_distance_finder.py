@@ -64,7 +64,6 @@ class CachedMapDistanceFinder:
                                  target_junction_id=tgt_junction.index,
                                  road_cost_fn=self.road_cost_fn, zero_road_cost=self.zero_road_cost)
         map_problem_result = self.map_problem_solver.solve_problem(map_problem)
-        map_distance = None if map_problem_result.final_search_node is None \
-            else map_problem_result.final_search_node.cost
+        map_distance = map_problem_result.solution_cost if map_problem_result.is_solution_found else None
         self._insert_to_cache(cache_key, map_distance)
         return map_distance
