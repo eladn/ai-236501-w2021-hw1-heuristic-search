@@ -215,8 +215,8 @@ class SearchNode:
 
 class StopReason(Enum):
     CompletedRunSuccessfully = 'CompletedRunSuccessfully'
-    OutOfMaxNrIteration = 'OutOfMaxNrIteration'
-    OutOfMaxNrStatesToExpand = 'OutOfMaxNrStatesToExpand'
+    ExceededMaxNrIteration = 'ExceededMaxNrIteration'
+    ExceededMaxNrStatesToExpand = 'ExceededMaxNrStatesToExpand'
 
 
 class SearchResult(NamedTuple):
@@ -263,8 +263,8 @@ class SearchResult(NamedTuple):
         if self.stop_reason != StopReason.CompletedRunSuccessfully:
             assert not self.is_solution_found
             StopReasonToDescriptionMapping = {
-                StopReason.OutOfMaxNrStatesToExpand: 'Out of max number of states to expand!',
-                StopReason.OutOfMaxNrIteration: 'Out of max number of iterations!'
+                StopReason.ExceededMaxNrStatesToExpand: 'Exceeded max number of states to expand!',
+                StopReason.ExceededMaxNrIteration: 'Exceeded max number of iterations!'
             }
             return res_str + '   ' + StopReasonToDescriptionMapping[self.stop_reason]
 

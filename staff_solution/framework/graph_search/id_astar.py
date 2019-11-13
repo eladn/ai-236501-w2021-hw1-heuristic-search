@@ -101,7 +101,7 @@ class IDAStar(GraphProblemSolver):
                     nr_expanded_states=total_nr_expanded_states,
                     max_nr_stored_states=max_depth_reached,
                     nr_iterations=nr_iterations-1,
-                    stop_reason=StopReason.OutOfMaxNrIteration)
+                    stop_reason=StopReason.ExceededMaxNrIteration)
 
             assert high_f_limit > low_f_limit
             mid_f_limit = (high_f_limit + low_f_limit) / 2
@@ -119,7 +119,7 @@ class IDAStar(GraphProblemSolver):
                     nr_expanded_states=total_nr_expanded_states,
                     max_nr_stored_states=max_depth_reached,
                     nr_iterations=nr_iterations,
-                    stop_reason=StopReason.OutOfMaxNrStatesToExpand)
+                    stop_reason=StopReason.ExceededMaxNrStatesToExpand)
 
             if result.is_solution_found:
                 high_f_limit = mid_f_limit
@@ -155,7 +155,7 @@ class IDAStar(GraphProblemSolver):
                     nr_expanded_states=total_nr_expanded_states,
                     max_nr_stored_states=max_depth_reached,
                     nr_iterations=nr_iterations-1,
-                    stop_reason=StopReason.OutOfMaxNrIteration)
+                    stop_reason=StopReason.ExceededMaxNrIteration)
 
             max_nr_states_to_expand = None if self.max_nr_states_to_expand is None \
                 else self.max_nr_states_to_expand - total_nr_expanded_states
@@ -172,7 +172,7 @@ class IDAStar(GraphProblemSolver):
                     nr_expanded_states=total_nr_expanded_states,
                     max_nr_stored_states=max_depth_reached,
                     nr_iterations=nr_iterations,
-                    stop_reason=StopReason.OutOfMaxNrStatesToExpand)
+                    stop_reason=StopReason.ExceededMaxNrStatesToExpand)
 
             if result.solution_path is not None:
                 return SearchResult(
