@@ -78,11 +78,12 @@ class DeliveryCost(ExtendedCost):
 
 
 class DeliveriesTruckProblem(GraphProblem):
+    name = 'Deliveries'
     def __init__(self,
                  problem_input: DeliveriesTruckProblemInput,
                  roads: Roads,
                  optimization_objective: OptimizationObjective = OptimizationObjective.Distance):
-        self.name += '({})'.format(problem_input.input_name)
+        self.name += f'({problem_input.input_name}:{optimization_objective})'
         initial_state = DeliveriesTruckState(
             loaded_deliveries=frozenset(),
             dropped_deliveries=frozenset(),
