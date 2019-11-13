@@ -101,10 +101,11 @@ class BestFirstSearch(GraphProblemSolver):
 
     solver_name: str = 'BestFirstSearch'
 
-    def __init__(self, use_close: bool = True):
+    def __init__(self, use_close: bool = True, max_nr_states_to_expand: Optional[int] = None):
         self.open: SearchNodesPriorityQueue = None
         self.close: Optional[SearchNodesCollection] = None
         self.use_close = use_close
+        self.max_nr_states_to_expand = max_nr_states_to_expand
         self.max_nr_stored_states = 0
 
     def solve_problem(self, problem: GraphProblem) -> SearchResult:
@@ -133,17 +134,21 @@ class BestFirstSearch(GraphProblemSolver):
             self.open.push_node(initial_search_node)
             max_nr_stored_states = max(max_nr_stored_states, _get_current_nr_stored_states())
 
+            exceeded_max_nr_expanded_states = False
             while True:
-                next_node_to_expand = self._extract_next_search_node_to_expand()
+                next_node_to_expand = self._extract_next_search_node_to_expand(problem)
                 if next_node_to_expand is None:
                     break
-
-                # TODO: is it correct to increment here? maybe should be after the `is_goal` check?
-                nr_expanded_states += 1
 
                 if problem.is_goal(next_node_to_expand.state):
                     final_search_node = next_node_to_expand
                     break
+
+                if self.max_nr_states_to_expand is not None and nr_expanded_states >= self.max_nr_states_to_expand:
+                    exceeded_max_nr_expanded_states = True
+                    break
+
+                nr_expanded_states += 1
 
                 # Iterate over next states and perform the update step for each.
                 for operator_result in problem.expand_state_with_costs(next_node_to_expand.state):
@@ -157,13 +162,16 @@ class BestFirstSearch(GraphProblemSolver):
                     self._open_successor_node(problem, successor_node)
                     max_nr_stored_states = max(max_nr_stored_states, _get_current_nr_stored_states())
 
+        stop_reason = StopReason.ExceededMaxNrStatesToExpand if exceeded_max_nr_expanded_states \
+            else StopReason.CompletedRunSuccessfully
         return SearchResult(
             solver=self,
             problem=problem,
-            solution_path=final_search_node.make_states_path(),
+            solution_path=final_search_node.make_states_path() if final_search_node is not None else None,
             nr_expanded_states=nr_expanded_states,
             max_nr_stored_states=max_nr_stored_states,
-            solving_time=timer.elapsed
+            solving_time=timer.elapsed,
+            stop_reason=stop_reason
         )
 
     def _init_solver(self, problem: GraphProblem):
@@ -174,7 +182,7 @@ class BestFirstSearch(GraphProblemSolver):
          to be used later by other methods called during the search.
         """
 
-    def _extract_next_search_node_to_expand(self) -> Optional[SearchNode]:
+    def _extract_next_search_node_to_expand(self, problem: GraphProblem) -> Optional[SearchNode]:
         """
         Extracts the next node to expand from the open queue.
         This is a default implementation.

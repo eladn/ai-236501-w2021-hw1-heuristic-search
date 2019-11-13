@@ -1,5 +1,6 @@
 from .graph_problem_interface import *
 from .best_first_search import BestFirstSearch
+from typing import Optional
 
 
 class AStar(BestFirstSearch):
@@ -10,7 +11,8 @@ class AStar(BestFirstSearch):
 
     solver_name = 'A*'
 
-    def __init__(self, heuristic_function_type: HeuristicFunctionType, heuristic_weight: float = 0.5):
+    def __init__(self, heuristic_function_type: HeuristicFunctionType, heuristic_weight: float = 0.5,
+                 max_nr_states_to_expand: Optional[int] = None):
         """
         :param heuristic_function_type: The A* solver stores the constructor of the heuristic
                                         function, rather than an instance of that heuristic.
@@ -20,12 +22,11 @@ class AStar(BestFirstSearch):
                                  the heuristic value and the node's cost. Default is 0.5.
         """
         # A* is a graph search algorithm. Hence, we use close set.
-        super(AStar, self).__init__(use_close=True)
+        super(AStar, self).__init__(use_close=True, max_nr_states_to_expand=max_nr_states_to_expand)
         self.heuristic_function_type = heuristic_function_type
+        self.heuristic_function = None
         self.heuristic_weight = heuristic_weight
-        self.solver_name += ' (h={heuristic_name}, w={heuristic_weight:.3f})'.format(
-            heuristic_name=heuristic_function_type.heuristic_name,
-            heuristic_weight=self.heuristic_weight)
+        self.solver_name += f' (h={heuristic_function_type.heuristic_name}, w={self.heuristic_weight:.3f})'
 
     def _init_solver(self, problem):
         """
@@ -44,12 +45,12 @@ class AStar(BestFirstSearch):
 
         TODO: implement this method.
         Remember: In Weighted-A* the f-score is defined by ((1-w) * cost) + (w * h(state)).
-        Notice: You may use `search_node.cost`, `self.heuristic_weight`, and `self.heuristic_function`.
+        Notice: You may use `search_node.g_cost`, `self.heuristic_weight`, and `self.heuristic_function`.
         """
 
         # raise NotImplemented()  # TODO: remove!
 
-        return (1 - self.heuristic_weight) * search_node.cost \
+        return (1 - self.heuristic_weight) * search_node.g_cost \
                 + self.heuristic_weight * self.heuristic_function.estimate(search_node.state)
 
     def _open_successor_node(self, problem: GraphProblem, successor_node: SearchNode):

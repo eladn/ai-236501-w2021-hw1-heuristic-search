@@ -43,10 +43,7 @@ class IDAStar(GraphProblemSolver):
         self.max_cost_relative_error = max_cost_relative_error
         self.max_nr_iterations = max_nr_iterations
         self.max_nr_states_to_expand = max_nr_states_to_expand
-        self.solver_name += ' (h={heuristic_name}, w={heuristic_weight:.3f})'.format(
-            heuristic_name=heuristic_function_type.heuristic_name if hasattr(heuristic_function_type,
-                                                                             'heuristic_name') else 'UnknownHeuristic',
-            heuristic_weight=self.heuristic_weight)
+        self.solver_name += f' (h={heuristic_function_type.heuristic_name}, w={self.heuristic_weight:.3f})'
 
     def solve_problem(self, problem: GraphProblem) -> SearchResult:
         self.heuristic_function = self.heuristic_function_type(problem)

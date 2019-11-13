@@ -1,5 +1,6 @@
 from .graph_problem_interface import *
 from .best_first_search import BestFirstSearch
+from typing import Optional
 
 
 class GreedyBestFirst(BestFirstSearch):
@@ -10,7 +11,8 @@ class GreedyBestFirst(BestFirstSearch):
 
     solver_name = 'Greedy'
 
-    def __init__(self, heuristic_function_type: HeuristicFunctionType):
+    def __init__(self, heuristic_function_type: HeuristicFunctionType,
+                 max_nr_states_to_expand: Optional[int] = None):
         """
         :param heuristic_function_type: The greedy solver stores the constructor of the heuristic
                                         function, rather than an instance of that heuristic.
@@ -18,11 +20,10 @@ class GreedyBestFirst(BestFirstSearch):
                                         is created.
         """
         # A* is a graph search algorithm. Hence, we use close set.
-        super(GreedyBestFirst, self).__init__(use_close=True)
+        super(GreedyBestFirst, self).__init__(use_close=True, max_nr_states_to_expand=max_nr_states_to_expand)
         self.heuristic_function_type = heuristic_function_type
         self.heuristic_function = None
-        self.solver_name += ' (h={heuristic_name})'.format(
-            heuristic_name=heuristic_function_type.heuristic_name if hasattr(heuristic_function_type, 'heuristic_name') else 'UnknownHeuristic')
+        self.solver_name += f' (h={heuristic_function_type.heuristic_name})'
 
     def _init_solver(self, problem):
         """

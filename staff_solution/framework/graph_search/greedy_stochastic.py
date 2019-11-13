@@ -5,16 +5,17 @@ import numpy as np
 
 
 class GreedyStochastic(BestFirstSearch):
+    solver_name = 'GreedyStochastic'
     def __init__(self, heuristic_function_type: HeuristicFunctionType,
-                 T_init: float = 1.0, N: int = 5, T_scale_factor: float = 0.95):
+                 T_init: float = 1.0, N: int = 5, T_scale_factor: float = 0.95,
+                 max_nr_states_to_expand: Optional[int] = None):
         # GreedyStochastic is a graph search algorithm. Hence, we use close set.
-        super(GreedyStochastic, self).__init__(use_close=True)
+        super(GreedyStochastic, self).__init__(use_close=True, max_nr_states_to_expand=max_nr_states_to_expand)
         self.heuristic_function_type = heuristic_function_type
         self.T = T_init
         self.N = N
         self.T_scale_factor = T_scale_factor
-        self.solver_name = 'GreedyStochastic (h={heuristic_name})'.format(
-            heuristic_name=heuristic_function_type.heuristic_name)
+        self.solver_name += f' (h={heuristic_function_type.heuristic_name})'
 
     def _init_solver(self, problem: GraphProblem):
         super(GreedyStochastic, self)._init_solver(problem)
@@ -53,7 +54,7 @@ class GreedyStochastic(BestFirstSearch):
 
         return self.heuristic_function.estimate(search_node.state)
 
-    def _extract_next_search_node_to_expand(self) -> Optional[SearchNode]:
+    def _extract_next_search_node_to_expand(self, problem: GraphProblem) -> Optional[SearchNode]:
         """
         Extracts the next node to expand from the open queue,
          using the stochastic method to choose out of the N
@@ -63,7 +64,7 @@ class GreedyStochastic(BestFirstSearch):
          an item from an array of items given a probabilities array `p`.
         You can read the documentation of `np.random.choice(...)` and
          see usage examples by searching it in Google.
-        Notice: You might want to pop min(N, len(open) items from the
+        Notice: You might want to pop min(N, len(open)) items from the
                 `open` priority queue, and then choose an item out
                 of these popped items. The other items have to be
                 pushed again into that queue.
