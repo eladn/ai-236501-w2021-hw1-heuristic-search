@@ -15,11 +15,11 @@ class GreedyStochastic(BestFirstSearch):
         self.T = T_init
         self.N = N
         self.T_scale_factor = T_scale_factor
-        self.solver_name += f' (h={heuristic_function_type.heuristic_name})'
 
     def _init_solver(self, problem: GraphProblem):
         super(GreedyStochastic, self)._init_solver(problem)
         self.heuristic_function = self.heuristic_function_type(problem)
+        self.solver_name = f'{self.__class__.solver_name} (h={self.heuristic_function.heuristic_name})'
 
     def _open_successor_node(self, problem: GraphProblem, successor_node: SearchNode):
         """

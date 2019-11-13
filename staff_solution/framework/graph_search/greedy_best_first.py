@@ -23,7 +23,6 @@ class GreedyBestFirst(BestFirstSearch):
         super(GreedyBestFirst, self).__init__(use_close=True, max_nr_states_to_expand=max_nr_states_to_expand)
         self.heuristic_function_type = heuristic_function_type
         self.heuristic_function = None
-        self.solver_name += f' (h={heuristic_function_type.heuristic_name})'
 
     def _init_solver(self, problem):
         """
@@ -32,6 +31,7 @@ class GreedyBestFirst(BestFirstSearch):
         """
         super(GreedyBestFirst, self)._init_solver(problem)
         self.heuristic_function = self.heuristic_function_type(problem)
+        self.solver_name = f'{self.__class__.solver_name} (h={self.heuristic_function.heuristic_name})'
 
     def _calc_node_expanding_priority(self, search_node: SearchNode) -> float:
         """

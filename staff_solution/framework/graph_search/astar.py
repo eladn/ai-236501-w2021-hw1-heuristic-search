@@ -26,7 +26,6 @@ class AStar(BestFirstSearch):
         self.heuristic_function_type = heuristic_function_type
         self.heuristic_function = None
         self.heuristic_weight = heuristic_weight
-        self.solver_name += f' (h={heuristic_function_type.heuristic_name}, w={self.heuristic_weight:.3f})'
 
     def _init_solver(self, problem):
         """
@@ -35,6 +34,7 @@ class AStar(BestFirstSearch):
         """
         super(AStar, self)._init_solver(problem)
         self.heuristic_function = self.heuristic_function_type(problem)
+        self.solver_name = f'{self.__class__.solver_name} (h={self.heuristic_function.heuristic_name}, w={self.heuristic_weight:.3f})'
 
     def _calc_node_expanding_priority(self, search_node: SearchNode) -> float:
         """

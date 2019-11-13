@@ -43,10 +43,10 @@ class IDAStar(GraphProblemSolver):
         self.max_cost_relative_error = max_cost_relative_error
         self.max_nr_iterations = max_nr_iterations
         self.max_nr_states_to_expand = max_nr_states_to_expand
-        self.solver_name += f' (h={heuristic_function_type.heuristic_name}, w={self.heuristic_weight:.3f})'
 
     def solve_problem(self, problem: GraphProblem) -> SearchResult:
         self.heuristic_function = self.heuristic_function_type(problem)
+        self.solver_name = f'{self.__class__.solver_name} (h={self.heuristic_function.heuristic_name}, w={self.heuristic_weight:.3f})'
         with Timer(print_title=False) as timer:
             if self.deepening_technique == 'binary_search':
                 search_result = self._binary_search_f_deepening(problem)
