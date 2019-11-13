@@ -1,6 +1,7 @@
 import abc
 from typing import Iterator, Tuple, Optional, Type, NamedTuple, Union, Callable
 from itertools import islice
+from enum import Enum
 
 
 """
@@ -11,7 +12,7 @@ imported when writing (from another file):
 __all__ = ['GraphProblemState', 'GraphProblem', 'GraphProblemStatesPath', 'SearchNode', 'StatesPathNode',
            'SearchResult', 'GraphProblemSolver',
            'HeuristicFunction', 'HeuristicFunctionType', 'NullHeuristic',
-           'GraphProblemError', 'Cost', 'ExtendedCost', 'OperatorResult']
+           'GraphProblemError', 'Cost', 'ExtendedCost', 'OperatorResult', 'StopReason']
 
 
 class GraphProblemError(Exception):
@@ -212,6 +213,12 @@ class SearchNode:
             return self.cost.get_g_cost()
 
 
+class StopReason(Enum):
+    CompletedRunSuccessfully = 'CompletedRunSuccessfully'
+    OutOfMaxNrIteration = 'OutOfMaxNrIteration'
+    OutOfMaxNrStatesToExpand = 'OutOfMaxNrStatesToExpand'
+
+
 class SearchResult(NamedTuple):
     """
     It is the type of the object that is returned by `solver.solve_problem()`.
@@ -222,17 +229,19 @@ class SearchResult(NamedTuple):
     solver: 'GraphProblemSolver'
     """The problem that the solver has attempted to solve."""
     problem: GraphProblem
-    """States path (including the applied operators) from the initial state to the final found goal state.
-    Set to `None` if no result had been found."""
-    solution_path: Optional[GraphProblemStatesPath]
     """The number of expanded states during the search."""
     nr_expanded_states: int
     """The maximum number of states that have been stored in open & close states during the search."""
     max_nr_stored_states: int
     """The time (in seconds) took to solve."""
-    solving_time: float
+    solving_time: Optional[float] = None
+    """States path (including the applied operators) from the initial state to the final found goal state.
+            Set to `None` if no result had been found."""
+    solution_path: Optional[GraphProblemStatesPath] = None
     """Number of iterations (for an iterative algorithm like iterative-deepening)"""
     nr_iterations: Optional[int] = None
+    """Whether the search ended as expected or stopped because of end of resources."""
+    stop_reason: StopReason = StopReason.CompletedRunSuccessfully
 
     def __str__(self):
         """
@@ -240,10 +249,24 @@ class SearchResult(NamedTuple):
         """
 
         res_str = f'{self.problem.name: <35}' \
-                  f'   {self.solver.solver_name: <27}' \
-                  f'   time: {self.solving_time:6.2f}' \
-                  f'   #dev: {self.nr_expanded_states: <5}' \
-                  f'   |space|: {self.max_nr_stored_states: <6}'
+                  f'   {self.solver.solver_name: <27}'
+
+        if self.solving_time is not None:
+            res_str += f'   time: {self.solving_time:6.2f}'
+
+        res_str += f'   #dev: {self.nr_expanded_states: <5}' \
+                   f'   |space|: {self.max_nr_stored_states: <6}'
+
+        if self.nr_iterations is not None:
+            res_str += f'   #iter: {self.nr_iterations: <3}'
+
+        if self.stop_reason != StopReason.CompletedRunSuccessfully:
+            assert not self.is_solution_found
+            StopReasonToDescriptionMapping = {
+                StopReason.OutOfMaxNrStatesToExpand: 'Out of max number of states to expand!',
+                StopReason.OutOfMaxNrIteration: 'Out of max number of iterations!'
+            }
+            return res_str + '   ' + StopReasonToDescriptionMapping[self.stop_reason]
 
         # no solution found by solver
         if not self.is_solution_found:
