@@ -81,7 +81,7 @@ class DeliveriesTruckProblem(GraphProblem):
     name = 'Deliveries'
     def __init__(self,
                  problem_input: DeliveriesTruckProblemInput,
-                 roads: Roads,
+                 streets_map: StreetsMap,
                  optimization_objective: OptimizationObjective = OptimizationObjective.Distance):
         self.name += f'({problem_input.input_name}:{optimization_objective})'
         initial_state = DeliveriesTruckState(
@@ -91,10 +91,10 @@ class DeliveriesTruckProblem(GraphProblem):
         )
         super(DeliveriesTruckProblem, self).__init__(initial_state)
         self.problem_input = problem_input
-        self.roads = roads
+        self.streets_map = streets_map
         inner_map_problem_heuristic_type = lambda problem: TruckDeliveriesInnerMapProblemHeuristic(problem, self)
         self.map_distance_finder = CachedMapDistanceFinder(
-            roads, AStar(inner_map_problem_heuristic_type),
+            streets_map, AStar(inner_map_problem_heuristic_type),
             road_cost_fn=self._calc_map_road_cost,
             zero_road_cost=DeliveryCost(optimization_objective=optimization_objective))
         self.optimization_objective = optimization_objective
@@ -163,7 +163,7 @@ class DeliveriesTruckProblem(GraphProblem):
             assert self.optimization_objective == OptimizationObjective.Money
 
             lower_bound_for_gas_cost_of_driving_remaining_roads = self._calc_map_road_cost(
-                Link(0, 0, total_distance_lower_bound, 0, None, MAX_ROAD_SPEED, False)).money_cost  # TODO: make it better!
+                Link(0, 0, total_distance_lower_bound, 0, MAX_ROAD_SPEED, False)).money_cost  # TODO: make it better!
             return lower_bound_for_gas_cost_of_driving_remaining_roads
 
 
@@ -221,7 +221,7 @@ class TruckDeliveriesInnerMapProblemHeuristic(HeuristicFunction):
         assert isinstance(self.problem, MapProblem)
         assert isinstance(state, MapState)
 
-        source_junction = self.problem.roads[state.junction_id]
-        target_junction = self.problem.roads[self.problem.target_junction_id]
+        source_junction = self.problem.streets_map[state.junction_id]
+        target_junction = self.problem.streets_map[self.problem.target_junction_id]
         total_distance_lower_bound = source_junction.calc_air_distance_from(target_junction)
         return self.outer_deliveries_problem.get_cost_lower_bound_from_distance_lower_bound(total_distance_lower_bound)

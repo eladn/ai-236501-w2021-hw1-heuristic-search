@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Callable
 
 class MapState(GraphProblemState):
     """
-    Map state is represents the current geographic location on the map.
+    StreetsMap state is represents the current geographic location on the map.
     This location is defined by the junction index.
     """
 
@@ -29,14 +29,14 @@ class MapProblem(GraphProblem):
     The problem is defined by a source location on the map and a destination.
     """
 
-    name = 'Map'
+    name = 'StreetsMap'
 
-    def __init__(self, roads: Roads, source_junction_id: int, target_junction_id: int,
+    def __init__(self, streets_map: StreetsMap, source_junction_id: int, target_junction_id: int,
                  road_cost_fn: Optional[Callable[[Link], Cost]] = None,
                  zero_road_cost: Optional[Cost] = None):
         initial_state = MapState(source_junction_id)
         super(MapProblem, self).__init__(initial_state)
-        self.roads = roads
+        self.streets_map = streets_map
         self.target_junction_id = target_junction_id
         self.road_cost_fn = road_cost_fn
         self.zero_road_cost = zero_road_cost
@@ -53,7 +53,7 @@ class MapProblem(GraphProblem):
         assert isinstance(state_to_expand, MapState)
 
         # Get the junction (in the map) that is represented by the state to expand.
-        junction = self.roads[state_to_expand.junction_id]
+        junction = self.streets_map[state_to_expand.junction_id]
 
         # TODO: read the documentation of this method in the base class `GraphProblem.expand_state_with_costs()`.
         # TODO: finish the implementation of this method.

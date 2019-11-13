@@ -27,7 +27,7 @@ class StrictDeliveriesProblem(RelaxedDeliveriesProblem):
 
     name = 'StrictDeliveries'
 
-    def __init__(self, problem_input: DeliveriesProblemInput, roads: Roads,
+    def __init__(self, problem_input: DeliveriesProblemInput, roads: StreetsMap,
                  inner_problem_solver: GraphProblemSolver, use_cache: bool = True):
         super(StrictDeliveriesProblem, self).__init__(problem_input)
         self.initial_state = StrictDeliveriesState(

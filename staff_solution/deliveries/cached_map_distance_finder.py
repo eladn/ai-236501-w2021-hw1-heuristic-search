@@ -12,11 +12,11 @@ class CachedMapDistanceFinder:
     """
 
     def __init__(self,
-                 roads: Roads,
+                 streets_map: StreetsMap,
                  map_problem_solver: GraphProblemSolver,
                  road_cost_fn: Optional[Callable[[Link], Cost]] = None,
                  zero_road_cost: Optional[Cost] = None):
-        self.roads = roads
+        self.streets_map = streets_map
         self.map_problem_solver = map_problem_solver
         self.road_cost_fn = road_cost_fn
         self.zero_road_cost = zero_road_cost
@@ -59,7 +59,7 @@ class CachedMapDistanceFinder:
         cache_key = (src_junction.index, tgt_junction.index)
         if self._is_in_cache(cache_key):
             return self._get_from_cache(cache_key)
-        map_problem = MapProblem(roads=self.roads,
+        map_problem = MapProblem(streets_map=self.streets_map,
                                  source_junction_id=src_junction.index,
                                  target_junction_id=tgt_junction.index,
                                  road_cost_fn=self.road_cost_fn, zero_road_cost=self.zero_road_cost)

@@ -11,6 +11,23 @@ __all__ = [
 ]
 
 
+# class Serializable:
+#     def serialize(self) -> str:
+#         return ','.join(
+#             getattr(self, field.name).serialize() if issubclass(field.type, Serializable) else str(getattr(self, field.name))
+#             for field in fields(self)
+#         )
+#
+#     @classmethod
+#     def deserialize(cls, serialized: str, **kwargs) -> 'DeliveriesTruck':
+#         parts = serialized.split(',')
+#         return DeliveriesTruck(**{
+#             field.name:
+#                 field.type(getattr(self, field.name)) if issubclass(field.type, Serializable) else str(getattr(self, field.name))
+#             for field in fields(cls)
+#         })
+
+
 class OptimizationObjective(Enum):
     Distance = 'Distance'
     Time = 'Time'
@@ -28,12 +45,12 @@ class Delivery:
         return f'{self.client_name},{self.pick_location.index},{self.drop_location.index},{self.nr_packages}'
 
     @staticmethod
-    def deserialize(serialized: str, roads: Roads) -> 'Delivery':
+    def deserialize(serialized: str, streets_map: StreetsMap) -> 'Delivery':
         parts = serialized.split(',')
         return Delivery(
             client_name=parts[0],
-            pick_location=roads[int(parts[1])],
-            drop_location=roads[int(parts[2])],
+            pick_location=streets_map[int(parts[1])],
+            drop_location=streets_map[int(parts[2])],
             nr_packages=int(parts[3]))
 
     def __repr__(self):
@@ -44,21 +61,26 @@ class Delivery:
 class DeliveriesTruck:
     max_nr_loaded_packages: int
     initial_location: Junction
-    optimal_vehicle_speed: float = kmh_to_ms(87)
-    gas_cost_per_meter_in_optimal_speed: float = 0.7
-    gas_cost_per_meter_gradient: float = 0.2
+    optimal_vehicle_speed: float = kmph_to_mpm(87)
+    gas_cost_per_meter_in_optimal_speed: float = 0.0009
+    gas_cost_per_meter_gradient_wrt_speed_change: float = 0.0018
     gas_cost_addition_per_meter_per_loaded_package: float = 0
 
     def serialize(self) -> str:
-        return f'{self.max_nr_loaded_packages},{self.initial_location.index}'
+        return f'{self.max_nr_loaded_packages},{self.initial_location.index},{self.optimal_vehicle_speed},' \
+               f'{self.gas_cost_per_meter_in_optimal_speed},{self.gas_cost_per_meter_gradient_wrt_speed_change},' \
+               f'{self.gas_cost_addition_per_meter_per_loaded_package}'
 
     @staticmethod
-    def deserialize(serialized: str, roads: Roads) -> 'DeliveriesTruck':
+    def deserialize(serialized: str, streets_map: StreetsMap) -> 'DeliveriesTruck':
         parts = serialized.split(',')
-        max_nr_loaded_packages, initial_location_index = int(parts[0]), int(parts[1])
         return DeliveriesTruck(
-            max_nr_loaded_packages=max_nr_loaded_packages,
-            initial_location=roads[initial_location_index])
+            max_nr_loaded_packages=int(parts[0]),
+            initial_location=streets_map[int(parts[1])],
+            optimal_vehicle_speed=float(parts[2]),
+            gas_cost_per_meter_in_optimal_speed=float(parts[3]),
+            gas_cost_per_meter_gradient_wrt_speed_change=float(parts[4]),
+            gas_cost_addition_per_meter_per_loaded_package=float(parts[5]))
 
     def calc_optimal_driving_parameters(self, optimization_objective: OptimizationObjective, max_driving_speed: float) \
             -> Tuple[float, float]:
@@ -67,8 +89,11 @@ class DeliveriesTruck:
         else:
             assert optimization_objective == OptimizationObjective.Money
             optimal_driving_speed = self.optimal_vehicle_speed if self.optimal_vehicle_speed < max_driving_speed else max_driving_speed
+        speed_delta_from_vehicle_optimal_speed = abs(optimal_driving_speed - self.optimal_vehicle_speed)
+        max_speed_delta_from_vehicle_optimal_speed = max(abs(self.optimal_vehicle_speed - MIN_ROAD_SPEED), abs(MAX_ROAD_SPEED - self.optimal_vehicle_speed))
+        relative_speed_delta_from_vehicle_optimal_speed = speed_delta_from_vehicle_optimal_speed / max_speed_delta_from_vehicle_optimal_speed
         gas_cost_per_meter = self.gas_cost_per_meter_in_optimal_speed + \
-                             self.gas_cost_per_meter_gradient * (abs(optimal_driving_speed - self.optimal_vehicle_speed) / self.optimal_vehicle_speed)
+                             self.gas_cost_per_meter_gradient_wrt_speed_change * relative_speed_delta_from_vehicle_optimal_speed
         return optimal_driving_speed, gas_cost_per_meter
 
 
@@ -80,10 +105,10 @@ class DeliveriesTruckProblemInput:
     toll_road_cost_per_meter: float
 
     @staticmethod
-    def load_from_file(input_file_name: str, roads: Roads) -> 'DeliveriesTruckProblemInput':
+    def load_from_file(input_file_name: str, streets_map: StreetsMap) -> 'DeliveriesTruckProblemInput':
         """
         Loads and parses a deliveries-problem-input from a file. Usage example:
-        >>> problem_input = DeliveriesTruckProblemInput.load_from_file('big_delivery.in', roads)
+        >>> problem_input = DeliveriesTruckProblemInput.load_from_file('big_delivery.in', streets_map)
         """
 
         with open(Consts.get_data_file_path(input_file_name), 'r') as input_file:
@@ -93,9 +118,9 @@ class DeliveriesTruckProblemInput:
             try:
                 input_name = input_file.readline().strip()
                 deliveries = tuple(
-                    Delivery.deserialize(serialized_delivery, roads)
+                    Delivery.deserialize(serialized_delivery, streets_map)
                     for serialized_delivery in input_file.readline().rstrip('\n').split(';'))
-                delivery_truck = DeliveriesTruck.deserialize(input_file.readline().rstrip('\n'), roads)
+                delivery_truck = DeliveriesTruck.deserialize(input_file.readline().rstrip('\n'), streets_map)
                 toll_road_cost_per_meter = float(input_file.readline())
             except:
                 raise ValueError(f'Invalid input file `{input_file_name}`.')
@@ -115,7 +140,7 @@ class DeliveriesTruckProblemInput:
                 input_file.write(line + '\n')
 
     @staticmethod
-    def load_all_inputs(roads: Roads) -> Dict[str, 'DeliveriesTruckProblemInput']:
+    def load_all_inputs(streets_map: StreetsMap) -> Dict[str, 'DeliveriesTruckProblemInput']:
         """
         Loads all the inputs in the inputs directory.
         :return: list of inputs.
@@ -125,7 +150,7 @@ class DeliveriesTruckProblemInput:
                             if os.path.isfile(os.path.join(Consts.DATA_PATH, f)) and f.split('.')[-1] == 'in']
         for input_file_name in input_file_names:
             try:
-                problem_input = DeliveriesTruckProblemInput.load_from_file(input_file_name, roads)
+                problem_input = DeliveriesTruckProblemInput.load_from_file(input_file_name, streets_map)
                 inputs[problem_input.input_name] = problem_input
             except:
                 pass

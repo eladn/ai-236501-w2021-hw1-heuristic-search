@@ -1,36 +1,89 @@
 """
  A set of utilities for using israel.csv 
- The map is extracted from the openstreetmap project
+ The map is extracted from the OpenStreetMap project
 """
 
-from . import tools
-import sys
-from typing import List, Tuple, Dict, Iterator, Set, NamedTuple
+import math
+from typing import List, Tuple, Dict, Iterator
+from collections import defaultdict
+import itertools
+import numpy as np
+from dataclasses import dataclass
 
 
-# Some additional parameters for a link
-class LinkTrafficParams(NamedTuple):
-    cos_frequency: float
-    sin_frequency: float
+kmph_to_mpm = lambda kmh: kmh * 16.667
+ROAD_SPEEDS = [kmph_to_mpm(kmh) for kmh in [60, 70, 80, 90, 100, 120]]
+ROAD_SPEEDS_PROBS = [0.3, 0.2, 0.2, 0.1, 0.1, 0.1]
+MIN_ROAD_SPEED = min(ROAD_SPEEDS)
+MAX_ROAD_SPEED = max(ROAD_SPEEDS)
 
 
-class Link(NamedTuple):
+@dataclass(frozen=True)
+class Coordinates:
+    lat: float
+    lon: float
+
+
+def compute_air_distance_between_coordinates(point1: Coordinates, point2: Coordinates) -> float:
+    """
+    Computes distance in meters
+    This code was borrowed from
+    http://www.johndcook.com/python_longitude_latitude.html
+    """
+
+    if math.isclose(point1.lat, point2.lat) and math.isclose(point1.lon, point2.lon):
+        return 0.0
+    if max(abs(point1.lat - point2.lat), abs(point1.lon - point2.lon)) < 0.00001:
+        return 0.001
+
+    phi1 = math.radians(90 - point1.lat)
+    phi2 = math.radians(90 - point2.lat)
+
+    meter_units_factor = 40000 / (2 * math.pi)
+    arc = math.acos(np.sin(phi1) * np.sin(phi2) * np.cos(math.radians(point1.lon) - math.radians(point2.lon))
+                    + np.cos(phi1) * np.cos(phi2))
+    return max(0.0, arc * meter_units_factor * 1000)
+
+
+@dataclass
+class Link:
     source: int
     target: int
-    distance: int
+    distance: float
     highway_type: int
-    link_params: LinkTrafficParams
+    max_speed: float = 0.0
+    is_toll_road: bool = False
+
+    @staticmethod
+    def deserialize(source_idx: int, link_string: str) -> 'Link':
+        link_params = [part.strip() for part in link_string.split("@") if part.strip()]
+        assert len(link_params) >= 3
+        target_idx = int(link_params[0])
+        distance = float(link_params[1])
+        highway_type = int(link_params[2])
+        max_speed = float(link_params[3]) if len(link_params) > 3 else None
+        is_toll_road = bool(link_params[4]) if len(link_params) > 4 else None
+        return Link(source=source_idx, target=target_idx, distance=distance, highway_type=highway_type,
+                    max_speed=max_speed, is_toll_road=is_toll_road)
+
+    def serialize(self) -> str:
+        return f'{self.target}@{self.distance}@{self.highway_type}@{self.max_speed}@{self.is_toll_road}'
+
+    def get_symmetric_hash(self):
+        return hash(frozenset((self.source, self.target)))
 
 
-class Junction(NamedTuple):
+@dataclass
+class Junction:
     index: int
     lat: float
     lon: float
-    links: List[Link]
+    outgoing_links: Tuple[Link, ...]
+    incoming_links: Tuple[Link, ...]
 
     @property
-    def coordinates(self) -> Tuple[float, float]:
-        return self.lat, self.lon
+    def coordinates(self) -> Coordinates:
+        return Coordinates(lat=self.lat, lon=self.lon)
 
     def __eq__(self, other):
         if not isinstance(other, Junction):
@@ -40,84 +93,83 @@ class Junction(NamedTuple):
     def __hash__(self):
         return hash(self.index)
 
+    # def __repr__(self):
+    #     return f'{self.index}'
+
     def calc_air_distance_from(self, other_junction: 'Junction') -> float:
         assert(isinstance(other_junction, Junction))
-        return tools.compute_distance(self.coordinates, other_junction.coordinates)
+        return compute_air_distance_between_coordinates(self.coordinates, other_junction.coordinates)
+    
+    @property
+    def all_connected_links(self) -> Iterator[Link]:
+        return itertools.chain(self.outgoing_links, self.incoming_links)
+
+    @staticmethod
+    def deserialize(serialized_junction_str: str) -> 'Junction':
+        junction_idx_str, lat_str, lon_str, *serialized_links_str = (
+            part.strip() for part in serialized_junction_str.split(',') if part.strip())
+        junction_idx, lat, lon = int(junction_idx_str), float(lat_str), float(lon_str)
+        links = tuple(Link.deserialize(junction_idx, serialized_link_str)
+                      for serialized_link_str in serialized_links_str)
+        return Junction(junction_idx, lat, lon, tuple(links), ())
+
+    def serialize(self) -> str:
+        serialized_links = ','.join(link.serialize() for link in self.outgoing_links)
+        return f'{self.index},{self.lat},{self.lon},' + serialized_links
 
 
-class Roads(Dict[int, Junction]):
+class StreetsMap(Dict[int, Junction]):
     """
-    The graph is a dictionary Junction_id->Junction, with some methods to help.
-    To change the generation, simply assign to it:
-    g.generation = 5
+    The StreetsMap is basically a dictionary fro junction index to the Junction object.
     """
 
-    def junctions(self) -> List[Junction]:
-        return list(self.values())
+    def __init__(self, junctions_mapping: Dict[int, Junction]):
+        super(StreetsMap, self).__init__(junctions_mapping)
 
-    def __init__(self, junction_list: Dict[int, Junction]):
-        super(Roads, self).__init__(junction_list)
-        """to change the generation, simply assign to it"""
-        self.generation = 0
-        self.base_traffic = tools.base_traffic_pattern()
-        tmp = [(n.lat, n.lon) for n in junction_list.values()]
-        self.mean_lat_lon = (sum([i[0] for i in tmp]) / len(tmp), sum([i[1] for i in tmp]) / len(tmp))
-
-    def return_focus(self, start_junction_id: int) -> Set[Link]:
-        found = set()
-        start_node = self[start_junction_id]
-        _next = {l for l in start_node.links}
-        while len(_next) > 0:
-            _next_next = {l for k in _next for l in self[k.target].links if
-                          l not in found}  # might even be able to drop the "l not in found" thing.
-            found |= _next
-            _next = _next_next
-            if len(found) > 15:
-                break
-        return found
+    def junctions(self) -> Iterator[Junction]:
+        return iter(self.values())
 
     def iterlinks(self) -> Iterator[Link]:
-        """chain all the links in the graph.
-        use: for link in roads.iterlinks(): ... """
-        return (link for j in self.values() for link in j.links)
+        """iterate over all the links in the map.
+        usage example:
+        >>> for link in streets_map.iterlinks(): ... """
+        return (link for junction in self.values() for link in junction.outgoing_links)
 
+    def update_link_distances_to_air_distance(self):
+        for link in self.iterlinks():
+            link.distance = self[link.target].calc_air_distance_from(self[link.source])
 
-def _make_link(source_idx: int, link_string: str) -> Link:
-    """This function is for local use only"""
-    link_params = [int(x) for x in link_string.split("@")]
-    assert len(link_params) == 3
-    target_idx = link_params[0]
-    distance = link_params[1]
-    highway_type = link_params[2]
-    link_traffic_params = LinkTrafficParams(*tools.generate_traffic_noise_params(source_idx, target_idx))
-    return Link(source_idx, target_idx, distance, highway_type, link_traffic_params)
+    def set_incoming_links(self):
+        junction_id_to_incoming_links: Dict[int, List[Link]] = defaultdict(list)
+        for link in self.iterlinks():
+            junction_id_to_incoming_links[link.target].append(link)
+        for junction in self.junctions():
+            junction.incoming_links = tuple(junction_id_to_incoming_links[junction.index])
 
+    def remove_dangling_links(self):
+        for junction in self.junctions():
+            junction.outgoing_links = tuple(link for link in junction.outgoing_links if link.target in self)
 
-def _make_junction(idx_str: str, lat_str: str, lon_str: str, *link_row: str) -> Junction:
-    """This function is for local use only"""
-    idx, lat, lon = int(idx_str), float(lat_str), float(lon_str)
-    try:
-        links = [_make_link(idx, lnk) for lnk in link_row]
-        links = list(filter(lambda lnk: lnk.distance > 0, links))
-    except ValueError:
-        links = []
-    return Junction(idx, lat, lon, links)
+    def remove_zero_distance_links(self):
+        for junction in self.junctions():
+            junction.outgoing_links = tuple(link for link in junction.outgoing_links if not math.isclose(link.distance, 0))
 
+    def set_links_max_speed_and_is_toll(self, q=55):
+        long_road_distance = np.percentile(a=np.array(list(link.distance for link in self.iterlinks())), q=q)
+        for link in self.iterlinks():
+            rnd = np.random.RandomState(link.get_symmetric_hash() % (2 ** 32))
+            link.is_toll_road = rnd.choice([True, False]) if link.distance >= long_road_distance else False
+            link.max_speed = MAX_ROAD_SPEED if link.is_toll_road else rnd.choice(ROAD_SPEEDS, p=ROAD_SPEEDS_PROBS)
 
-@tools.timed
-def load_map_from_csv(filename: str, start=0, count=sys.maxsize) -> Roads:
-    """
-    returns graph, encoded as an adjacency list
-    @param slice_params can be used to cut part of the file
-    example: load_map_from_csv(start=50000, count=50000))
-    """
+    @staticmethod
+    def load_from_csv(map_filename: str) -> 'StreetsMap':
+        with open(map_filename, 'rt') as map_file:
+            junctions_iterator = (Junction.deserialize(row) for row in map_file)
+            junction_id_to_junction_mapping = {junction.index: junction for junction in junctions_iterator}
+        return StreetsMap(junction_id_to_junction_mapping)
 
-    import csv
-    from itertools import islice
-    with open(filename, 'rt') as f:
-        it = islice(f, start, min(start + count, sys.maxsize))
-        lst = {int(row[0]): _make_junction(*row) for row in csv.reader(it)}
-        if count < sys.maxsize:
-            lst = {i: Junction(i, j.lat, j.lon, [lnk for lnk in j.links if lnk.target in lst])
-                   for i, j in lst.items()}
-    return Roads(lst)
+    def write_to_csv(self, map_filename: str):
+        with open(map_filename, 'w') as map_file:
+            for junction in self.junctions():
+                map_file.write(junction.serialize())
+                map_file.write('\n')
