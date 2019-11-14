@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import random
 
 
 class Consts:
@@ -18,6 +19,7 @@ class Consts:
     @staticmethod
     def set_seed():
         np.random.seed(236501)
+        random.seed(236501)
 
 
 Consts.set_seed()
