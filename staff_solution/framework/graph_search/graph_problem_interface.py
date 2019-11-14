@@ -124,6 +124,15 @@ class GraphProblem(abc.ABC):
         ...
 
     def get_zero_cost(self) -> Cost:
+        """
+        The search algorithm should be able to use a zero cost object in order to
+         initialize the cumulative cost.
+        The default implementation assumes the problem uses `float` cost, and hence
+         simply returns scalar value of `0`.
+        When using an extended cost type (and not just float scalar), this method
+         should be overridden and return an instance (of the extended cost type)
+         with a "zero cost" meaning.
+        """
         return 0.0
 
     def solution_additional_str(self, result: 'SearchResult') -> str:
