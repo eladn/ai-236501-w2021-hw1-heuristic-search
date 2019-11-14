@@ -79,6 +79,7 @@ class DeliveryCost(ExtendedCost):
 
 class DeliveriesTruckProblem(GraphProblem):
     name = 'Deliveries'
+
     def __init__(self,
                  problem_input: DeliveriesTruckProblemInput,
                  streets_map: StreetsMap,
@@ -167,11 +168,37 @@ class DeliveriesTruckProblem(GraphProblem):
             return lower_bound_for_gas_cost_of_driving_remaining_roads
 
 
-class TruckDeliveriesHeuristic(HeuristicFunction):
-    heuristic_name = 'MSTAirDistTruckDeliveries'
+class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
+    heuristic_name = 'TruckDeliveriesMaxAirDist'
 
     def __init__(self, problem: GraphProblem):
-        super(TruckDeliveriesHeuristic, self).__init__(problem)
+        super(TruckDeliveriesMaxAirDistHeuristic, self).__init__(problem)
+        assert isinstance(self.problem, DeliveriesTruckProblem)
+
+    def estimate(self, state: GraphProblemState) -> float:
+        assert isinstance(self.problem, DeliveriesTruckProblem)
+        assert isinstance(state, DeliveriesTruckState)
+
+        deliveries_waiting_to_pick = (set(
+            self.problem.problem_input.deliveries) - state.dropped_deliveries) - state.loaded_deliveries
+        all_junctions_to_visit = {delivery.pick_location for delivery in deliveries_waiting_to_pick} | \
+                                 {delivery.drop_location for delivery in state.loaded_deliveries} | \
+                                 {state.current_location}
+        if len(all_junctions_to_visit) < 2:
+            return 0
+        total_distance_lower_bound = max(
+            junction1.calc_air_distance_from(junction2)
+            for junction1 in all_junctions_to_visit
+            for junction2 in all_junctions_to_visit
+            if junction1 != junction2)
+        return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_distance_lower_bound)
+
+
+class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
+    heuristic_name = 'TruckDeliveriesMSTAirDist'
+
+    def __init__(self, problem: GraphProblem):
+        super(TruckDeliveriesMSTAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, DeliveriesTruckProblem)
 
     def estimate(self, state: GraphProblemState) -> float:
@@ -194,19 +221,19 @@ class TruckDeliveriesHeuristic(HeuristicFunction):
 
     def _calculate_mst_weight(
             self, vertices: Set[object], edges_costs_fn: Callable) -> float:
-        nr_junctions = len(vertices)
-        idx_to_junction = {idx: junction for idx, junction in enumerate(vertices)}
-        distances_matrix = np.zeros((nr_junctions, nr_junctions), dtype=np.float)
+        nr_vertices = len(vertices)
+        idx_to_vertex = {idx: vertex for idx, vertex in enumerate(vertices)}
+        edges_costs_matrix = np.zeros((nr_vertices, nr_vertices), dtype=np.float)
 
-        for j1_idx in range(nr_junctions):
-            for j2_idx in range(nr_junctions):
+        for j1_idx in range(nr_vertices):
+            for j2_idx in range(nr_vertices):
                 if j1_idx == j2_idx:
                     continue
-                dist = edges_costs_fn(idx_to_junction[j1_idx], idx_to_junction[j2_idx])
-                distances_matrix[j1_idx, j2_idx] = dist
-                distances_matrix[j2_idx, j1_idx] = dist
-        distances_mst = mst(distances_matrix)
-        return float(np.sum(distances_mst))
+                edge_cost = edges_costs_fn(idx_to_vertex[j1_idx], idx_to_vertex[j2_idx])
+                edges_costs_matrix[j1_idx, j2_idx] = edge_cost
+                edges_costs_matrix[j2_idx, j1_idx] = edge_cost
+        mst_matrix = mst(edges_costs_matrix)
+        return float(np.sum(mst_matrix))
 
 
 class TruckDeliveriesInnerMapProblemHeuristic(HeuristicFunction):

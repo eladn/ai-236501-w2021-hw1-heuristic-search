@@ -12,11 +12,11 @@ class AirDistHeuristic(HeuristicFunction):
 
         TODO: implement this method!
         Use `self.problem` to access the problem.
-        Use `self.problem.roads` to access the map.
-        Given a junction index, use `roads[junction_id]` to find the
-         junction instance (of type Junction).
-        Use the method `calc_air_distance_from()` to calculate the
-        air distance between two junctions.
+        Use `self.problem.streets_map` to access the map.
+        Given a junction index, use `streets_map[junction_id]` to find the
+         junction instance (of type `Junction`).
+        Use the method `calc_air_distance_from()` to calculate the air
+         distance between two junctions.
         """
         assert isinstance(self.problem, MapProblem)
         assert isinstance(state, MapState)
