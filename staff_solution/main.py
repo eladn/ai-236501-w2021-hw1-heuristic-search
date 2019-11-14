@@ -1,14 +1,3 @@
-import os
-import sys
-
-if os.path.basename(os.getcwd().rstrip('/')) == 'ai-236501-w2019-hw1':
-    new_path = os.path.join(os.getcwd(), 'staff_aux/staff_solution/')
-    if os.getcwd() in sys.path:
-        sys.path.remove(os.getcwd())
-    sys.path.append(new_path)
-    os.chdir(new_path)
-print(os.getcwd())
-
 from framework import *
 from deliveries import *
 
@@ -16,15 +5,17 @@ from matplotlib import pyplot as plt
 import numpy as np
 from typing import List, Union
 
-# Load the map
-roads = load_map_from_csv(Consts.get_data_file_path("tlv.csv"))
+# Load the streets map
+streets_map = StreetsMap.load_from_csv(Consts.get_data_file_path("tlv.csv"))
 
-# Make `np.random` behave deterministic.
+# Make sure that the whole execution is deterministic.
+# This is important, because we expect to get the exact same results
+# in each execution.
 Consts.set_seed()
 
 
 # --------------------------------------------------------------------
-# -------------------------- Map Problem -----------------------------
+# ------------------------ StreetsMap Problem ------------------------
 # --------------------------------------------------------------------
 
 def plot_distance_and_expanded_wrt_weight_figure(
@@ -69,103 +60,107 @@ def plot_distance_and_expanded_wrt_weight_figure(
 
 def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, problem: GraphProblem):
     # TODO:
-    # 1. Create an array of 20 numbers equally spreaded in [0.5, 1]
-    #    (including the edges). You can use `np.linspace()` for that.
-    # 2. For each weight in that array run the A* algorithm, with the
-    #    given `heuristic_type` over the map problem. For each such run,
-    #    store the cost of the solution (res.final_search_node.cost)
-    #    and the number of expanded states (res.nr_expanded_states).
-    #    Store these in 2 lists (array for the costs and array for
-    #    the #expanded.
-    # Call the function `plot_distance_and_expanded_by_weight_figure()`
-    #  with that data.
+    #  1. Create an array of 20 numbers equally spread in [0.5, 1]
+    #     (including the edges). You can use `np.linspace()` for that.
+    #  2. For each weight in that array run the A* algorithm, with the
+    #     given `heuristic_type` over the given problem. For each such run,
+    #     if a solution has been found (res.is_solution_found), store the
+    #     cost of the solution (res.solution_g_cost), the number of
+    #     expanded states (res.nr_expanded_states), and the weight that
+    #     has been used in this iteration. Store these in 3 lists (array
+    #     for the costs, array for the #expanded and array for the weights.
+    #     These arrays should be of the same size when this operation ends.
+    #  Call the function `plot_distance_and_expanded_by_weight_figure()`
+    #   with these 3 generated arrays.
     # raise NotImplemented()  # TODO: remove!
-    total_distance = []
-    total_expanded = []
+    total_cost = []
+    total_nr_expanded = []
     weights = np.linspace(0.5, 1, 20)
+    weights_with_found_solutions = []
     for w in weights:
-        astar = AStar(heuristic_type, w)
+        astar = AStar(heuristic_type, w, max_nr_states_to_expand=30_000)
         res = astar.solve_problem(problem)
         print(res)
-        total_distance.append(res.final_search_node.cost)
-        total_expanded.append(res.nr_expanded_states)
-    plot_distance_and_expanded_wrt_weight_figure(weights, total_distance, total_expanded)
+        if res.is_solution_found:
+            total_cost.append(res.solution_g_cost)
+            total_nr_expanded.append(res.nr_expanded_states)
+            weights_with_found_solutions.append(w)
+    plot_distance_and_expanded_wrt_weight_figure(weights_with_found_solutions, total_cost, total_nr_expanded)
 
 
-def map_problem():
+def map_problem_experiments():
     print()
     print('Solve the map problem.')
 
     # Ex.8
-    map_prob = MapProblem(roads, 54, 549)
+    toy_map_problem = MapProblem(streets_map, 54, 549)
     uc = UniformCost()
-    res = uc.solve_problem(map_prob)
+    res = uc.solve_problem(toy_map_problem)
     print(res)
 
     # Ex.10
     # TODO: create an instance of `AStar` with the `NullHeuristic`,
-    #       solve the same `map_prob` with it and print the results (as before).
+    #       solve the same `toy_map_problem` with it and print the results (as before).
     # Notice: AStar constructor receives the heuristic *type* (ex: `MyHeuristicClass`),
-    #         and not an instance of the heuristic (eg: not `MyHeuristicClass()`).
+    #         and NOT an instance of the heuristic (eg: not `MyHeuristicClass()`).
     # exit()  # TODO: remove!
     astar = AStar(NullHeuristic)
-    res = astar.solve_problem(map_prob)
+    res = astar.solve_problem(toy_map_problem)
     print(res)
 
     # Ex.11
     # TODO: create an instance of `AStar` with the `AirDistHeuristic`,
-    #       solve the same `map_prob` with it and print the results (as before).
+    #       solve the same `toy_map_problem` with it and print the results (as before).
     # exit()  # TODO: remove!
     astar = AStar(AirDistHeuristic)
-    res = astar.solve_problem(map_prob)
+    res = astar.solve_problem(toy_map_problem)
     print(res)
 
     # Ex.12
     # TODO:
-    # 1. Complete the implementation of the function
-    #    `run_astar_for_weights_in_range()` (upper in this file).
-    # 2. Complete the implementation of the function
-    #    `plot_distance_and_expanded_by_weight_figure()`
-    #    (upper in this file).
-    # 3. Call here the function `run_astar_for_weights_in_range()`
-    #    with `AirDistHeuristic` and `map_prob`.
+    #  1. Complete the implementation of the function
+    #     `run_astar_for_weights_in_range()` (upper in this file).
+    #  2. Complete the implementation of the function
+    #     `plot_distance_and_expanded_by_weight_figure()`
+    #     (upper in this file).
+    #  3. Call here the function `run_astar_for_weights_in_range()`
+    #     with `AirDistHeuristic` and `toy_map_problem`.
     # exit()  # TODO: remove!
-    run_astar_for_weights_in_range(AirDistHeuristic, map_prob)
+    run_astar_for_weights_in_range(AirDistHeuristic, toy_map_problem)
 
 
 # --------------------------------------------------------------------
-# ----------------------- Deliveries Problem -------------------------
+# --------------------- Truck Deliveries Problem ---------------------
 # --------------------------------------------------------------------
 
-def relaxed_deliveries_problem():
-
+def deliveries_truck_problem_experiments():
     print()
-    print('Solve the relaxed deliveries problem.')
+    print('Solve the truck deliveries problem.')
 
-    big_delivery = DeliveriesProblemInput.load_from_file('big_delivery.in', roads)
-    big_deliveries_prob = RelaxedDeliveriesProblem(big_delivery)
+    big_delivery = DeliveriesTruckProblemInput.load_from_file('big_delivery.in', streets_map)
+    big_deliveries_prob = DeliveriesTruckProblem(problem_input=big_delivery, streets_map=streets_map)
 
     # Ex.16
-    # TODO: create an instance of `AStar` with the `MaxAirDistHeuristic`,
+    # TODO: create an instance of `AStar` with the `TruckDeliveriesMaxAirDistHeuristic`,
     #       solve the `big_deliveries_prob` with it and print the results (as before).
     # exit()  # TODO: remove!
-    astar = AStar(MaxAirDistHeuristic)
+    astar = AStar(TruckDeliveriesMaxAirDistHeuristic)
     res = astar.solve_problem(big_deliveries_prob)
     print(res)
 
     # Ex.17
-    # TODO: create an instance of `AStar` with the `MSTAirDistHeuristic`,
+    # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
     #       solve the `big_deliveries_prob` with it and print the results (as before).
     # exit()  # TODO: remove!
-    astar = AStar(MSTAirDistHeuristic)
+    astar = AStar(TruckDeliveriesMSTAirDistHeuristic)
     res = astar.solve_problem(big_deliveries_prob)
     print(res)
 
     # Ex.18
     # TODO: Call here the function `run_astar_for_weights_in_range()`
-    #       with `MSTAirDistHeuristic` and `big_deliveries_prob`.
+    #       with `TruckDeliveriesMSTAirDistHeuristic` and `big_deliveries_prob`.
     # exit()  # TODO: remove!
-    run_astar_for_weights_in_range(MSTAirDistHeuristic, big_deliveries_prob)
+    run_astar_for_weights_in_range(TruckDeliveriesMSTAirDistHeuristic, big_deliveries_prob)
 
     # Ex.24
     # TODO:
@@ -222,33 +217,9 @@ def relaxed_deliveries_problem():
     plt.show()
 
 
-def strict_deliveries_problem():
-    print()
-    print('Solve the strict deliveries problem.')
-
-    small_delivery = DeliveriesProblemInput.load_from_file('small_delivery.in', roads)
-    small_deliveries_strict_problem = StrictDeliveriesProblem(
-        small_delivery, roads, inner_problem_solver=AStar(AirDistHeuristic))
-
-    # Ex.26
-    # TODO: Call here the function `run_astar_for_weights_in_range()`
-    #       with `MSTAirDistHeuristic` and `big_deliveries_prob`.
-    # exit()  # TODO: remove!
-    run_astar_for_weights_in_range(MSTAirDistHeuristic, small_deliveries_strict_problem)
-
-    # Ex.28
-    # TODO: create an instance of `AStar` with the `RelaxedDeliveriesHeuristic`,
-    #       solve the `small_deliveries_strict_problem` with it and print the results (as before).
-    # exit()  # TODO: remove!
-    astar = AStar(RelaxedDeliveriesHeuristic)
-    res = astar.solve_problem(small_deliveries_strict_problem)
-    print(res)
-
-
 def main():
-    map_problem()
-    relaxed_deliveries_problem()
-    strict_deliveries_problem()
+    map_problem_experiments()
+    deliveries_truck_problem_experiments()
 
 
 if __name__ == '__main__':
