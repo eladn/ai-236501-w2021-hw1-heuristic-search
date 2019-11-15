@@ -1,5 +1,5 @@
 from .graph_problem_interface import *
-from .greedy_best_first import GreedyBestFirst
+from .astar import AStar
 from .utils.utils import calc_relative_error
 from .utils.timer import Timer
 from typing import Optional, Tuple
@@ -78,7 +78,7 @@ class IDAStar(GraphProblemSolver):
                 nr_iterations=nr_iterations)
 
         # Quickly find some some f_limit for which a solution exists (in order to to use it as `high_f_limit`)
-        greedy = GreedyBestFirst(self.heuristic_function_type)
+        greedy = AStar(self.heuristic_function_type, heuristic_weight=1)
         greedy_solution = greedy.solve_problem(problem)
         assert greedy_solution.is_solution_found
         greedy_solution_cost = greedy_solution.solution_g_cost
@@ -108,6 +108,7 @@ class IDAStar(GraphProblemSolver):
             result = self._dfs_f(problem=problem, state=problem.initial_state, f_limit=mid_f_limit,
                                  max_nr_states_to_expand=max_nr_states_to_expand)
             total_nr_expanded_states += result.nr_expanded_states
+            max_depth_reached = max(max_depth_reached, result.max_depth_reached)
 
             if result.stopped_because_max_nr_states_to_expand_reached:
                 return SearchResult(
