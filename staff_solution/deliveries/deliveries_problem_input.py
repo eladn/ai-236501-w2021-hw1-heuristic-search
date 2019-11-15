@@ -36,25 +36,31 @@ class OptimizationObjective(Enum):
 
 @dataclass(frozen=True)
 class Delivery:
+    delivery_id: int
     client_name: str
     pick_location: Junction
     drop_location: Junction
     nr_packages: int
 
     def serialize(self) -> str:
-        return f'{self.client_name},{self.pick_location.index},{self.drop_location.index},{self.nr_packages}'
+        return f'{self.delivery_id},{self.client_name},{self.pick_location.index},{self.drop_location.index},' \
+               f'{self.nr_packages}'
 
     @staticmethod
     def deserialize(serialized: str, streets_map: StreetsMap) -> 'Delivery':
         parts = serialized.split(',')
         return Delivery(
-            client_name=parts[0],
-            pick_location=streets_map[int(parts[1])],
-            drop_location=streets_map[int(parts[2])],
-            nr_packages=int(parts[3]))
+            delivery_id=int(parts[0]),
+            client_name=parts[1],
+            pick_location=streets_map[int(parts[2])],
+            drop_location=streets_map[int(parts[3])],
+            nr_packages=int(parts[4]))
 
     def __repr__(self):
         return f'{self.client_name} ({self.nr_packages} pkgs)'
+
+    def __hash__(self):
+        return hash((self.delivery_id, self.pick_location, self.drop_location, self.nr_packages))
 
 
 @dataclass(frozen=True)
