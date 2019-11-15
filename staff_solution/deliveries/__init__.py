@@ -1,7 +1,8 @@
 from .map_heuristics import AirDistHeuristic
 from .map_problem import MapState, MapProblem
 from .deliveries_problem import Delivery, DeliveriesTruck, DeliveriesTruckState, TruckDeliveriesMaxAirDistHeuristic, \
-    DeliveriesTruckProblemInput, DeliveriesTruckProblem, TruckDeliveriesMSTAirDistHeuristic, OptimizationObjective
+    DeliveriesTruckProblemInput, DeliveriesTruckProblem, TruckDeliveriesMSTAirDistHeuristic, OptimizationObjective, \
+    TruckDeliveriesSumAirDistHeuristic
 from .cached_map_distance_finder import CachedMapDistanceFinder
 
 __all__ = [
@@ -9,5 +10,6 @@ __all__ = [
     'MapState', 'MapProblem',
     'Delivery', 'DeliveriesTruck', 'DeliveriesTruckState', 'OptimizationObjective',
     'DeliveriesTruckProblemInput', 'DeliveriesTruckProblem',
-    'TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesMSTAirDistHeuristic'
+    'TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesMSTAirDistHeuristic',
+    'TruckDeliveriesSumAirDistHeuristic'
 ]
