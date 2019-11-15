@@ -1,7 +1,7 @@
 from typing import *
 from dataclasses import dataclass
 import numpy as np
-from scipy.sparse.csgraph import minimum_spanning_tree as mst
+import networkx as nx
 
 from framework import *
 from .map_problem import MapProblem, MapState
@@ -148,11 +148,11 @@ class DeliveriesTruckProblem(GraphProblem):
                 operator_name=f'drop {delivery.client_name}')
 
     def _calc_map_road_cost(self, link: Link) -> DeliveryCost:
-        return DeliveryCost(
-            distance_cost=link.distance,
-            time_cost=0,
-            money_cost=0,
-            optimization_objective=self.optimization_objective)  # TODO: modify!
+        # return DeliveryCost(
+        #     distance_cost=link.distance,
+        #     time_cost=0,
+        #     money_cost=0,
+        #     optimization_objective=self.optimization_objective)  # TODO: modify!
 
         optimal_velocity, gas_cost_per_meter = self.problem_input.delivery_truck.calc_optimal_driving_parameters(
             self.optimization_objective, max_driving_speed=link.max_speed)
@@ -189,6 +189,13 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesMaxAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, DeliveriesTruckProblem)
+        self.junctions_pair_to_air_distances_mapping = {}
+
+    def get_distance_between_junctions(self, junction1: Junction, junction2: Junction) -> float:
+        key = frozenset((junction1, junction2))
+        if key not in self.junctions_pair_to_air_distances_mapping:
+            self.junctions_pair_to_air_distances_mapping[key] = junction1.calc_air_distance_from(junction2)
+        return self.junctions_pair_to_air_distances_mapping[key]
 
     def estimate(self, state: GraphProblemState) -> float:
         assert isinstance(self.problem, DeliveriesTruckProblem)
@@ -205,7 +212,7 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
         if len(all_junctions_to_visit) < 2:
             return 0
         total_distance_lower_bound = max(
-            junction1.calc_air_distance_from(junction2)
+            self.get_distance_between_junctions(junction1, junction2)
             for junction1 in all_junctions_to_visit
             for junction2 in all_junctions_to_visit
             if junction1 != junction2)
@@ -260,6 +267,13 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesMSTAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, DeliveriesTruckProblem)
+        self.junctions_pair_to_air_distances_mapping = {}
+
+    def get_distance_between_junctions(self, junction1: Junction, junction2: Junction) -> float:
+        key = frozenset((junction1, junction2))
+        if key not in self.junctions_pair_to_air_distances_mapping:
+            self.junctions_pair_to_air_distances_mapping[key] = junction1.calc_air_distance_from(junction2)
+        return self.junctions_pair_to_air_distances_mapping[key]
 
     def estimate(self, state: GraphProblemState) -> float:
         assert isinstance(self.problem, DeliveriesTruckProblem)
@@ -278,41 +292,24 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
                                  {delivery.drop_location for delivery in state.loaded_deliveries} | \
                                  {state.current_location}
         total_distance_lower_bound = self._calculate_junctions_mst_weight_using_air_distance(all_junctions_to_visit)
-        # print(
-        #     f'#deliveries: {len(self.problem.problem_input.deliveries)} -- '
-        #     f'#loaded: {len(state.loaded_deliveries)} -- '
-        #     f'#dropped: {len(state.dropped_deliveries)} -- '
-        #     f'#deliveries_waiting_to_pick: {len(deliveries_waiting_to_pick)} -- '
-        #     f'#all_junctions_to_visit: {len(all_junctions_to_visit)} --'
-        #     f'total_distance_lower_bound: {total_distance_lower_bound}')
         return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_distance_lower_bound)
 
-    def _calculate_junctions_mst_weight_using_air_distance(
-            self, junctions: Set[Junction]) -> float:
-        def junctions_dist_fn(junction1: Junction, junction2: Junction) -> float:
-            return junction1.calc_air_distance_from(junction2)
-        return self._calculate_mst_weight(vertices=junctions, edges_costs_fn=junctions_dist_fn)
-
-    def _calculate_mst_weight(
-            self, vertices: Set[object], edges_costs_fn: Callable) -> float:
-        nr_vertices = len(vertices)
-        idx_to_vertex = {idx: vertex for idx, vertex in enumerate(vertices)}
-        edges_costs_matrix = np.zeros((nr_vertices, nr_vertices), dtype=np.float)
-
+    def _calculate_junctions_mst_weight_using_air_distance(self, junctions: Set[Junction]) -> float:
         """
         TODO:
         """
         # raise NotImplemented()  # TODO: remove!
 
-        for j1_idx in range(nr_vertices):
-            for j2_idx in range(nr_vertices):
-                if j1_idx == j2_idx:
+        junctions_graph = nx.Graph()
+        idx_to_junction = {idx: vertex for idx, vertex in enumerate(junctions)}
+        for junction1_idx, junction1 in idx_to_junction.items():
+            for junction2_idx, junction2 in idx_to_junction.items():
+                if junction1_idx == junction2_idx:
                     continue
-                edge_cost = edges_costs_fn(idx_to_vertex[j1_idx], idx_to_vertex[j2_idx])
-                edges_costs_matrix[j1_idx, j2_idx] = edge_cost
-                edges_costs_matrix[j2_idx, j1_idx] = edge_cost
-        mst_matrix = mst(edges_costs_matrix)
-        return float(np.sum(mst_matrix))
+                junctions_graph.add_edge(
+                    junction1_idx, junction2_idx, weight=self.get_distance_between_junctions(junction1, junction2))
+        junctions_mst = nx.minimum_spanning_tree(junctions_graph)
+        return sum(d['weight'] for (u, v, d) in junctions_mst.edges(data=True))
 
 
 class TruckDeliveriesInnerMapProblemHeuristic(HeuristicFunction):
