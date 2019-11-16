@@ -1,16 +1,16 @@
 from framework import *
 
 from typing import Iterator, Optional, Callable
+from dataclasses import dataclass
 
 
+@dataclass(frozen=True)
 class MapState(GraphProblemState):
     """
     StreetsMap state is represents the current geographic location on the map.
     This location is defined by the junction index.
     """
-
-    def __init__(self, junction_id: int):
-        self.junction_id = junction_id
+    junction_id: int
 
     def __eq__(self, other):
         assert isinstance(other, MapState)
