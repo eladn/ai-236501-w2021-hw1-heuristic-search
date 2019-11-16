@@ -68,7 +68,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
 
 
 def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, problem: GraphProblem, n: int = 30,
-                                   max_nr_states_to_expand: Optional[int] = 10_000):
+                                   max_nr_states_to_expand: Optional[int] = 30_000):
     # TODO:
     #  1. Create an array of 20 numbers equally spread in [0.5, 1]
     #     (including the edges). You can use `np.linspace()` for that.
@@ -295,10 +295,10 @@ def deliveries_truck_problem_anytime_astar_experiments():
 
     # Ex.xxx
     # TODO: create an instance of `AnytimeAStar` once with the `TruckDeliveriesMSTAirDistHeuristic`, with
-    #       `max_nr_states_to_expand_per_iteration` set to 200, solve the
+    #       `max_nr_states_to_expand_per_iteration` set to 50, solve the
     #       `moderate_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
-    anytime_astar = AnytimeAStar(TruckDeliveriesMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=200)
+    anytime_astar = AnytimeAStar(TruckDeliveriesMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=50)
     res = anytime_astar.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
 
