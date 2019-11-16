@@ -3,7 +3,7 @@ from deliveries import *
 
 from matplotlib import pyplot as plt
 import numpy as np
-from typing import List, Union, Optional, Tuple
+from typing import List, Union, Optional
 
 # Load the streets map
 streets_map = StreetsMap.load_from_csv(Consts.get_data_file_path("tlv_streets_map.csv"))
@@ -174,30 +174,30 @@ def basic_deliveries_truck_problem_experiments():
 
 def deliveries_truck_problem_with_astar_experiments():
     print()
-    print('Solve the truck deliveries problem (small input, only distance objective, A*, MaxAirDist & MSTAirDist heuristics).')
+    print('Solve the truck deliveries problem (moderate input, only distance objective, A*, MaxAirDist & MSTAirDist heuristics).')
 
-    small_delivery_problem_with_distance_cost = get_deliveries_problem('small', OptimizationObjective.Distance)
+    moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
 
     # Ex.xxx
     # TODO: create an instance of `AStar` with the `TruckDeliveriesMaxAirDistHeuristic`,
-    #       solve the `small_delivery_problem_with_distance_cost` with it and print the results.
+    #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
     astar = AStar(TruckDeliveriesMaxAirDistHeuristic)
-    res = astar.solve_problem(small_delivery_problem_with_distance_cost)
+    res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
 
     # Ex.xxx
     # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
-    #       solve the `small_delivery_problem_with_distance_cost` with it and print the results.
+    #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
     astar = AStar(TruckDeliveriesMSTAirDistHeuristic)
-    res = astar.solve_problem(small_delivery_problem_with_distance_cost)
+    res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
 
 
 def deliveries_truck_problem_with_weighted_astar_experiments():
     print()
-    print('Solve the truck deliveries problem (small input, only distance objective, wA*).')
+    print('Solve the truck deliveries problem (small & moderate input, only distance objective, wA*).')
 
     small_delivery_problem_with_distance_cost = get_deliveries_problem('small', OptimizationObjective.Distance)
     moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
@@ -205,11 +205,11 @@ def deliveries_truck_problem_with_weighted_astar_experiments():
     # Ex.xxx
     # TODO: Call here the function `run_astar_for_weights_in_range()`
     #       with `TruckDeliveriesMSTAirDistHeuristic`
-    #       and `small_delivery_problem_with_distance_cost`.
+    #       once over the `small_delivery_problem_with_distance_cost` and then over the
+    #       `moderate_delivery_problem_with_distance_cost`.
     # exit()  # TODO: remove!
     run_astar_for_weights_in_range(TruckDeliveriesMSTAirDistHeuristic, small_delivery_problem_with_distance_cost)
-    run_astar_for_weights_in_range(TruckDeliveriesMSTAirDistHeuristic, moderate_delivery_problem_with_distance_cost,
-                                   n=10, max_nr_states_to_expand=1000)
+    run_astar_for_weights_in_range(TruckDeliveriesMSTAirDistHeuristic, moderate_delivery_problem_with_distance_cost)
 
 
 def multiple_objectives_deliveries_truck_problem_experiments():
@@ -240,13 +240,13 @@ def deliveries_truck_problem_with_astar_epsilon_experiments():
     print()
     print('Solve the truck deliveries problem (small input, distance objective, using A*eps).')
 
-    small_delivery_problem_with_time_cost = get_deliveries_problem('small', OptimizationObjective.Distance)
-    moderate_delivery_problem_with_time_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
+    small_delivery_problem_with_distance_cost = get_deliveries_problem('small', OptimizationObjective.Distance)
+    moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
 
     # Ex.xxx
     # Try using A*eps to improve the speed (#dev) for heuristic_weight=0.5.
     # TODO: create an instance of `AStarEpsilon` with the `TruckDeliveriesMSTAirDistHeuristic`,
-    #       solve the `small_delivery_problem_with_time_cost` with it and print the results.
+    #       solve the `small_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
 
     def within_focal_h_priority_function(node: SearchNode, problem: GraphProblem, solver: AStarEpsilon):
@@ -255,69 +255,58 @@ def deliveries_truck_problem_with_astar_epsilon_experiments():
     astar_eps = AStarEpsilon(
         TruckDeliveriesMSTAirDistHeuristic, within_focal_priority_function=within_focal_h_priority_function,
         max_nr_states_to_expand=8_000, max_focal_size=25)
-    res = astar_eps.solve_problem(small_delivery_problem_with_time_cost)
+    res = astar_eps.solve_problem(small_delivery_problem_with_distance_cost)
     print(res)
 
     # Ex.xxx
     # Try using A*eps to improve the solution quality when heuristic_weight>0.5.
     # TODO: create an instance of `AStarEpsilon` with the `TruckDeliveriesMSTAirDistHeuristic`,
-    #       solve the `small_delivery_problem_with_time_cost` with it and print the results.
+    #       solve the `small_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
 
     def within_focal_g_priority_function(node: SearchNode, problem: GraphProblem, solver: AStarEpsilon):
         return node.g_cost
 
     astar07 = AStar(TruckDeliveriesMSTAirDistHeuristic, heuristic_weight=0.7)
-    res = astar07.solve_problem(small_delivery_problem_with_time_cost)
+    res = astar07.solve_problem(small_delivery_problem_with_distance_cost)
     print(res)
     astar_eps = AStarEpsilon(
         TruckDeliveriesMSTAirDistHeuristic, within_focal_priority_function=within_focal_g_priority_function,
         max_nr_states_to_expand=8_000, max_focal_size=20, heuristic_weight=0.7)
-    res = astar_eps.solve_problem(small_delivery_problem_with_time_cost)
+    res = astar_eps.solve_problem(small_delivery_problem_with_distance_cost)
     print(res)
 
     astar07 = AStar(TruckDeliveriesMSTAirDistHeuristic, heuristic_weight=0.7)
-    res = astar07.solve_problem(moderate_delivery_problem_with_time_cost)
+    res = astar07.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
     astar_eps = AStarEpsilon(
         TruckDeliveriesMSTAirDistHeuristic, within_focal_priority_function=within_focal_g_priority_function,
         max_nr_states_to_expand=8_000, max_focal_size=20, heuristic_weight=0.7)
-    res = astar_eps.solve_problem(moderate_delivery_problem_with_time_cost)
+    res = astar_eps.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
 
 
-# def anytime_weighted_astar(heuristic_function_type: HeuristicFunctionType, problem: GraphProblem,
-#                            max_nr_states_to_expand: int = 500) -> Tuple[SearchResult, float]:
-#     acceptable_astar = AStar(heuristic_function_type, heuristic_weight=0.5, max_nr_states_to_expand=max_nr_states_to_expand)
-#     acceptable_astar_res = acceptable_astar.solve_problem(problem)
-#     if acceptable_astar_res.is_solution_found:
-#         return acceptable_astar_res, 0.5
-#
-#     greedy = AStar(heuristic_function_type, heuristic_weight=1, max_nr_states_to_expand=max_nr_states_to_expand)
-#     greedy_res = greedy.solve_problem(problem)
-#     assert greedy_res.is_solution_found
-#     best_solution = greedy_res
-#
-#     high_heuristic_weight = 1.0
-#     low_heuristic_weight = 0.5
-#     while (high_heuristic_weight - low_heuristic_weight) > 0.01:
-#         mid_heuristic_weight = (low_heuristic_weight + high_heuristic_weight) / 2
-#         print(f'low: {low_heuristic_weight} -- mid: {mid_heuristic_weight} -- high: {high_heuristic_weight}')
-#         astar = AStar(heuristic_function_type, heuristic_weight=mid_heuristic_weight,
-#                       max_nr_states_to_expand=max_nr_states_to_expand)
-#         res = astar.solve_problem(problem)
-#         if res.is_solution_found:
-#             high_heuristic_weight = mid_heuristic_weight
-#             best_solution = res if res.solution_g_cost < best_solution.solution_g_cost else best_solution
-#         else:
-#             low_heuristic_weight = mid_heuristic_weight
-#     return best_solution, high_heuristic_weight
-
-
-def deliveries_truck_problem_with_non_acceptable_heuristic_experiments():
+def deliveries_truck_problem_anytime_astar_experiments():
     print()
-    print(
-        'Solve the truck deliveries problem (big input, only distance objective, Anytime-A*, SumAirDist heuristics).')
+    print('Solve the truck deliveries problem (moderate input, only distance objective, Anytime-A*, '
+          'MSTAirDist heuristics).')
+
+    moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
+
+    # Ex.xxx
+    # TODO: create an instance of `AnytimeAStar` once with the `TruckDeliveriesMSTAirDistHeuristic`, with
+    #       `max_nr_states_to_expand_per_iteration` set to 200, solve the
+    #       `moderate_delivery_problem_with_distance_cost` with it and print the results.
+    # exit()  # TODO: remove!
+    anytime_astar = AnytimeAStar(TruckDeliveriesMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=200)
+    res = anytime_astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    print(res)
+
+
+def big_deliveries_truck_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments():
+    print()
+    print('Solve the truck deliveries problem (big input, only distance objective, Anytime-A*, '
+          'SumAirDist & MSTAirDist heuristics).')
 
     big_delivery_problem_with_distance_cost = get_deliveries_problem('big', OptimizationObjective.Distance)
 
@@ -347,54 +336,30 @@ def deliveries_truck_problem_with_id_astar_experiments():
     # TODO: create an instance of `IDAStar` once with the `TruckDeliveriesMSTAirDistHeuristic`,
     #       solve the `small_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
-    # id_astar = IDAStar(TruckDeliveriesMSTAirDistHeuristic, deepening_technique='iterative',
-    #                    max_nr_states_to_expand=7_000, max_nr_iterations=400)
-    # res = id_astar.solve_problem(small_delivery_problem_with_distance_cost)
-    # print(res)
+    id_astar = IDAStar(TruckDeliveriesMSTAirDistHeuristic, deepening_technique='iterative',
+                       max_nr_states_to_expand=30_000, max_nr_iterations=400)
+    res = id_astar.solve_problem(small_delivery_problem_with_distance_cost)
+    print(res)
 
     # Ex.xxx
     # TODO: create an instance of `IDAStar` once with the `TruckDeliveriesMSTAirDistHeuristic`,
     #       solve the `small_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
     id_astar = IDAStar(TruckDeliveriesMSTAirDistHeuristic, deepening_technique='binary_search',
-                       max_nr_states_to_expand=10_000, max_nr_iterations=400)
+                       max_nr_states_to_expand=30_000, max_nr_iterations=400)
     res = id_astar.solve_problem(small_delivery_problem_with_distance_cost)
     print(res)
 
 
-def tests():
-    small_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
-
-    # astar = AStar(TruckDeliveriesSumAirDistHeuristic)
-    # res = astar.solve_problem(small_delivery_problem_with_distance_cost)
-    # print(res)
-
-    # astar = AStar(TruckDeliveriesMSTAirDistHeuristic, max_nr_states_to_expand=10_000)
-    # res = astar.solve_problem(small_delivery_problem_with_distance_cost)
-    # print(res)
-
-    h = TruckDeliveriesSumAirDistHeuristic(small_delivery_problem_with_distance_cost)
-    def within_focal_priority_function(node: SearchNode, problem: GraphProblem, solver: AStarEpsilon):
-        return h.estimate(node.state)
-
-    astar_eps = AStarEpsilon(
-        TruckDeliveriesMSTAirDistHeuristic, within_focal_priority_function=within_focal_priority_function,
-        max_nr_states_to_expand=9_000, max_focal_size=50, focal_epsilon=0.4)
-    res = astar_eps.solve_problem(small_delivery_problem_with_distance_cost)
-    print(res)
-
-
 def main():
-    # tests()
-    # exit()
-
-    # toy_map_problem_experiments()
-    # basic_deliveries_truck_problem_experiments()
-    # deliveries_truck_problem_with_astar_experiments()
-    # deliveries_truck_problem_with_weighted_astar_experiments()
-    # multiple_objectives_deliveries_truck_problem_experiments()
-    # deliveries_truck_problem_with_astar_epsilon_experiments()
-    # deliveries_truck_problem_with_non_acceptable_heuristic_experiments()
+    toy_map_problem_experiments()
+    basic_deliveries_truck_problem_experiments()
+    deliveries_truck_problem_with_astar_experiments()
+    deliveries_truck_problem_with_weighted_astar_experiments()
+    multiple_objectives_deliveries_truck_problem_experiments()
+    deliveries_truck_problem_with_astar_epsilon_experiments()
+    deliveries_truck_problem_anytime_astar_experiments()
+    big_deliveries_truck_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments()
     deliveries_truck_problem_with_id_astar_experiments()
 
 
