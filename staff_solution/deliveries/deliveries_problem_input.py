@@ -70,23 +70,21 @@ class DeliveriesTruck:
     optimal_vehicle_speed: float = kmph_to_mpm(87)
     gas_cost_per_meter_in_optimal_speed: float = 0.0009
     gas_cost_per_meter_gradient_wrt_speed_change: float = 0.0018
-    gas_cost_addition_per_meter_per_loaded_package: float = 0
 
     def serialize(self) -> str:
         return f'{self.max_nr_loaded_packages},{self.initial_location.index},{self.optimal_vehicle_speed},' \
-               f'{self.gas_cost_per_meter_in_optimal_speed},{self.gas_cost_per_meter_gradient_wrt_speed_change},' \
-               f'{self.gas_cost_addition_per_meter_per_loaded_package}'
+               f'{self.gas_cost_per_meter_in_optimal_speed},{self.gas_cost_per_meter_gradient_wrt_speed_change}'
 
     @staticmethod
     def deserialize(serialized: str, streets_map: StreetsMap) -> 'DeliveriesTruck':
         parts = serialized.split(',')
+        assert len(parts) == 5
         return DeliveriesTruck(
             max_nr_loaded_packages=int(parts[0]),
             initial_location=streets_map[int(parts[1])],
             optimal_vehicle_speed=float(parts[2]),
             gas_cost_per_meter_in_optimal_speed=float(parts[3]),
-            gas_cost_per_meter_gradient_wrt_speed_change=float(parts[4]),
-            gas_cost_addition_per_meter_per_loaded_package=float(parts[5]))
+            gas_cost_per_meter_gradient_wrt_speed_change=float(parts[4]))
 
     def calc_optimal_driving_parameters(self, optimization_objective: OptimizationObjective, max_driving_speed: float) \
             -> Tuple[float, float]:
