@@ -7,10 +7,19 @@ from framework import *
 from .map_problem import MapProblem, MapState
 from .cached_map_distance_finder import CachedMapDistanceFinder
 from .deliveries_problem_input import *
+from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
 
 @dataclass(frozen=True)
 class DeliveriesTruckState(GraphProblemState):
+    """
+    An instance of this class represents a state of deliveries problem.
+    This state includes the deliveries which are currently loaded on the
+     truck, the deliveries which had already been dropped, and the current
+     location of the truck (which is either the initial location or the
+     last pick/drop location.
+    """
+
     loaded_deliveries: FrozenSet[Delivery]
     dropped_deliveries: FrozenSet[Delivery]
     current_location: Junction
@@ -37,20 +46,49 @@ class DeliveriesTruckState(GraphProblemState):
                f'current_location: {current_location})'
 
     def __eq__(self, other):
+        """
+        This method is used to determine whether two given state objects represent the same state.
+        """
         assert isinstance(other, DeliveriesTruckState)
 
-        # raise NotImplemented()  # TODO: remove!
+        # TODO: Complete the implementation of this method!
+        #       Note that you can simply compare two instances of `Junction` type
+        #        (using equals `==` operator) because the class `Junction` explicitly
+        #        implements the `__eq__()` method. The types `frozenset` and `Delivery`
+        #        are also comparable (in the same manner).
+        # raise NotImplemented()  # TODO: remove this line.
 
         return self.loaded_deliveries == other.loaded_deliveries \
                and self.dropped_deliveries == other.dropped_deliveries \
                and self.current_location == other.current_location
 
     def __hash__(self):
+        """
+        This method is used to create a hash of a state instance.
+        The hash of a state being is used whenever the state is stored as a key in a dictionary
+         or as an item in a set.
+        It is critical that two objects representing the same state would have the same hash!
+        """
         return hash((self.loaded_deliveries, self.dropped_deliveries, self.current_location))
 
 
 @dataclass(frozen=True)
 class DeliveryCost(ExtendedCost):
+    """
+    An instance of this class is returned as an operator cost by the method
+     `DeliveriesTruckProblem.expand_state_with_costs()`.
+    The reason for using a custom type for the cost (instead of just using a `float` scalar),
+     is because we want the cumulative cost (of each search node and particularly of the final
+     node of the solution) to be consisted of 3 objectives: (i) distance, (ii) time, and
+     (iii) money.
+    The field `optimization_objective` controls the objective of the problem (the cost we want
+     the solver to minimize). In order to tell the solver which is the objective to optimize,
+     we have the `get_g_cost()` method, which returns a single `float` scalar which is only the
+     cost to optimize.
+    This way, whenever we get a solution, we can inspect the 3 different costs of that solution,
+     even though the objective was only one of the costs (time for example).
+    Having said that, note that during this assignment we will mostly use the distance objective.
+    """
     distance_cost: float = 0.0
     time_cost: float = 0.0
     money_cost: float = 0.0
@@ -81,6 +119,10 @@ class DeliveryCost(ExtendedCost):
 
 
 class DeliveriesTruckProblem(GraphProblem):
+    """
+    An instance of this class represents a deliveries truck problem.
+    """
+
     name = 'Deliveries'
 
     def __init__(self,
@@ -104,12 +146,20 @@ class DeliveriesTruckProblem(GraphProblem):
         self.optimization_objective = optimization_objective
 
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
-        assert isinstance(state_to_expand, DeliveriesTruckState)
+        """
+        TODO: implement this method!
+        This method represents the `Succ: S -> P(S)` function of the deliveries truck problem.
+        The `Succ` function is defined by the problem operators as shown in class.
+        The deliveries truck problem operators are defined in the assignment instructions.
+        It receives a state and iterates over its successor states.
+        Notice that this its return type is an *Iterator*. It means that this function is not
+         a regular function, but a `generator function`. Hence, it should be implemented using
+         the `yield` statement.
+        For each successor state, a pair of the successor state and the operator cost is yielded.
+        """
 
-        """
-        TODO: 
-        """
-        # raise NotImplemented()  # TODO: remove!
+        assert isinstance(state_to_expand, DeliveriesTruckState)
+        # raise NotImplemented()  # TODO: remove this line!
 
         # Pick delivery
         deliveries_waiting_to_pick = (set(self.problem_input.deliveries) - state_to_expand.dropped_deliveries) - state_to_expand.loaded_deliveries
@@ -148,14 +198,27 @@ class DeliveriesTruckProblem(GraphProblem):
                 operator_name=f'drop {delivery.client_name}')
 
     def _calc_map_road_cost(self, link: Link) -> DeliveryCost:
+        """
+        TODO: Modify the implementation of this method, so that for a given link (road), it would return
+               the extended cost of this link. That is, the distance should remain as it is now, but both
+               the `time_cost` and the `money_cost` should be set appropriately.
+              Use the `optimal_velocity` and the `gas_cost_per_meter` returned by the method
+               `self.problem_input.delivery_truck.calc_optimal_driving_parameters()`, in order to calculate
+               the `time_cost` and the `money_cost`.
+              Note that the `money_cost` is the total gas cost for this given link plus the total fee paid
+               for driving on this road if this road is a toll road. Use the appropriate Link's field to
+               check whether is it a tool road and to get the distance of this road, and use the appropriate
+               field in the problem input (accessible by `self.problem_input`) to get the toll road cost per
+               meter.
+        """
+        optimal_velocity, gas_cost_per_meter = self.problem_input.delivery_truck.calc_optimal_driving_parameters(
+            optimization_objective=self.optimization_objective, max_driving_speed=link.max_speed)
         # return DeliveryCost(
         #     distance_cost=link.distance,
         #     time_cost=0,
         #     money_cost=0,
-        #     optimization_objective=self.optimization_objective)  # TODO: modify!
+        #     optimization_objective=self.optimization_objective)  # TODO: modify this!
 
-        optimal_velocity, gas_cost_per_meter = self.problem_input.delivery_truck.calc_optimal_driving_parameters(
-            self.optimization_objective, max_driving_speed=link.max_speed)
         return DeliveryCost(
             distance_cost=link.distance,
             time_cost=link.distance / optimal_velocity,
@@ -163,21 +226,42 @@ class DeliveriesTruckProblem(GraphProblem):
             optimization_objective=self.optimization_objective)
 
     def is_goal(self, state: GraphProblemState) -> bool:
+        """
+        This method receives a state and returns whether this state is a goal.
+        TODO: implement this method!
+        """
         assert isinstance(state, DeliveriesTruckState)
+        # raise NotImplemented()  # TODO: remove!
         return state.dropped_deliveries == set(self.problem_input.deliveries)
 
     def get_zero_cost(self) -> Cost:
         return DeliveryCost(optimization_objective=self.optimization_objective)
 
     def get_cost_lower_bound_from_distance_lower_bound(self, total_distance_lower_bound: float) -> float:
+        """
+        Used by the heuristics of the deliveries truck problem.
+        Given a lower bound of the distance (in meters) that the truck has left to travel,
+         this method returns an appropriate lower bound of the distance/time/money cost
+         based on the problem's objective.
+        TODO: We left only partial implementation of this method (just the trivial distance objective).
+              Complete the implementation of this method!
+              You might want to use constants like `MIN_ROAD_SPEED` or `MAX_ROAD_SPEED`.
+              For the money cost, you would like to use the method `self._calc_map_road_cost()`. This
+               method expects to get a `Link` instance and returns the (extended) cost of this road.
+               Although the `total_distance_lower_bound` actually represents an estimation for the
+               remaining route (and not an actual road on the map), you can simply create a `Link`
+               instance (that represents this whole remaining path) for this purpose.
+              Remember: The return value should be a real lower bound. This is required for the
+               heuristic to be acceptable.
+        """
         if self.optimization_objective == OptimizationObjective.Distance:
             return total_distance_lower_bound
         elif self.optimization_objective == OptimizationObjective.Time:
-            # raise NotImplemented()  # TODO: remove!
+            # raise NotImplemented()  # TODO: remove this line and complete the implementation of this case!
             return total_distance_lower_bound / MAX_ROAD_SPEED
         else:
             assert self.optimization_objective == OptimizationObjective.Money
-            # raise NotImplemented()  # TODO: remove!
+            # raise NotImplemented()  # TODO: remove this line and complete the implementation of this case!
             lower_bound_for_gas_cost_of_driving_remaining_roads = self._calc_map_road_cost(
                 Link(0, 0, total_distance_lower_bound, 0, MAX_ROAD_SPEED, False)).money_cost
             return lower_bound_for_gas_cost_of_driving_remaining_roads
@@ -189,19 +273,13 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesMaxAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, DeliveriesTruckProblem)
-        self.junctions_pair_to_air_distances_mapping = {}
-
-    def get_distance_between_junctions(self, junction1: Junction, junction2: Junction) -> float:
-        key = frozenset((junction1, junction2))
-        if key not in self.junctions_pair_to_air_distances_mapping:
-            self.junctions_pair_to_air_distances_mapping[key] = junction1.calc_air_distance_from(junction2)
-        return self.junctions_pair_to_air_distances_mapping[key]
+        self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
         assert isinstance(self.problem, DeliveriesTruckProblem)
         assert isinstance(state, DeliveriesTruckState)
 
-        # raise NotImplemented()  # TODO: remove!
+        # raise NotImplemented()  # TODO: remove this line!
 
         deliveries_waiting_to_pick = (set(
             self.problem.problem_input.deliveries) - state.dropped_deliveries) - state.loaded_deliveries
@@ -212,7 +290,7 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
         if len(all_junctions_to_visit) < 2:
             return 0
         total_distance_lower_bound = max(
-            self.get_distance_between_junctions(junction1, junction2)
+            self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2)
             for junction1 in all_junctions_to_visit
             for junction2 in all_junctions_to_visit
             if junction1 != junction2)
@@ -225,19 +303,13 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesSumAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, DeliveriesTruckProblem)
-        self.junctions_pair_to_air_distances_mapping = {}
-
-    def get_distance_between_junctions(self, junction1: Junction, junction2: Junction) -> float:
-        key = frozenset((junction1, junction2))
-        if key not in self.junctions_pair_to_air_distances_mapping:
-            self.junctions_pair_to_air_distances_mapping[key] = junction1.calc_air_distance_from(junction2)
-        return self.junctions_pair_to_air_distances_mapping[key]
+        self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
         assert isinstance(self.problem, DeliveriesTruckProblem)
         assert isinstance(state, DeliveriesTruckState)
 
-        # raise NotImplemented()  # TODO: remove!
+        # raise NotImplemented()  # TODO: remove this line!
 
         deliveries_waiting_to_pick = (set(
             self.problem.problem_input.deliveries) - state.dropped_deliveries) - state.loaded_deliveries
@@ -252,10 +324,10 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
         total_distance_sum = 0
         while len(all_junctions_to_visit) > 1:
             all_junctions_to_visit.remove(last_location)
-            locs_and_dist = [(loc, self.get_distance_between_junctions(last_location, loc)) for loc in all_junctions_to_visit]
+            locs_and_dist = [(loc, self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc)) for loc in all_junctions_to_visit]
             min_dist_idx = np.argmin(np.array([dist for _, dist in locs_and_dist]))
             next_location = locs_and_dist[min_dist_idx][0]
-            total_distance_sum += self.get_distance_between_junctions(last_location, next_location)
+            total_distance_sum += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
             last_location = next_location
 
         return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_distance_sum)
@@ -267,23 +339,17 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesMSTAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, DeliveriesTruckProblem)
-        self.junctions_pair_to_air_distances_mapping = {}
-
-    def get_distance_between_junctions(self, junction1: Junction, junction2: Junction) -> float:
-        key = frozenset((junction1, junction2))
-        if key not in self.junctions_pair_to_air_distances_mapping:
-            self.junctions_pair_to_air_distances_mapping[key] = junction1.calc_air_distance_from(junction2)
-        return self.junctions_pair_to_air_distances_mapping[key]
+        self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
+        """
+        TODO: Implement this method.
+
+        """
         assert isinstance(self.problem, DeliveriesTruckProblem)
         assert isinstance(state, DeliveriesTruckState)
 
-        """
-        TODO:
-        
-        """
-        # raise NotImplemented()  # TODO: remove!
+        # raise NotImplemented()  # TODO: remove this line!
 
         deliveries_waiting_to_pick = (set(
             self.problem.problem_input.deliveries) - state.dropped_deliveries) - state.loaded_deliveries
@@ -296,9 +362,16 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
 
     def _calculate_junctions_mst_weight_using_air_distance(self, junctions: Set[Junction]) -> float:
         """
-        TODO:
+        TODO: Implement this method.
+              Use `networkx` (nx) package (already imported in this file) to calculate the weight
+               of the minimum-spanning-tree of the graph in which the vertices are the given junctions
+               and there is an edge between each pair of dintinct junctions (no self-loops) for which
+               the weight is the air distance between these junctions.
+              Use the method `self.cached_air_distance_calculator.get_air_distance_between_junctions()`
+               to calculate the air distance between the two junctions.
+              Google for how to use `networkx` for this purpose.
         """
-        # raise NotImplemented()  # TODO: remove!
+        # raise NotImplemented()  # TODO: remove this line!
 
         junctions_graph = nx.Graph()
         idx_to_junction = {idx: vertex for idx, vertex in enumerate(junctions)}
@@ -307,7 +380,8 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
                 if junction1_idx == junction2_idx:
                     continue
                 junctions_graph.add_edge(
-                    junction1_idx, junction2_idx, weight=self.get_distance_between_junctions(junction1, junction2))
+                    junction1_idx, junction2_idx,
+                    weight=self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2))
         junctions_mst = nx.minimum_spanning_tree(junctions_graph)
         return sum(d['weight'] for (u, v, d) in junctions_mst.edges(data=True))
 
@@ -327,7 +401,7 @@ class TruckDeliveriesInnerMapProblemHeuristic(HeuristicFunction):
         """
         TODO:
         """
-        # raise NotImplemented()  # TODO: remove!
+        # raise NotImplemented()  # TODO: remove this line!
 
         source_junction = self.problem.streets_map[state.junction_id]
         target_junction = self.problem.streets_map[self.problem.target_junction_id]
