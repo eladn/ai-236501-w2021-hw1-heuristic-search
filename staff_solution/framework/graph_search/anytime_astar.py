@@ -40,12 +40,13 @@ class AnytimeAStar(GraphProblemSolver):
                 return greedy_res._replace(
                     solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)  # 1
             best_solution = greedy_res
+            best_heuristic_weight = 1
 
             high_heuristic_weight = 1.0
             low_heuristic_weight = 0.5
             while (high_heuristic_weight - low_heuristic_weight) > 0.01:
                 mid_heuristic_weight = (low_heuristic_weight + high_heuristic_weight) / 2
-                print(f'low: {low_heuristic_weight} -- mid: {mid_heuristic_weight} -- high: {high_heuristic_weight}')
+                # print(f'low: {low_heuristic_weight} -- mid: {mid_heuristic_weight} -- high: {high_heuristic_weight}')  # TODO: remove!
                 astar = AStar(heuristic_function_type=self.heuristic_function_type,
                               heuristic_weight=mid_heuristic_weight,
                               max_nr_states_to_expand=self.max_nr_states_to_expand_per_iteration)
@@ -53,8 +54,11 @@ class AnytimeAStar(GraphProblemSolver):
                 total_nr_expanded_states += res.nr_expanded_states
                 if res.is_solution_found:
                     high_heuristic_weight = mid_heuristic_weight
-                    best_solution = res if res.solution_g_cost < best_solution.solution_g_cost else best_solution
+                    if res.solution_g_cost < best_solution.solution_g_cost:
+                        best_solution = res
+                        best_heuristic_weight = mid_heuristic_weight
                 else:
                     low_heuristic_weight = mid_heuristic_weight
+        self.solver_name = f'{self.__class__.solver_name} (h={best_solution.solver.heuristic_function.heuristic_name}, w={best_heuristic_weight:.3f})'
         return best_solution._replace(
             solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)  #, high_heuristic_weight
