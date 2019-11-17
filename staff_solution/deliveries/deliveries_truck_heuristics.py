@@ -69,7 +69,9 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
         It builds a path that starts in the current truck's location, and each next junction in
          the path is the (air-distance) nearest junction (to the previous one in the path) among
          all junctions (in `all_junctions_in_remaining_truck_path`) that haven't been visited yet.
-        The estimation
+        The remaining distance estimation is the cost of this built path.
+        Note that we ignore here the problem constraints (like picking before dropping and maximum number of packages
+         on the truck). We only make sure to visit all junctions in `all_junctions_in_remaining_truck_path`.
         TODO:
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
