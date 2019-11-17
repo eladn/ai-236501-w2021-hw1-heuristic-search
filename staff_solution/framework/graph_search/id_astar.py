@@ -11,6 +11,11 @@ import numpy as np
 
 @dataclass(frozen=True)
 class DFSFResult:
+    """
+    An instance of this class is returned for each call of the inner method `_dfs_f()`.
+    The DFS-L has many values to return. We use a class to make the return value friendly.
+    """
+
     max_depth_reached: int
     f_limit_for_next_iteration: Optional[float] = None
     nr_expanded_states: int = 0
