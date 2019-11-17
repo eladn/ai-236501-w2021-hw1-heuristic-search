@@ -39,9 +39,9 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # TODO: Make this curve colored blue with solid line style.
     # See documentation here:
     # https://matplotlib.org/2.0.0/api/_as_gen/matplotlib.axes.Axes.plot.html
-    # You can also search google for additional examples.
+    # You can also Google for additional examples.
     # raise NotImplemented()  # TODO: remove this line!
-    p1, = ax1.plot(weights, total_cost, 'b-', label='Cost')
+    p1, = ax1.plot(weights, total_cost, 'b-', label='Solution cost')
 
     # ax1: Make the y-axis label, ticks and tick labels match the line color.
     ax1.set_ylabel('solution cost', color='b')
@@ -63,7 +63,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     ax1.legend(curves, [curve.get_label() for curve in curves])
 
     fig.tight_layout()
-    plt.title(f'Quality vs. time for wA* on problem {problem_name}')
+    plt.title(f'Quality vs. time for wA* \non problem {problem_name}')
     plt.show()
 
 
@@ -174,7 +174,7 @@ def basic_deliveries_truck_problem_experiments():
 
 def deliveries_truck_problem_with_astar_experiments():
     print()
-    print('Solve the truck deliveries problem (moderate input, only distance objective, A*, MaxAirDist & MSTAirDist heuristics).')
+    print('Solve the truck deliveries problem (moderate input, only distance objective, A*, MaxAirDist & SumAirDist & MSTAirDist heuristics).')
 
     moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
 
@@ -183,6 +183,14 @@ def deliveries_truck_problem_with_astar_experiments():
     #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
     astar = AStar(TruckDeliveriesMaxAirDistHeuristic)
+    res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    print(res)
+
+    # Ex.xxx
+    # TODO: create an instance of `AStar` with the `TruckDeliveriesSumAirDistHeuristic`,
+    #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
+    # exit()  # TODO: remove!
+    astar = AStar(TruckDeliveriesSumAirDistHeuristic)
     res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
 
@@ -205,11 +213,16 @@ def deliveries_truck_problem_with_weighted_astar_experiments():
     # Ex.xxx
     # TODO: Call here the function `run_astar_for_weights_in_range()`
     #       with `TruckDeliveriesMSTAirDistHeuristic`
-    #       once over the `small_delivery_problem_with_distance_cost` and then over the
-    #       `moderate_delivery_problem_with_distance_cost`.
+    #       over the `small_delivery_problem_with_distance_cost`.
     # exit()  # TODO: remove!
     run_astar_for_weights_in_range(TruckDeliveriesMSTAirDistHeuristic, small_delivery_problem_with_distance_cost)
-    run_astar_for_weights_in_range(TruckDeliveriesMSTAirDistHeuristic, moderate_delivery_problem_with_distance_cost)
+
+    # Ex.xxx
+    # TODO: Call here the function `run_astar_for_weights_in_range()`
+    #       with `TruckDeliveriesSumAirDistHeuristic`
+    #       over the `moderate_delivery_problem_with_distance_cost`.
+    # exit()  # TODO: remove!
+    run_astar_for_weights_in_range(TruckDeliveriesSumAirDistHeuristic, moderate_delivery_problem_with_distance_cost)
 
 
 def multiple_objectives_deliveries_truck_problem_experiments():
@@ -351,7 +364,7 @@ def deliveries_truck_problem_with_id_astar_experiments():
     print(res)
 
 
-def main():
+def run_all_experiments():
     toy_map_problem_experiments()
     basic_deliveries_truck_problem_experiments()
     deliveries_truck_problem_with_astar_experiments()
@@ -364,4 +377,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    run_all_experiments()

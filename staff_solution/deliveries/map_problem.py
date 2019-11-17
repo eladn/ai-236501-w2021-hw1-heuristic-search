@@ -4,6 +4,9 @@ from typing import Iterator, Optional, Callable
 from dataclasses import dataclass
 
 
+__all__ = ['MapState', 'MapProblem']
+
+
 @dataclass(frozen=True)
 class MapState(GraphProblemState):
     """
