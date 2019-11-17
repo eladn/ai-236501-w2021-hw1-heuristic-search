@@ -93,7 +93,7 @@ class heapdict(collections.MutableMapping):
     def popitem(self, default=None):
         """D.popitem() -> (k, v), remove and return the (key, value) pair with lowest\nvalue; but raise KeyError if D is empty."""
         if len(self.heap) == 0:
-            return default;
+            return default
         wrapper = self.heap[0]
         if len(self.heap) == 1:
             self.heap.pop()
@@ -111,7 +111,7 @@ class heapdict(collections.MutableMapping):
     def peekitem(self, default=None):
         """D.peekitem() -> (k, v), return the (key, value) pair with lowest value;\n but raise KeyError if D is empty."""
         if len(self.heap) == 0:
-            return default;
+            return default
         return (self.heap[0][1], self.heap[0][0])
 
     def empty(self):
