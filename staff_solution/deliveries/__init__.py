@@ -4,6 +4,7 @@ from .deliveries_truck_problem_input import *
 from .deliveries_truck_problem import *
 from .deliveries_truck_heuristics import *
 from .cached_map_distance_finder import CachedMapDistanceFinder
+from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
 __all__ = [
     'AirDistHeuristic',
@@ -11,5 +12,6 @@ __all__ = [
     'Delivery', 'DeliveriesTruck', 'DeliveriesTruckState', 'OptimizationObjective',
     'DeliveriesTruckProblemInput', 'DeliveriesTruckProblem',
     'TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesMSTAirDistHeuristic',
-    'TruckDeliveriesSumAirDistHeuristic'
+    'TruckDeliveriesSumAirDistHeuristic',
+    'CachedMapDistanceFinder', 'CachedAirDistanceCalculator'
 ]
