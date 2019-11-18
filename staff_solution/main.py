@@ -26,6 +26,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     """
     Use `matplotlib` to generate a figure of the distance & #expanded-nodes
      w.r.t. the weight.
+    TODO [Ex.14]: Complete the implementation of this method.
     """
     weights, total_cost, total_nr_expanded = np.array(weights), np.array(total_cost), np.array(total_nr_expanded)
     assert len(weights) == len(total_cost) == len(total_nr_expanded)
@@ -69,7 +70,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
 
 def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, problem: GraphProblem, n: int = 30,
                                    max_nr_states_to_expand: Optional[int] = 30_000):
-    # TODO:
+    # TODO [Ex.14]:
     #  1. Create an array of 20 numbers equally spread in [0.5, 1]
     #     (including the edges). You can use `np.linspace()` for that.
     #  2. For each weight in that array run the wA* algorithm, with the
@@ -104,6 +105,7 @@ def toy_map_problem_experiments():
     print('Solve the map problem.')
 
     # Ex.10
+    # TODO: Just run it and inspect the printed result.
     toy_map_problem = MapProblem(streets_map, 54, 549)
     uc = UniformCost()
     res = uc.solve_problem(toy_map_problem)

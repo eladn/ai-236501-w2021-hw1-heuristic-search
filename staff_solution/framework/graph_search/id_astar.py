@@ -95,6 +95,11 @@ class IDAStar(GraphProblemSolver):
 
         max_f_limit_relative_error = self.max_cost_relative_error * (1 - self.heuristic_weight)
         while calc_relative_error(low_f_limit, high_f_limit) > max_f_limit_relative_error:
+            """
+            TODO:
+             Complete the implementation inside this loop.
+             
+            """
             nr_iterations += 1
             if self.max_nr_iterations is not None and nr_iterations > self.max_nr_iterations:
                 return SearchResult(

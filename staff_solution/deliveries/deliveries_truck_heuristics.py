@@ -25,9 +25,13 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
          by calculating the maximum distance within the group of air distances between each
          two junctions in the remaining truck path.
 
-        TODO:
+        TODO [Ex.17]:
             Calculate the `total_distance_lower_bound` by taking the maximum over the group
                 {airDistanceBetween(j1,j2) | j1,j2 in JunctionsInRemainingTruckPath s.t. j1 != j2}
+            Use the method `get_all_junctions_in_remaining_truck_path()` of the deliveries problem.
+            Notice: The problem is accessible via the `self.problem` field.
+            Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
+                distance calculations.
             Use python's built-in `max()` function. Note that `max()` can receive an *ITERATOR*
                 and return the item with the maximum value within this iterator.
             That is, you can simply write something like this:
@@ -35,8 +39,6 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
         >>>     for item1 in some_items_collection
         >>>     for item2 in some_items_collection
         >>>     if <some condition over item1 & item2>)
-            Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
-                distance calculations.
         """
         assert isinstance(self.problem, DeliveriesTruckProblem)
         assert isinstance(state, DeliveriesTruckState)
@@ -72,7 +74,7 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
         The remaining distance estimation is the cost of this built path.
         Note that we ignore here the problem constraints (like picking before dropping and maximum number of packages
          on the truck). We only make sure to visit all junctions in `all_junctions_in_remaining_truck_path`.
-        TODO:
+        TODO [Ex.20]:
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
              distance calculations.
@@ -127,7 +129,7 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
 
     def _calculate_junctions_mst_weight_using_air_distance(self, junctions: Set[Junction]) -> float:
         """
-        TODO: Implement this method.
+        TODO [Ex.23]: Implement this method.
               Use `networkx` (nx) package (already imported in this file) to calculate the weight
                of the minimum-spanning-tree of the graph in which the vertices are the given junctions
                and there is an edge between each pair of distinct junctions (no self-loops) for which

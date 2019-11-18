@@ -58,8 +58,9 @@ class MapProblem(GraphProblem):
         # Get the junction (in the map) that is represented by the state to expand.
         junction = self.streets_map[state_to_expand.junction_id]
 
-        # TODO: read the documentation of this method in the base class `GraphProblem.expand_state_with_costs()`.
-        # TODO: finish the implementation of this method.
+        # TODO [Ex.10]:
+        #  Read the documentation of this method in the base class `GraphProblem.expand_state_with_costs()`.
+        #  Finish the implementation of this method.
         #  Iterate over the outgoing links of the current junction (find the implementation of `Junction`
         #  type to see the exact field name). For each link:
         #    (1) Create the successor state (it should be an instance of class `MapState`). This state represents the
@@ -87,18 +88,18 @@ class MapProblem(GraphProblem):
             # Yield the successor state and the cost of the operator we used to get this successor.
             yield OperatorResult(successor_state=successor_state, operator_cost=operator_cost)
 
-    def get_zero_cost(self) -> Cost:
-        if self.zero_road_cost is not None:
-            return self.zero_road_cost
-        return 0.0
-
     def is_goal(self, state: GraphProblemState) -> bool:
         """
         :return: Whether a given map state represents the destination.
         """
         assert (isinstance(state, MapState))
 
-        # TODO: modify the returned value to indicate whether `state` is a final state.
+        # TODO [Ex.10]: modify the returned value to indicate whether `state` is a final state.
         # You may use the problem's input parameters (stored as fields of this object by the constructor).
         # return state.junction_id == 14593  # TODO: modify this!
         return state.junction_id == self.target_junction_id
+
+    def get_zero_cost(self) -> Cost:
+        if self.zero_road_cost is not None:
+            return self.zero_road_cost
+        return 0.0

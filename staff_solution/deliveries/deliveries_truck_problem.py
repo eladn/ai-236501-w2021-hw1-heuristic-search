@@ -51,11 +51,11 @@ class DeliveriesTruckState(GraphProblemState):
         """
         assert isinstance(other, DeliveriesTruckState)
 
-        # TODO: Complete the implementation of this method!
-        #       Note that you can simply compare two instances of `Junction` type
-        #        (using equals `==` operator) because the class `Junction` explicitly
-        #        implements the `__eq__()` method. The types `frozenset` and `Delivery`
-        #        are also comparable (in the same manner).
+        # TODO [Ex.15]: Complete the implementation of this method!
+        #  Note that you can simply compare two instances of `Junction` type
+        #   (using equals `==` operator) because the class `Junction` explicitly
+        #   implements the `__eq__()` method. The types `frozenset` and `Delivery`
+        #   are also comparable (in the same manner).
         # raise NotImplemented()  # TODO: remove this line.
 
         return self.loaded_deliveries == other.loaded_deliveries \
@@ -70,6 +70,17 @@ class DeliveriesTruckState(GraphProblemState):
         It is critical that two objects representing the same state would have the same hash!
         """
         return hash((self.loaded_deliveries, self.dropped_deliveries, self.current_location))
+
+    def get_total_nr_packages_loaded(self) -> int:
+        """
+        This method returns the total number of packages that are loaded on the truck in this state.
+        TODO [Ex.15]: Implement this method.
+         Notice that this method can be implemented using a single line of code - do so!
+         Use python's built-it `sum()` function.
+         Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
+        >>> sum(<some expression using item> for item in some_collection_of_items)
+        """
+        return sum(delivery.nr_packages for delivery in self.loaded_deliveries)
 
 
 @dataclass(frozen=True)
@@ -149,7 +160,7 @@ class DeliveriesTruckProblem(GraphProblem):
 
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
-        TODO: implement this method!
+        TODO [Ex.15]: implement this method!
         This method represents the `Succ: S -> P(S)` function of the deliveries truck problem.
         The `Succ` function is defined by the problem operators as shown in class.
         The deliveries truck problem operators are defined in the assignment instructions.
@@ -165,9 +176,9 @@ class DeliveriesTruckProblem(GraphProblem):
         # raise NotImplemented()  # TODO: remove this line!
 
         # Pick delivery
-        free_space_in_truck = self.problem_input.delivery_truck.max_nr_loaded_packages - len(state_to_expand.loaded_deliveries)
+        available_space_in_truck = self.problem_input.delivery_truck.max_nr_loaded_packages - state_to_expand.get_total_nr_packages_loaded()
         for delivery in self.get_deliveries_waiting_to_pick(state_to_expand):
-            if delivery.nr_packages > free_space_in_truck:
+            if delivery.nr_packages > available_space_in_truck:
                 continue
             new_state = DeliveriesTruckState(
                 loaded_deliveries=frozenset(state_to_expand.loaded_deliveries | {delivery}),
@@ -202,7 +213,7 @@ class DeliveriesTruckProblem(GraphProblem):
     def is_goal(self, state: GraphProblemState) -> bool:
         """
         This method receives a state and returns whether this state is a goal.
-        TODO: implement this method!
+        TODO [Ex.15]: implement this method!
         """
         assert isinstance(state, DeliveriesTruckState)
         # raise NotImplemented()  # TODO: remove the line!
@@ -210,17 +221,17 @@ class DeliveriesTruckProblem(GraphProblem):
 
     def _calc_map_road_cost(self, link: Link) -> DeliveryCost:
         """
-        TODO: Modify the implementation of this method, so that for a given link (road), it would return
-               the extended cost of this link. That is, the distance should remain as it is now, but both
-               the `time_cost` and the `money_cost` should be set appropriately.
-              Use the `optimal_velocity` and the `gas_cost_per_meter` returned by the method
-               `self.problem_input.delivery_truck.calc_optimal_driving_parameters()`, in order to calculate
-               the `time_cost` and the `money_cost`.
-              Note that the `money_cost` is the total gas cost for this given link plus the total fee paid
-               for driving on this road if this road is a toll road. Use the appropriate Link's field to
-               check whether is it a tool road and to get the distance of this road, and use the appropriate
-               field in the problem input (accessible by `self.problem_input`) to get the toll road cost per
-               meter.
+        TODO [Ex.xxx]: Modify the implementation of this method, so that for a given link (road), it would return
+                the extended cost of this link. That is, the distance should remain as it is now, but both
+                the `time_cost` and the `money_cost` should be set appropriately.
+            Use the `optimal_velocity` and the `gas_cost_per_meter` returned by the method
+                `self.problem_input.delivery_truck.calc_optimal_driving_parameters()`, in order to calculate
+                the `time_cost` and the `money_cost`.
+            Note that the `money_cost` is the total gas cost for this given link plus the total fee paid
+                for driving on this road if this road is a toll road. Use the appropriate Link's field to
+                check whether is it a tool road and to get the distance of this road, and use the appropriate
+                field in the problem input (accessible by `self.problem_input`) to get the toll road cost per
+                meter.
         """
         optimal_velocity, gas_cost_per_meter = self.problem_input.delivery_truck.calc_optimal_driving_parameters(
             optimization_objective=self.optimization_objective, max_driving_speed=link.max_speed)
@@ -245,16 +256,16 @@ class DeliveriesTruckProblem(GraphProblem):
         Given a lower bound of the distance (in meters) that the truck has left to travel,
          this method returns an appropriate lower bound of the distance/time/money cost
          based on the problem's objective.
-        TODO: We left only partial implementation of this method (just the trivial distance objective).
-              Complete the implementation of this method!
-              You might want to use constants like `MIN_ROAD_SPEED` or `MAX_ROAD_SPEED`.
-              For the money cost, you would like to use the method `self._calc_map_road_cost()`. This
-               method expects to get a `Link` instance and returns the (extended) cost of this road.
-               Although the `total_distance_lower_bound` actually represents an estimation for the
-               remaining route (and not an actual road on the map), you can simply create a `Link`
-               instance (that represents this whole remaining path) for this purpose.
-              Remember: The return value should be a real lower bound. This is required for the
-               heuristic to be acceptable.
+        TODO [Ex.xxx]: We left only partial implementation of this method (just the trivial distance objective).
+            Complete the implementation of this method!
+            You might want to use constants like `MIN_ROAD_SPEED` or `MAX_ROAD_SPEED`.
+            For the money cost, you would like to use the method `self._calc_map_road_cost()`. This
+                method expects to get a `Link` instance and returns the (extended) cost of this road.
+            Although the `total_distance_lower_bound` actually represents an estimation for the
+                remaining route (and not an actual road on the map), you can simply create a `Link`
+                instance (that represents this whole remaining path) for this purpose.
+            Remember: The return value should be a real lower bound. This is required for the
+                heuristic to be acceptable.
         """
         if self.optimization_objective == OptimizationObjective.Distance:
             return total_distance_lower_bound
@@ -271,12 +282,12 @@ class DeliveriesTruckProblem(GraphProblem):
     def get_deliveries_waiting_to_pick(self, state: DeliveriesTruckState) -> Set[Delivery]:
         """
         This method returns a set of all deliveries that haven't been neither picked nor dropped yet.
-        TODO: Implement this method.
-              Use `set` difference operations.
-              Note: Given a collection of items, you can create a new set of these items simply by
-               `set(my_collection_of_items)`. Then you can use set operations over this newly
-               generated set.
-              Note: This method can be implemented using a single line of code.
+        TODO [Ex.15]: Implement this method.
+            Use `set` difference operations.
+            Note: Given a collection of items, you can create a new set of these items simply by
+                `set(my_collection_of_items)`. Then you can use set operations over this newly
+                generated set.
+            Note: This method can be implemented using a single line of code.
         """
         # raise NotImplemented()  # TODO: remove this line!
         return (set(self.problem_input.deliveries) - state.dropped_deliveries) - state.loaded_deliveries
@@ -286,12 +297,12 @@ class DeliveriesTruckProblem(GraphProblem):
         This method returns a set of all junctions that are part of the remaining route of the truck.
         This includes the truck's current location, the pick locations of the deliveries that haven't
          been picked yet, and the drop location of the deliveries that haven't been dropped yet.
-        TODO: Implement this method.
-              Use `set` union operations.
-              Use the method `self.get_deliveries_waiting_to_pick(state)`.
-              Note: `set-comprehension` technique might be useful here. It works similar to the
-               `list-comprehension` technique. Example: {i * 10 for i in range(100)} would create
-               a set of the items {0, 10, 20, 30, ..., 990}
+        TODO [Ex.17]: Implement this method.
+            Use `set` union operations.
+            Use the method `self.get_deliveries_waiting_to_pick(state)`.
+            Note: `set-comprehension` technique might be useful here. It works similar to the
+                `list-comprehension` technique. Example: {i * 10 for i in range(100)} would create
+                a set of the items {0, 10, 20, 30, ..., 990}
         """
         # raise NotImplemented()  # TODO: remove this line!
         deliveries_waiting_to_pick = self.get_deliveries_waiting_to_pick(state)
