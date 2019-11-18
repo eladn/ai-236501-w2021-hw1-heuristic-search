@@ -70,6 +70,8 @@ class MapProblem(GraphProblem):
         #    (3) Yield an object of type `OperatorResult` with the successor state and the operator cost (you don't
         #        have to specify the operator name here). Find the definition of `OperatorResult` and check out its
         #        field.
+        #  Note: Generally, in order to check whether a variable is set to None you should use the expression:
+        #        `my_variable_to_check is None`, and particularly do NOT use comparison (==).
 
         # raise NotImplementedError()  # TODO: remove this line!
 

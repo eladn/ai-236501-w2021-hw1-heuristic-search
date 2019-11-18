@@ -23,7 +23,7 @@ class SearchNodesPriorityQueue:
 
     def push_node(self, node: SearchNode):
         assert node.state not in self._state_to_search_node_mapping
-        self._nodes_queue[node] = (node.expanding_priority, hash(node.state))
+        self._nodes_queue[node] = (node.expanding_priority, -node.g_cost, hash(node.state))
         self._state_to_search_node_mapping[node.state] = node
 
     def pop_next_node(self) -> SearchNode:

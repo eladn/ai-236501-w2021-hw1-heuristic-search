@@ -158,15 +158,15 @@ class DeliveriesTruckProblem(GraphProblem):
          a regular function, but a `generator function`. Hence, it should be implemented using
          the `yield` statement.
         For each successor state, a pair of the successor state and the operator cost is yielded.
+        You might want to use the method `self.get_deliveries_waiting_to_pick()` here.
         """
 
         assert isinstance(state_to_expand, DeliveriesTruckState)
         # raise NotImplemented()  # TODO: remove this line!
 
         # Pick delivery
-        deliveries_waiting_to_pick = (set(self.problem_input.deliveries) - state_to_expand.dropped_deliveries) - state_to_expand.loaded_deliveries
         free_space_in_truck = self.problem_input.delivery_truck.max_nr_loaded_packages - len(state_to_expand.loaded_deliveries)
-        for delivery in deliveries_waiting_to_pick:
+        for delivery in self.get_deliveries_waiting_to_pick(state_to_expand):
             if delivery.nr_packages > free_space_in_truck:
                 continue
             new_state = DeliveriesTruckState(
