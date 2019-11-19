@@ -160,7 +160,7 @@ class DeliveriesTruckProblem(GraphProblem):
 
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
-        TODO [Ex.15]: implement this method!
+        TODO [Ex.15]: Implement this method!
         This method represents the `Succ: S -> P(S)` function of the deliveries truck problem.
         The `Succ` function is defined by the problem operators as shown in class.
         The deliveries truck problem operators are defined in the assignment instructions.
@@ -168,8 +168,22 @@ class DeliveriesTruckProblem(GraphProblem):
         Notice that this its return type is an *Iterator*. It means that this function is not
          a regular function, but a `generator function`. Hence, it should be implemented using
          the `yield` statement.
-        For each successor state, a pair of the successor state and the operator cost is yielded.
-        You might want to use the method `self.get_deliveries_waiting_to_pick()` here.
+        For each successor, an object of type `OperatorResult` is yielded. This object describes the
+            successor state, the cost of the applied operator and its name. Look for its definition
+            and use the correct fields in its c'tor. The operator name should be in the following
+            format: `pick ClientName` (with the correct client name) if a pick operator was applied,
+            or `drop ClientName` if a drop operator was applied. The delivery object stores its
+            client name in one of its fields.
+        Things you might want to use:
+            - The method `self.get_total_nr_packages_loaded()`.
+            - The field `self.problem_input.delivery_truck.max_nr_loaded_packages`.
+            - The method `self.get_deliveries_waiting_to_pick()` here.
+            - The method `self.map_distance_finder.get_map_cost_between()` to calculate
+              the operator cost. Its returned value is the operator cost (as is).
+            - The c'tor for `DeliveriesTruckState` to create the new successor state.
+            - Python's built-in method `frozenset()` to create a new frozen set (for fields that
+              expect this type).
+            - Other fields of the state and the problem input.
         """
 
         assert isinstance(state_to_expand, DeliveriesTruckState)
