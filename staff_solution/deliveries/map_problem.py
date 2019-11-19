@@ -62,19 +62,18 @@ class MapProblem(GraphProblem):
         #  Read the documentation of this method in the base class `GraphProblem.expand_state_with_costs()`.
         #  Finish the implementation of this method.
         #  Iterate over the outgoing links of the current junction (find the implementation of `Junction`
-        #  type to see the exact field name). For each link:
+        #  type to see the exact field name to access the outgoing links). For each link:
         #    (1) Create the successor state (it should be an instance of class `MapState`). This state represents the
         #        target junction of the current link;
         #    (2) Calculate the operator cost: if `self.road_cost_fn` is None the operator cost should be
         #        `link.distance`, otherwise call the function `self.road_cost_fn` with the link as an argument
         #        and set the operator cost to be the returned value of this call;
         #    (3) Yield an object of type `OperatorResult` with the successor state and the operator cost (you don't
-        #        have to specify the operator name here). Find the definition of `OperatorResult` and check out its
-        #        field.
+        #        have to specify the operator name here).
         #  Note: Generally, in order to check whether a variable is set to None you should use the expression:
         #        `my_variable_to_check is None`, and particularly do NOT use comparison (==).
 
-        # raise NotImplementedError()  # TODO: remove this line!
+        # yield OperatorResult(successor_state=MapState(self.target_junction_id), operator_cost=7)  # TODO: remove this line!
 
         for outgoing_link in junction.outgoing_links:
             # Create the successor state (it should be an instance of class `MapState`).
