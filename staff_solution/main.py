@@ -38,6 +38,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
 
     # TODO: Plot the total distances with ax1. Use `ax1.plot(...)`.
     # TODO: Make this curve colored blue with solid line style.
+    # TODO: Set its label to be 'Solution cost'.
     # See documentation here:
     # https://matplotlib.org/2.0.0/api/_as_gen/matplotlib.axes.Axes.plot.html
     # You can also Google for additional examples.
@@ -55,6 +56,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # TODO: Plot the total expanded with ax2. Use `ax2.plot(...)`.
     # TODO: ax2: Make the y-axis label, ticks and tick labels match the line color.
     # TODO: Make this curve colored red with solid line style.
+    # TODO: Set its label to be '#Expanded states'.
     # raise NotImplemented()  # TODO: remove this line!
     p2, = ax2.plot(weights, total_nr_expanded, 'r-', label='#Expanded states')
     ax2.set_ylabel('states expanded', color='r')
@@ -84,7 +86,7 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
     #     Don't forget to pass `max_nr_states_to_expand` to the AStar c'tor.
     #  3. Call the function `plot_distance_and_expanded_wrt_weight_figure()`
     #     with these 3 generated lists.
-    # raise NotImplemented()  # TODO: remove!
+    # raise NotImplemented()  # TODO: remove this line!
     total_cost = []
     total_nr_expanded = []
     weights = np.linspace(0.5, 1, n)
