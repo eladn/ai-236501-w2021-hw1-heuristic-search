@@ -5,7 +5,7 @@ from .utils.timer import Timer
 
 class AnytimeAStar(GraphProblemSolver):
     """
-    This class implements the (weighted) anytime A* search algorithm.
+    This class implements a variation of the Anytime A* search algorithm.
     We execute (weighted) AStar for multiple values of `w` (=`heuristic_weight`) in a "binary-search-way" over `w`,
      and look for the best solution we can find using a limited number of expanded states for each AStar execution.
     Performs a binary search over the values [0.5, 1]. As always, the binary search has two bounds maintained during
