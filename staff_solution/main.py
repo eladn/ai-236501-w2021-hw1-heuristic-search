@@ -308,7 +308,7 @@ def big_deliveries_truck_problem_with_non_acceptable_heuristic_and_anytime_astar
 
     big_delivery_problem_with_distance_cost = get_deliveries_problem('big', OptimizationObjective.Distance)
 
-    # Ex.xxx
+    # Ex.35
     # TODO: create an instance of `AnytimeAStar` once with the `TruckDeliveriesSumAirDistHeuristic`,
     #       and then with the `TruckDeliveriesMSTAirDistHeuristic`, both with `max_nr_states_to_expand_per_iteration`
     #       set to 400, solve the `big_delivery_problem_with_distance_cost` with it and print the results.
