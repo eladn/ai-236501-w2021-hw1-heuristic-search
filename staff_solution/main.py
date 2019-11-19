@@ -134,7 +134,7 @@ def toy_map_problem_experiments():
     #  1. Complete the implementation of the function
     #     `run_astar_for_weights_in_range()` (upper in this file).
     #  2. Complete the implementation of the function
-    #     `plot_distance_and_expanded_by_weight_figure()`
+    #     `plot_distance_and_expanded_wrt_weight_figure()`
     #     (upper in this file).
     #  3. Call here the function `run_astar_for_weights_in_range()`
     #     with `AirDistHeuristic` and `toy_map_problem`.
@@ -147,17 +147,22 @@ def toy_map_problem_experiments():
 # --------------------------------------------------------------------
 
 loaded_problem_inputs_by_size = {}
+loaded_problems_by_size_and_opt_obj = {}
 
 
 def get_deliveries_problem(problem_input_size: str = 'small', optimization_objective: OptimizationObjective = OptimizationObjective.Distance):
+    if (problem_input_size, optimization_objective) in loaded_problems_by_size_and_opt_obj:
+        return loaded_problems_by_size_and_opt_obj[(problem_input_size, optimization_objective)]
     assert problem_input_size in {'small', 'moderate', 'big'}
     if problem_input_size not in loaded_problem_inputs_by_size:
         loaded_problem_inputs_by_size[problem_input_size] = DeliveriesTruckProblemInput.load_from_file(
             f'{problem_input_size}_delivery.in', streets_map)
-    return DeliveriesTruckProblem(
+    problem = DeliveriesTruckProblem(
         problem_input=loaded_problem_inputs_by_size[problem_input_size],
         streets_map=streets_map,
         optimization_objective=optimization_objective)
+    loaded_problems_by_size_and_opt_obj[(problem_input_size, optimization_objective)] = problem
+    return problem
 
 
 def basic_deliveries_truck_problem_experiments():
@@ -271,11 +276,11 @@ def deliveries_truck_problem_with_astar_epsilon_experiments():
         return focal_heuristic.estimate(node.state)
 
     # Ex.33
-    # Try using A*eps to improve the speed (#dev).
-    # TODO: create an instance of `AStarEpsilon` with the `TruckDeliveriesSumAirDistHeuristic`,
+    # Try using A*eps to improve the speed (#dev) with a non-acceptable heuristic.
+    # TODO: create an instance of `AStarEpsilon` with the `TruckDeliveriesMSTAirDistHeuristic`,
     #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
     #       use focal_epsilon=0.03, and  max_focal_size=40.
-    #       use `within_focal_h_sum_priority_function`
+    #       use within_focal_priority_function=within_focal_h_sum_priority_function
     # exit()  # TODO: remove!
     astar_eps = AStarEpsilon(
         TruckDeliveriesMSTAirDistHeuristic, within_focal_priority_function=within_focal_h_sum_priority_function,
