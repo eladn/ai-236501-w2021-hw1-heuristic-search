@@ -235,7 +235,7 @@ def multiple_objectives_deliveries_truck_problem_experiments():
     small_delivery_problem_with_time_cost = get_deliveries_problem('small', OptimizationObjective.Time)
     small_delivery_problem_with_money_cost = get_deliveries_problem('small', OptimizationObjective.Money)
 
-    # Ex.xxx
+    # Ex.29
     # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
     #       solve the `small_delivery_problem_with_time_cost` with it and print the results.
     # exit()  # TODO: remove!
@@ -243,7 +243,7 @@ def multiple_objectives_deliveries_truck_problem_experiments():
     res = astar.solve_problem(small_delivery_problem_with_time_cost)
     print(res)
 
-    # Ex.xxx
+    # Ex.29
     # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
     #       solve the `small_delivery_problem_with_money_cost` with it and print the results.
     # exit()  # TODO: remove!

@@ -235,25 +235,25 @@ class DeliveriesTruckProblem(GraphProblem):
 
     def _calc_map_road_cost(self, link: Link) -> DeliveryCost:
         """
-        TODO [Ex.xxx]: Modify the implementation of this method, so that for a given link (road), it would return
+        TODO [Ex.27]: Modify the implementation of this method, so that for a given link (road), it would return
                 the extended cost of this link. That is, the distance should remain as it is now, but both
                 the `time_cost` and the `money_cost` should be set appropriately.
             Use the `optimal_velocity` and the `gas_cost_per_meter` returned by the method
                 `self.problem_input.delivery_truck.calc_optimal_driving_parameters()`, in order to calculate
-                the `time_cost` and the `money_cost`.
+                both the `time_cost` and the `money_cost`.
             Note that the `money_cost` is the total gas cost for this given link plus the total fee paid
                 for driving on this road if this road is a toll road. Use the appropriate Link's field to
-                check whether is it a tool road and to get the distance of this road, and use the appropriate
-                field in the problem input (accessible by `self.problem_input`) to get the toll road cost per
-                meter.
+                check whether is it a toll road and to get the distance of this road. Additionally, use the
+                appropriate field in the problem input (accessible by `self.problem_input`) to get the toll road
+                cost per meter.
         """
         optimal_velocity, gas_cost_per_meter = self.problem_input.delivery_truck.calc_optimal_driving_parameters(
             optimization_objective=self.optimization_objective, max_driving_speed=link.max_speed)
         # return DeliveryCost(
         #     distance_cost=link.distance,
-        #     time_cost=0,
-        #     money_cost=0,
-        #     optimization_objective=self.optimization_objective)  # TODO: modify this!
+        #     time_cost=0,  # TODO: modify this value!
+        #     money_cost=0,  # TODO: modify this value!
+        #     optimization_objective=self.optimization_objective)
 
         return DeliveryCost(
             distance_cost=link.distance,
@@ -270,7 +270,7 @@ class DeliveriesTruckProblem(GraphProblem):
         Given a lower bound of the distance (in meters) that the truck has left to travel,
          this method returns an appropriate lower bound of the distance/time/money cost
          based on the problem's objective.
-        TODO [Ex.xxx]: We left only partial implementation of this method (just the trivial distance objective).
+        TODO [Ex.28]: We left only partial implementation of this method (just the trivial distance objective).
             Complete the implementation of this method!
             You might want to use constants like `MIN_ROAD_SPEED` or `MAX_ROAD_SPEED`.
             For the money cost, you would like to use the method `self._calc_map_road_cost()`. This
