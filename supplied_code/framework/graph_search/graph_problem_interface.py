@@ -1,5 +1,7 @@
 import abc
 from typing import Iterator, Tuple, Optional, Type, NamedTuple, Union, Callable
+from itertools import islice
+from enum import Enum
 
 
 """
@@ -7,10 +9,10 @@ We define `__all__` variable in order to set which names will be
 imported when writing (from another file):
 >>> from framework.graph_search.graph_problem_interface import *
 """
-__all__ = ['GraphProblemState', 'GraphProblem', 'GraphProblemStatesPath', 'SearchNode',
+__all__ = ['GraphProblemState', 'GraphProblem', 'GraphProblemStatesPath', 'SearchNode', 'StatesPathNode',
            'SearchResult', 'GraphProblemSolver',
            'HeuristicFunction', 'HeuristicFunctionType', 'NullHeuristic',
-           'GraphProblemError']
+           'GraphProblemError', 'Cost', 'ExtendedCost', 'OperatorResult', 'StopReason']
 
 
 class GraphProblemError(Exception):
@@ -53,6 +55,40 @@ class GraphProblemState(abc.ABC):
         """
 
 
+class ExtendedCost(abc.ABC):
+    """
+    Used as an interface for a cost type.
+    Custom cost type is needed when a problem has multiple cost functions that
+     each one of them should individually accumulated during the search.
+    The `g_cost` is a single float scalar that should be eventually optimized
+     by the search algorithm. The `g_cost` can be, for example, just one of the
+     accumulated cost functions, or any function of these.
+    """
+
+    @abc.abstractmethod
+    def get_g_cost(self) -> float: ...
+
+    @abc.abstractmethod
+    def __add__(self, other) -> 'ExtendedCost': ...
+
+
+Cost = Union[float, ExtendedCost]
+
+
+class OperatorResult(NamedTuple):
+    successor_state: GraphProblemState
+    operator_cost: Cost
+    operator_name: Optional[str] = None
+
+
+class StatesPathNode(NamedTuple):
+    state: GraphProblemState
+    last_operator_cost: Cost
+    cumulative_cost: Cost
+    cumulative_g_cost: Cost
+    last_operator_name: Optional[str] = None
+
+
 class GraphProblem(abc.ABC):
     """
     This class defines an *interface* used to represent a states-space, as learnt in class.
@@ -68,13 +104,14 @@ class GraphProblem(abc.ABC):
         self.initial_state = initial_state
 
     @abc.abstractmethod
-    def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[Tuple[GraphProblemState, float]]:
+    def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
         This is an abstract method that must be implemented by the inheritor class.
-        This method represents the `Succ: S -> P(S)` function learnt in class.
+        This method represents the `Succ: S -> P(S)` function (as learnt in class) of the problem.
         It receives a state and iterates over the successor states.
         Notice that this is an *Iterator*. Hence it should be implemented using the `yield` keyword.
-        For each successor, a pair of the successor state and the operator cost is yielded.
+        For each successor, an object of type `OperatorResult` is yielded. This object describes the
+            successor state, the cost of the applied operator and its name.
         """
         ...
 
@@ -86,6 +123,18 @@ class GraphProblem(abc.ABC):
         """
         ...
 
+    def get_zero_cost(self) -> Cost:
+        """
+        The search algorithm should be able to use a zero cost object in order to
+         initialize the cumulative cost.
+        The default implementation assumes the problem uses `float` cost, and hence
+         simply returns scalar value of `0`.
+        When using an extended cost type (and not just float scalar), this method
+         should be overridden and return an instance (of the extended cost type)
+         with a "zero cost" meaning.
+        """
+        return 0.0
+
     def solution_additional_str(self, result: 'SearchResult') -> str:
         """
         This method may be overridden by the inheritor class.
@@ -95,7 +144,7 @@ class GraphProblem(abc.ABC):
         return ''
 
 
-class GraphProblemStatesPath(Tuple[GraphProblemState]):
+class GraphProblemStatesPath(Tuple[StatesPathNode]):
     """
     This class represents a path of states.
     It is just a tuple of GraphProblemState objects.
@@ -109,7 +158,14 @@ class GraphProblemStatesPath(Tuple[GraphProblemState]):
         return all(s1 == s2 for s1, s2 in zip(self, other))
 
     def __str__(self):
-        return '[' + (', '.join(str(state) for state in self)) + ']'
+        if len(self) == 0:
+            return '[]'
+        return '[' + str(self[0].state) + \
+               ''.join(f'  ={"" if action.last_operator_name is None else f"=({action.last_operator_name})="}=>  ' + str(action.state)
+                       for action in islice(self, 1, None))\
+               + ']'
+
+        # return '[' + (' ==> '.join(str(state) for state in self)) + ']'
 
 
 class SearchNode:
@@ -122,25 +178,17 @@ class SearchNode:
 
     def __init__(self, state: GraphProblemState,
                  parent_search_node: Optional['SearchNode'] = None,
-                 operator_cost: float = 0,
+                 operator_cost: Cost = 0.0, operator_name: Optional[str] = None,
                  expanding_priority: Optional[float] = None):
         self.state: GraphProblemState = state
         self.parent_search_node: SearchNode = parent_search_node
-        self.operator_cost: float = operator_cost
-        self.cost: Optional[float] = None
+        self.operator_cost: Cost = operator_cost
+        self.operator_name: Optional[str] = operator_name
         self.expanding_priority: Optional[float] = expanding_priority
 
-        self.cost = operator_cost
+        self.cost: Cost = operator_cost
         if self.parent_search_node is not None:
             self.cost += self.parent_search_node.cost
-
-    def to_log_format(self):
-        return {
-            'state': str(self.state),
-            'operator_cost': self.operator_cost,
-            'cost': self.cost,
-            'expanding_priority': self.expanding_priority
-        }
 
     def traverse_back_to_root(self) -> Iterator['SearchNode']:
         """
@@ -158,16 +206,26 @@ class SearchNode:
         :return: A path of *states* represented by the nodes
         in the path from the root to this node.
         """
-        path = [node.state for node in self.traverse_back_to_root()]
+        path = [StatesPathNode(state=node.state, last_operator_cost=node.operator_cost,
+                               cumulative_cost=node.cost, cumulative_g_cost=node.g_cost,
+                               last_operator_name=node.operator_name)
+                for node in self.traverse_back_to_root()]
         path.reverse()
         return GraphProblemStatesPath(path)
 
-    def get_canonical_hash(self) -> int:
-        if self.state.__class__.__name__ == 'MapState':
-            return hash(self.state.junction_id)
-        elif self.state.__class__.__name__ == 'RelaxedDeliveriesState' or self.state.__class__.__name__ == 'StrictDeliveriesState':
-            return hash((self.state.current_location, self.state.dropped_so_far, self.state.fuel_as_int))
-        raise GraphProblemError()
+    @property
+    def g_cost(self) -> float:
+        if isinstance(self.cost, float):
+            return self.cost
+        else:
+            assert isinstance(self.cost, ExtendedCost)
+            return self.cost.get_g_cost()
+
+
+class StopReason(Enum):
+    CompletedRunSuccessfully = 'CompletedRunSuccessfully'
+    ExceededMaxNrIteration = 'ExceededMaxNrIteration'
+    ExceededMaxNrStatesToExpand = 'ExceededMaxNrStatesToExpand'
 
 
 class SearchResult(NamedTuple):
@@ -180,40 +238,54 @@ class SearchResult(NamedTuple):
     solver: 'GraphProblemSolver'
     """The problem that the solver has attempted to solve."""
     problem: GraphProblem
-    """The node that represents the goal found. Set to `None` if no result had been found."""
-    final_search_node: Optional[SearchNode]
     """The number of expanded states during the search."""
     nr_expanded_states: int
+    """The maximum number of states that have been stored in open & close states during the search."""
+    max_nr_stored_states: int
     """The time (in seconds) took to solve."""
-    solving_time: float
+    solving_time: Optional[float] = None
+    """States path (including the applied operators) from the initial state to the final found goal state.
+            Set to `None` if no result had been found."""
+    solution_path: Optional[GraphProblemStatesPath] = None
+    """Number of iterations (for an iterative algorithm like iterative-deepening)"""
+    nr_iterations: Optional[int] = None
+    """Whether the search ended as expected or stopped because of end of resources."""
+    stop_reason: StopReason = StopReason.CompletedRunSuccessfully
 
     def __str__(self):
         """
         Enhanced string formatting for the search result.
         """
 
-        res_str = '{problem_name: <35}' \
-                   '   {solver_name: <27}' \
-                   '   time: {solving_time:6.2f}' \
-                   '   #dev: {nr_expanded_states: <5}'.format(
-            problem_name=self.problem.name,
-            solver_name=self.solver.solver_name,
-            solving_time=self.solving_time,
-            nr_expanded_states=self.nr_expanded_states
-        )
+        res_str = f'{self.problem.name: <35}' \
+                  f'   {self.solver.solver_name: <27}'
+
+        if self.solving_time is not None:
+            res_str += f'   time: {self.solving_time:6.2f}'
+
+        res_str += f'   #dev: {self.nr_expanded_states: <5}' \
+                   f'   |space|: {self.max_nr_stored_states: <6}'
+
+        if self.nr_iterations is not None:
+            res_str += f'   #iter: {self.nr_iterations: <3}'
+
+        if self.stop_reason != StopReason.CompletedRunSuccessfully:
+            assert not self.is_solution_found
+            StopReasonToDescriptionMapping = {
+                StopReason.ExceededMaxNrStatesToExpand: 'Exceeded max number of states to expand!',
+                StopReason.ExceededMaxNrIteration: 'Exceeded max number of iterations!'
+            }
+            return res_str + '   ' + StopReasonToDescriptionMapping[self.stop_reason]
 
         # no solution found by solver
-        if self.final_search_node is None:
+        if not self.is_solution_found:
             return res_str + '   NO SOLUTION FOUND !!!'
 
-        path = self.make_path()
-        res_str += '   total_cost: {cost:11.5f}' \
-                   '   |path|: {path_len: <3}' \
-                   '   path: {path}'.format(
-            cost=self.final_search_node.cost,
-            path_len=len(path),
-            path=str(path)
-        )
+        res_str += f'   total_g_cost: {self.solution_g_cost:11.5f}'
+        if not isinstance(self.solution_cost, float):
+            res_str += f'   total_cost: {self.solution_cost}'
+        res_str += f'   |path|: {len(self.solution_path): <3}' \
+                   f'   path: {str(self.solution_path)}'
 
         additional_str = self.problem.solution_additional_str(self)
         if additional_str:
@@ -221,8 +293,21 @@ class SearchResult(NamedTuple):
 
         return res_str
 
-    def make_path(self):
-        return self.final_search_node.make_states_path()
+    @property
+    def is_solution_found(self) -> bool:
+        return self.solution_path is not None
+
+    @property
+    def solution_cost(self) -> Optional[Cost]:
+        return None if self.solution_path is None else self.solution_path[-1].cumulative_cost
+
+    @property
+    def solution_g_cost(self) -> Optional[Cost]:
+        return None if self.solution_path is None else self.solution_path[-1].cumulative_g_cost
+
+    @property
+    def solution_final_state(self) -> Optional[GraphProblemState]:
+        return None if self.solution_path is None else self.solution_path[-1].state
 
 
 class GraphProblemSolver(abc.ABC):

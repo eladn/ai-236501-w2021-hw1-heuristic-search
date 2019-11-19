@@ -1,5 +1,6 @@
 from .graph_problem_interface import *
 from .best_first_search import BestFirstSearch
+from typing import Optional
 
 
 class UniformCost(BestFirstSearch):
@@ -10,9 +11,9 @@ class UniformCost(BestFirstSearch):
 
     solver_name = 'UniformCost'
 
-    def __init__(self):
+    def __init__(self, max_nr_states_to_expand: Optional[int] = None):
         # Uniform Cost is a graph search algorithm. Hence, we use close set.
-        super(UniformCost, self).__init__(use_close=True)
+        super(UniformCost, self).__init__(use_close=True, max_nr_states_to_expand=max_nr_states_to_expand)
 
     def _open_successor_node(self, problem: GraphProblem, successor_node: SearchNode):
         if self.close.has_state(successor_node.state):
@@ -27,5 +28,4 @@ class UniformCost(BestFirstSearch):
             self.open.push_node(successor_node)
 
     def _calc_node_expanding_priority(self, search_node: SearchNode) -> float:
-        assert(search_node.cost is not None)
-        return search_node.cost
+        return search_node.g_cost
