@@ -63,7 +63,7 @@ class AnytimeAStar(GraphProblemSolver):
             low_heuristic_weight = 0.5
             high_heuristic_weight = 1.0
             while (high_heuristic_weight - low_heuristic_weight) > 0.01:
-                # TODO:
+                # TODO [Ex.34]:
                 #  Complete the missing part inside this loop.
                 #  Perform a binary search over the possible values of `heuristic_weight`.
                 #  In each iteration, create an AStar solver with:
@@ -80,23 +80,7 @@ class AnytimeAStar(GraphProblemSolver):
                 #   (SearchResult object) found with the best g-cost (use `solution_g_cost` field of SearchResult to
                 #   obtain the g-cost of a solution).
                 #  Make sure to also read the big comment in the head of this class.
-                # raise NotImplementedError()   # TODO: remove this line!
-
-                mid_heuristic_weight = (low_heuristic_weight + high_heuristic_weight) / 2
-                # print(f'low: {low_heuristic_weight} -- mid: {mid_heuristic_weight} -- high: {high_heuristic_weight}')  # TODO: remove!
-                astar = AStar(heuristic_function_type=self.heuristic_function_type,
-                              heuristic_weight=mid_heuristic_weight,
-                              max_nr_states_to_expand=self.max_nr_states_to_expand_per_iteration)
-                res = astar.solve_problem(problem)
-                total_nr_expanded_states += res.nr_expanded_states
-                max_nr_stored_states = max(max_nr_stored_states, res.max_nr_stored_states)
-                if res.is_solution_found:
-                    high_heuristic_weight = mid_heuristic_weight
-                    if res.solution_g_cost < best_solution.solution_g_cost:
-                        best_solution = res
-                        best_heuristic_weight = mid_heuristic_weight
-                else:
-                    low_heuristic_weight = mid_heuristic_weight
+                raise NotImplementedError()   # TODO: remove this line!
 
         self.solver_name = f'{self.__class__.solver_name} (h={best_solution.solver.heuristic_function.heuristic_name}, w={best_heuristic_weight:.3f})'
         return best_solution._replace(

@@ -56,11 +56,7 @@ class DeliveriesTruckState(GraphProblemState):
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset` and `Delivery`
         #   are also comparable (in the same manner).
-        # raise NotImplemented()  # TODO: remove this line.
-
-        return self.loaded_deliveries == other.loaded_deliveries \
-               and self.dropped_deliveries == other.dropped_deliveries \
-               and self.current_location == other.current_location
+        raise NotImplementedError()  # TODO: remove this line.
 
     def __hash__(self):
         """
@@ -80,7 +76,7 @@ class DeliveriesTruckState(GraphProblemState):
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
         >>> sum(<some expression using item> for item in some_collection_of_items)
         """
-        return sum(delivery.nr_packages for delivery in self.loaded_deliveries)
+        raise NotImplementedError()  # TODO: remove this line.
 
 
 @dataclass(frozen=True)
@@ -187,42 +183,7 @@ class DeliveriesTruckProblem(GraphProblem):
         """
 
         assert isinstance(state_to_expand, DeliveriesTruckState)
-        # raise NotImplemented()  # TODO: remove this line!
-
-        # Pick delivery
-        available_space_in_truck = self.problem_input.delivery_truck.max_nr_loaded_packages - state_to_expand.get_total_nr_packages_loaded()
-        for delivery in self.get_deliveries_waiting_to_pick(state_to_expand):
-            if delivery.nr_packages > available_space_in_truck:
-                continue
-            new_state = DeliveriesTruckState(
-                loaded_deliveries=frozenset(state_to_expand.loaded_deliveries | {delivery}),
-                dropped_deliveries=state_to_expand.dropped_deliveries,
-                current_location=delivery.pick_location
-            )
-            operator_cost = self.map_distance_finder.get_map_cost_between(
-                state_to_expand.current_location, delivery.pick_location)
-            assert isinstance(operator_cost, DeliveryCost)
-            assert operator_cost.optimization_objective == self.optimization_objective
-            yield OperatorResult(
-                successor_state=new_state,
-                operator_cost=operator_cost,
-                operator_name=f'pick {delivery.client_name}')
-
-        # Drop delivery
-        for delivery in state_to_expand.loaded_deliveries:
-            new_state = DeliveriesTruckState(
-                loaded_deliveries=frozenset(state_to_expand.loaded_deliveries - {delivery}),
-                dropped_deliveries=frozenset(state_to_expand.dropped_deliveries | {delivery}),
-                current_location=delivery.drop_location
-            )
-            operator_cost = self.map_distance_finder.get_map_cost_between(
-                state_to_expand.current_location, delivery.drop_location)
-            assert isinstance(operator_cost, DeliveryCost)
-            assert operator_cost.optimization_objective == self.optimization_objective
-            yield OperatorResult(
-                successor_state=new_state,
-                operator_cost=operator_cost,
-                operator_name=f'drop {delivery.client_name}')
+        raise NotImplementedError()  # TODO: remove this line!
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -230,8 +191,7 @@ class DeliveriesTruckProblem(GraphProblem):
         TODO [Ex.15]: implement this method!
         """
         assert isinstance(state, DeliveriesTruckState)
-        # raise NotImplemented()  # TODO: remove the line!
-        return state.dropped_deliveries == set(self.problem_input.deliveries)
+        raise NotImplementedError()  # TODO: remove the line!
 
     def _calc_map_road_cost(self, link: Link) -> DeliveryCost:
         """
@@ -249,16 +209,10 @@ class DeliveriesTruckProblem(GraphProblem):
         """
         optimal_velocity, gas_cost_per_meter = self.problem_input.delivery_truck.calc_optimal_driving_parameters(
             optimization_objective=self.optimization_objective, max_driving_speed=link.max_speed)
-        # return DeliveryCost(
-        #     distance_cost=link.distance,
-        #     time_cost=0,  # TODO: modify this value!
-        #     money_cost=0,  # TODO: modify this value!
-        #     optimization_objective=self.optimization_objective)
-
         return DeliveryCost(
             distance_cost=link.distance,
-            time_cost=link.distance / optimal_velocity,
-            money_cost=gas_cost_per_meter * link.distance + (self.problem_input.toll_road_cost_per_meter * link.distance if link.is_toll_road else 0),
+            time_cost=0,  # TODO: modify this value!
+            money_cost=0,  # TODO: modify this value!
             optimization_objective=self.optimization_objective)
 
     def get_zero_cost(self) -> Cost:
@@ -285,14 +239,10 @@ class DeliveriesTruckProblem(GraphProblem):
         if self.optimization_objective == OptimizationObjective.Distance:
             return total_distance_lower_bound
         elif self.optimization_objective == OptimizationObjective.Time:
-            # raise NotImplemented()  # TODO: remove this line and complete the implementation of this case!
-            return total_distance_lower_bound / MAX_ROAD_SPEED
+            raise NotImplementedError()  # TODO: remove this line and complete the implementation of this case!
         else:
             assert self.optimization_objective == OptimizationObjective.Money
-            # raise NotImplemented()  # TODO: remove this line and complete the implementation of this case!
-            lower_bound_for_gas_cost_of_driving_remaining_roads = self._calc_map_road_cost(
-                Link(0, 0, total_distance_lower_bound, 0, MAX_ROAD_SPEED, False)).money_cost
-            return lower_bound_for_gas_cost_of_driving_remaining_roads
+            raise NotImplementedError()  # TODO: remove this line and complete the implementation of this case!
 
     def get_deliveries_waiting_to_pick(self, state: DeliveriesTruckState) -> Set[Delivery]:
         """
@@ -304,8 +254,7 @@ class DeliveriesTruckProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code.
         """
-        # raise NotImplemented()  # TODO: remove this line!
-        return (set(self.problem_input.deliveries) - state.dropped_deliveries) - state.loaded_deliveries
+        raise NotImplementedError()  # TODO: remove this line!
 
     def get_all_junctions_in_remaining_truck_path(self, state: DeliveriesTruckState) -> Set[Junction]:
         """
@@ -319,12 +268,7 @@ class DeliveriesTruckProblem(GraphProblem):
                 `list-comprehension` technique. Example: {i * 10 for i in range(100)} would create
                 a set of the items {0, 10, 20, 30, ..., 990}
         """
-        # raise NotImplemented()  # TODO: remove this line!
-        deliveries_waiting_to_pick = self.get_deliveries_waiting_to_pick(state)
-        return {delivery.pick_location for delivery in deliveries_waiting_to_pick} | \
-               {delivery.drop_location for delivery in deliveries_waiting_to_pick} | \
-               {delivery.drop_location for delivery in state.loaded_deliveries} | \
-               {state.current_location}
+        raise NotImplementedError()  # TODO: remove this line!
 
 
 class TruckDeliveriesInnerMapProblemHeuristic(HeuristicFunction):

@@ -48,11 +48,6 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
             return 0
 
         total_distance_lower_bound = 10  # TODO: modify this line.
-        total_distance_lower_bound = max(
-            self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2)
-            for junction1 in all_junctions_in_remaining_truck_path
-            for junction2 in all_junctions_in_remaining_truck_path
-            if junction1 != junction2)
 
         return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_distance_lower_bound)
 
@@ -87,19 +82,7 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
         if len(all_junctions_in_remaining_truck_path) < 2:
             return 0
 
-        # raise NotImplemented()  # TODO: remove this line and complete the missing part here!
-
-        last_location = state.current_location
-        total_cost_of_greedily_built_path = 0
-        while len(all_junctions_in_remaining_truck_path) > 1:
-            all_junctions_in_remaining_truck_path.remove(last_location)
-            locs_and_dist = [
-                (loc, self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc))
-                for loc in all_junctions_in_remaining_truck_path]
-            min_dist_idx = np.argmin(np.array([dist for _, dist in locs_and_dist]))
-            next_location = locs_and_dist[min_dist_idx][0]
-            total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
-            last_location = next_location
+        total_cost_of_greedily_built_path = 10  # TODO: modify this line and complete the missing implementation here.
 
         return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_cost_of_greedily_built_path)
 
@@ -138,16 +121,4 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
                to calculate the air distance between the two junctions.
               Google for how to use `networkx` package for this purpose.
         """
-        # raise NotImplemented()  # TODO: remove this line!
-
-        junctions_graph = nx.Graph()
-        idx_to_junction = {idx: vertex for idx, vertex in enumerate(junctions)}
-        for junction1_idx, junction1 in idx_to_junction.items():
-            for junction2_idx, junction2 in idx_to_junction.items():
-                if junction1_idx == junction2_idx:
-                    continue
-                junctions_graph.add_edge(
-                    junction1_idx, junction2_idx,
-                    weight=self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2))
-        junctions_mst = nx.minimum_spanning_tree(junctions_graph)
-        return sum(d['weight'] for (u, v, d) in junctions_mst.edges(data=True))
+        raise NotImplementedError()  # TODO: remove this line!
