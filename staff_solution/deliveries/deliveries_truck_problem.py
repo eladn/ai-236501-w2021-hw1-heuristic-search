@@ -275,6 +275,7 @@ class DeliveriesTruckProblem(GraphProblem):
             You might want to use constants like `MIN_ROAD_SPEED` or `MAX_ROAD_SPEED`.
             For the money cost, you would like to use the method `self._calc_map_road_cost()`. This
                 method expects to get a `Link` instance and returns the (extended) cost of this road.
+                You'll have to take the money cost from this extended cost.
             Although the `total_distance_lower_bound` actually represents an estimation for the
                 remaining route (and not an actual road on the map), you can simply create a `Link`
                 instance (that represents this whole remaining path) for this purpose.
