@@ -16,8 +16,8 @@ from framework import *
 from deliveries import *
 from tests_utils import *
 
-# Load the map
-roads = load_map_from_csv(Consts.get_data_file_path("tlv.csv"))
+# Load the streets map
+streets_map = StreetsMap.load_from_csv(Consts.get_data_file_path("tlv_streets_map.csv"))
 
 # Make `np.random` behave deterministic.
 # Notice: It is set again on `test.run_test()`, using the test index to also effect the seed.
@@ -37,7 +37,7 @@ def run_tests_and_write_results():
         execution_log_file = open(execution_log_file_path, 'w')
     with open(results_output_file_path, 'w') as results_output_file:
         for test in tests_suit:
-            test_result, res, execution_log = test.run_test(roads, store_execution_log=bool(execution_log_file_path))
+            test_result, res, execution_log = test.run_test(streets_map, store_execution_log=bool(execution_log_file_path))
             print(res)
             assert test_result is not None
             results_output_file.write(test_result.serialize())

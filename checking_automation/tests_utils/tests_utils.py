@@ -1,4 +1,5 @@
 import os
+import argparse
 import sys
 import shutil
 from typing import *
@@ -12,7 +13,8 @@ from .tests_consts import *
 
 __all__ = ['timeout_exec', 'TestResult', 'is_dir_contains_files', 'iterate_inner_directories',
            'make_dirs_if_not_exist', 'dyn_load_module', 'Submission',
-           'SolverFactory', 'ProblemFactory', 'SubmissionTest', 'SubmissionTestsSuit']
+           'SolverFactory', 'ProblemFactory', 'SubmissionTest', 'SubmissionTestsSuit',
+           'argparse_file_path_type', 'argparse_dir_path_type']
 
 
 # I tried to limit the execution time for each test separately.
@@ -86,6 +88,7 @@ class SolverFactory(NamedTuple):
     name: str
     heuristic_name: Optional[str] = None
     params: Tuple = ()
+    ctor_kwargs: Dict = {}
 
     def create_instance(self):
         framework_module = importlib.import_module('framework')
@@ -102,7 +105,7 @@ class SolverFactory(NamedTuple):
             else:
                 heuristic_ctor = deliveries_module.__dict__[self.heuristic_name]
             solver_ctor_args = (heuristic_ctor,) + solver_ctor_args
-        solver_instance = solver_ctor(*solver_ctor_args)
+        solver_instance = solver_ctor(*solver_ctor_args, **self.ctor_kwargs)
         return solver_instance
 
     def get_full_name(self):
@@ -126,8 +129,8 @@ class ProblemFactory(NamedTuple):
     def create_instance(self, roads):
         deliveries_module = importlib.import_module('deliveries')
         problem_ctor = deliveries_module.__dict__[self.name]
-        use_problem_input = self.name == 'RelaxedDeliveriesProblem' or self.name == 'StrictDeliveriesProblem'
-        use_roads_in_problem_ctor = self.name == 'MapProblem' or self.name == 'StrictDeliveriesProblem'
+        use_problem_input = self.name == 'DeliveriesTruckProblem'
+        use_roads_in_problem_ctor = self.name == 'MapProblem' or self.name == 'DeliveriesTruckProblem'
         assert not use_problem_input or self.input_name is not None
         assert use_problem_input or self.input_name is None
         problem_ctor_args = tuple(self.params)
@@ -139,7 +142,7 @@ class ProblemFactory(NamedTuple):
         if use_roads_in_problem_ctor:
             problem_ctor_args = (roads,) + problem_ctor_args
         if use_problem_input:
-            DeliveriesProblemInput = deliveries_module.__dict__['DeliveriesProblemInput']
+            DeliveriesProblemInput = deliveries_module.__dict__['DeliveriesTruckProblemInput']
             problem_input = DeliveriesProblemInput.load_from_file(self.input_name + '.in', roads)
             problem_ctor_args = (problem_input,) + problem_ctor_args
         problem_instance = problem_ctor(*problem_ctor_args, **problem_ctor_kwargs)
@@ -168,11 +171,15 @@ class SubmissionTest(NamedTuple):
     solver_factory: SolverFactory
     execution_timeout: int
     execute_in_submission_test_env: bool = True
+    files_to_override_from_staff_solution: Tuple[str] = ()
+    fn_to_execute_before_solving: Optional[Callable] = None
 
     def run_test(self, roads, store_execution_log: bool = False):
         self.init_numpy_seed()
         problem_instance = self.problem_factory.create_instance(roads)
         solver_instance = self.solver_factory.create_instance()
+        if self.fn_to_execute_before_solving is not None:
+            self.fn_to_execute_before_solving(problem_instance, solver_instance)
         if store_execution_log:
             solver_instance.store_execution_log = True
         res = solver_instance.solve_problem(problem_instance)
@@ -197,21 +204,20 @@ class SubmissionTest(NamedTuple):
 
 class TestResult(NamedTuple):
     dev: int
+    space: int
     cost: Optional[float]
     path: Tuple[int]
 
     @staticmethod
     def from_search_result(search_result):
         # assert isinstance(search_result, SearchResult)
-        if search_result.final_search_node is None:
-            return TestResult(dev=search_result.nr_expanded_states, cost=None, path=())
-        path = tuple(int(str(state)) for state in search_result.make_path())
-        return TestResult(dev=search_result.nr_expanded_states, cost=search_result.final_search_node.cost, path=path)
+        if not search_result.is_solution_found:
+            return TestResult(dev=search_result.nr_expanded_states, space=search_result.max_nr_stored_states, cost=None, path=())
+        path = tuple(state.state.current_location.index if hasattr(state.state, 'current_location') else state.state.junction_id for state in search_result.solution_path)
+        return TestResult(dev=search_result.nr_expanded_states, space=search_result.max_nr_stored_states, cost=search_result.solution_g_cost, path=path)
 
     def serialize(self) -> str:
-        return 'dev:{dev} -- cost:{cost} -- path:{path}'.format(
-            dev=self.dev, cost=self.cost, path=self.path
-        )
+        return f'dev:{self.dev} -- space:{self.space} -- cost:{self.cost} -- path:{self.path}'
 
     @staticmethod
     def deserialize(serialized: str) -> Optional['TestResult']:
@@ -220,9 +226,10 @@ class TestResult(NamedTuple):
         list_of_positive_integers_pattern = '(((' + positive_integer_pattern + '([\\ ]*,[\\ ]*))*)' + positive_integer_pattern + ')'
         positive_float_pattern = '(' + positive_integer_pattern + '(\\.[0-9]*)?)'
         dev_pattern = 'dev:(?P<dev>' + positive_integer_pattern + ')'
+        space_pattern = 'space:(?P<space>' + positive_integer_pattern + ')'
         cost_pattern = 'cost:(?P<cost>' + positive_float_pattern + ')'
         path_pattern = 'path:\\((?P<path>' + list_of_positive_integers_pattern + ')\\)'
-        test_result_pattern = '^' + ('[\\ ]+\\-\\-[\\ ]+'.join([dev_pattern, cost_pattern, path_pattern])) + '$'
+        test_result_pattern = '^' + ('[\\ ]+\\-\\-[\\ ]+'.join([dev_pattern, space_pattern, cost_pattern, path_pattern])) + '$'
 
         serialized = serialized.strip()
         test_result_parser = regex.compile(test_result_pattern)
@@ -232,11 +239,13 @@ class TestResult(NamedTuple):
             assert parsed_test_result
             assert len(parsed_test_result.capturesdict()['dev']) == 1
             dev = int(parsed_test_result.capturesdict()['dev'][0])
+            assert len(parsed_test_result.capturesdict()['space']) == 1
+            space = int(parsed_test_result.capturesdict()['space'][0])
             assert len(parsed_test_result.capturesdict()['cost']) == 1
             cost = float(parsed_test_result.capturesdict()['cost'][0])
             assert len(parsed_test_result.capturesdict()['path']) == 1
             path = tuple(int(s) for s in parsed_test_result.capturesdict()['path'][0].split(','))
-            return TestResult(dev=dev, cost=cost, path=path)
+            return TestResult(dev=dev, space=space, cost=cost, path=path)
         except:
             return None
 
@@ -347,7 +356,7 @@ class SubmissionTestsSuit:
 class Submission:
     main_submission_path: str
     main_submission_directory_name: str
-    ids: List[str]
+    ids: Tuple[int]
     code_dirs: List[str]
     code_dir: Optional[str]
     code_path: Optional[str]
@@ -430,23 +439,25 @@ class Submission:
         tests_to_run.reverse()
         while len(tests_to_run) > 0:
             cur_test_to_run, cur_test_attempt_nr = tests_to_run.pop()
-            test_str = 'test-{test_idx}'.format(test_idx=cur_test_to_run.index)
+            test_str = f'test-{cur_test_to_run.index}'
             test_out_path = os.path.join(self.test_logs_dir_path, test_str)
+
+            # files_to_override_from_staff_solution
 
             output_files_exts = ['res', 'out', 'err', 'exec_time', 'exec_log']
             for ext in output_files_exts:
-                file_to_delete = test_out_path + '.' + ext
+                file_to_delete = f'{test_out_path}.{ext}'
                 if os.path.isfile(file_to_delete):
                     os.remove(file_to_delete)
 
             run_args = [
                 PYTHON_INTERPRETER_FOR_SUBMISSIONS_TESTS,
                 TEST_SCRIPT_FILENAME,
-                test_out_path + '.res',
+                f'{test_out_path}.res',
                 str(cur_test_to_run.index)
             ]
             if store_execution_log:
-                run_args.append(test_out_path + '.exec_log')
+                run_args.append(f'{test_out_path}.exec_log')
             timeout = cur_test_to_run.execution_timeout
             if store_execution_log:
                 # It takes time just to store the execution log.
@@ -559,3 +570,17 @@ class SubmissionTestsResults(List[Optional[TestResult]]):
     def pass_vector(self):
         assert self._pass_vector is not None
         return self._pass_vector
+
+
+def argparse_file_path_type(input_path: str):
+    input_path = str(input_path)
+    if not os.path.isfile(input_path):
+        raise argparse.ArgumentError(f'Given `{input_path}` is not a valid path of an existing file.')
+    return input_path
+
+
+def argparse_dir_path_type(input_path: str):
+    input_path = str(input_path)
+    if not os.path.isdir(input_path):
+        raise argparse.ArgumentError(f'Given `{input_path}` is not a valid path of an existing file.')
+    return input_path
