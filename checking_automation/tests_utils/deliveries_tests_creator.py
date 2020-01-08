@@ -15,7 +15,7 @@ Done:
     [V] In A*eps + AnytimeA* tests - use the stuff-sol A*
     [V] Add new implementation for the deliveries sum-air-heuristic which is intended for the tests (sorts junctions by secondary sorting)
     [V] Add descriptive names to tests
-    [ ] Fix anytime-A* issue: using the greedy (A* with w=1) in the first iteration makes the result undefined.
+    [V] Fix anytime-A* issue: using the greedy (A* with w=1) in the first iteration makes the result undefined.
 """
 
 
@@ -148,8 +148,9 @@ class DeliveriesTestsSuitCreator:
             problem_factory=simple_map_problem_factory,
             solver_factory=SolverFactory(
                 name='AnytimeAStar', heuristic=HeuristicFactory('AirDistHeuristic'),
-                ctor_kwargs={'max_nr_states_to_expand_per_iteration': 50}),
-            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/map_problem.py', 'deliveries/map_heuristics.py'),
+                ctor_kwargs={'max_nr_states_to_expand_per_iteration': 1200}),
+            files_to_override_from_staff_solution=('deliveries/map_problem.py', 'deliveries/map_heuristics.py'),
+            files_to_override_from_adhoc_code_fixes=('framework/graph_search/astar.py', ),
             execution_timeout=90)
         tests_suit.create_test(
             name='anytime_astar',
@@ -158,16 +159,18 @@ class DeliveriesTestsSuitCreator:
                 name='AnytimeAStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests'),
                 ctor_kwargs={'max_nr_states_to_expand_per_iteration': 50}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_adhoc_code_fixes=('framework/graph_search/astar.py', ),
             execution_timeout=90)
         tests_suit.create_test(
             name='anytime_astar',
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(
                 name='AnytimeAStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests'),
-                ctor_kwargs={'max_nr_states_to_expand_per_iteration': 50}),
+                ctor_kwargs={'max_nr_states_to_expand_per_iteration': 150}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_adhoc_code_fixes=('framework/graph_search/astar.py', ),
             execution_timeout=90)
 
     @staticmethod

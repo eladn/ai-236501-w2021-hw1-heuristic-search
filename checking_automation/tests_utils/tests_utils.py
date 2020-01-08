@@ -187,6 +187,7 @@ class SubmissionTest(NamedTuple):
     execution_timeout: int
     execute_in_submission_test_env: bool = True
     files_to_override_from_staff_solution: Tuple[str] = ()
+    files_to_override_from_adhoc_code_fixes: Tuple[str] = ()
     fn_to_execute_before_solving: Optional[Callable] = None
 
     def run_test(self, roads, store_execution_log: bool = False):
@@ -362,6 +363,8 @@ class SubmissionTestsSuit:
 
     def update_timeouts(self, new_timeouts_per_test):
         for test_idx, new_timeout in new_timeouts_per_test.items():
+            if test_idx not in self._tests_by_idx_mapping:
+                continue
             old_test = self._tests_by_idx_mapping[test_idx]
             dct = old_test._asdict()
             dct['execution_timeout'] = new_timeout
@@ -421,16 +424,21 @@ class Submission:
             test_environment_path_path = os.path.join(tests_environment_path, f'test-{test.index}')
             os.mkdir(test_environment_path_path)
             files_to_override_from_staff_solution = set()
+            files_to_override_from_adhoc_code_fixes = set()
             if test.files_to_override_from_staff_solution is not None:
                 files_to_override_from_staff_solution = set(test.files_to_override_from_staff_solution)
-            for submitted_file in set(VITAL_REQUIRED_SUBMISSION_CODE_FILES) - set(files_to_override_from_staff_solution):
+            if test.files_to_override_from_adhoc_code_fixes is not None:
+                files_to_override_from_adhoc_code_fixes = set(test.files_to_override_from_adhoc_code_fixes)
+            files_not_to_copy_from_submission_or_clean_supplied_code = set(files_to_override_from_staff_solution) | \
+                                                                       set(files_to_override_from_adhoc_code_fixes)
+            for submitted_file in set(VITAL_REQUIRED_SUBMISSION_CODE_FILES) - set(files_not_to_copy_from_submission_or_clean_supplied_code):
                 make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(submitted_file))
                 shutil.copy2(os.path.join(self.code_path, submitted_file),
                              os.path.join(test_environment_path_path, os.path.dirname(submitted_file)))
                 if submitted_file.split('.')[-1] == 'py':
                     filepath = os.path.join(test_environment_path_path, submitted_file)
                     autopep8.fix_file(filepath, options=autopep8.parse_args([filepath, '-i']))
-            for submitted_file in set(NONVITAL_REQUIRED_SUBMISSION_CODE_FILES) - set(files_to_override_from_staff_solution):
+            for submitted_file in set(NONVITAL_REQUIRED_SUBMISSION_CODE_FILES) - set(files_not_to_copy_from_submission_or_clean_supplied_code):
                 if not os.path.isfile(os.path.join(self.code_path, submitted_file)):
                     continue
                 make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(submitted_file))
@@ -439,11 +447,11 @@ class Submission:
                 if submitted_file.split('.')[-1] == 'py':
                     filepath = os.path.join(test_environment_path_path, submitted_file)
                     autopep8.fix_file(filepath, options=autopep8.parse_args([filepath, '-i']))
-            for file in set(FILES_TO_COPY_FROM_CLEAN_SUPPLIED_CODE) - set(files_to_override_from_staff_solution):
+            for file in set(FILES_TO_COPY_FROM_CLEAN_SUPPLIED_CODE) - set(files_not_to_copy_from_submission_or_clean_supplied_code):
                 make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(file))
                 shutil.copy2(os.path.join(CLEAN_SUPPLIED_CODE_ENV_PATH, file),
                              os.path.join(test_environment_path_path, os.path.dirname(file)))
-            for test_file in set(TEST_SCRIPT_FILES) - set(files_to_override_from_staff_solution):
+            for test_file in set(TEST_SCRIPT_FILES):
                 make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(test_file))
                 shutil.copy2(os.path.join(CHECK_AUTOMATION_CODE_PATH, test_file),
                              os.path.join(test_environment_path_path, os.path.dirname(test_file)))
@@ -451,6 +459,10 @@ class Submission:
                 make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(staff_solution_file))
                 shutil.copy2(os.path.join(STAFF_SOLUTION_CODE_PATH, staff_solution_file),
                              os.path.join(test_environment_path_path, os.path.dirname(staff_solution_file)))
+            for adhoc_code_fix_file in files_to_override_from_adhoc_code_fixes:
+                make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(adhoc_code_fix_file))
+                shutil.copy2(os.path.join(ADHOC_CODE_FIXES_FOR_CHECKING_PATH, adhoc_code_fix_file),
+                             os.path.join(test_environment_path_path, os.path.dirname(adhoc_code_fix_file)))
 
     def run_tests_suit_in_tests_environment(
             self, tests_indices: Tuple[int], store_execution_log: bool = False) -> Dict[int, float]:

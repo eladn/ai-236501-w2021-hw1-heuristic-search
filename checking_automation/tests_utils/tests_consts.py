@@ -7,6 +7,7 @@ __all__ = [
     'TESTS_LOGS_PATH',
     'CLEAN_SUPPLIED_CODE_ENV_PATH',
     'STAFF_SOLUTION_CODE_PATH',
+    'ADHOC_CODE_FIXES_FOR_CHECKING_PATH',
     'TEST_CALCULATED_TIMEOUTS_PATH',
     'TEST_STAFF_SOLUTION_TIMES_PATH',
     'STAFF_SOLUTION_DUMMY_ID',
@@ -30,6 +31,7 @@ TESTS_ENVIRONMENTS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-submissions/tests
 TESTS_LOGS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-submissions/tests-logs/'
 CLEAN_SUPPLIED_CODE_ENV_PATH = '../supplied_code/'
 STAFF_SOLUTION_CODE_PATH = '../staff_solution/'
+ADHOC_CODE_FIXES_FOR_CHECKING_PATH = '../adhoc_code_fixes_for_checking/'
 CHECK_AUTOMATION_CODE_PATH = './'
 TEST_CALCULATED_TIMEOUTS_PATH = os.path.join(TESTS_LOGS_PATH, 'tests-calculated-timeouts.txt')
 TEST_STAFF_SOLUTION_TIMES_PATH = os.path.join(TESTS_LOGS_PATH, 'tests-staff-solution-times.txt')
