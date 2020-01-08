@@ -12,6 +12,6 @@ __all__ = [
     'Delivery', 'DeliveriesTruck', 'DeliveriesTruckState', 'OptimizationObjective',
     'DeliveriesTruckProblemInput', 'DeliveriesTruckProblem',
     'TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesMSTAirDistHeuristic',
-    'TruckDeliveriesSumAirDistHeuristic',
+    'TruckDeliveriesSumAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuristicForTests',
     'CachedMapDistanceFinder', 'CachedAirDistanceCalculator'
 ]

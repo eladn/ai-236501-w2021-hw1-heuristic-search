@@ -8,7 +8,7 @@ from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
 
 __all__ = ['TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuristic',
-           'TruckDeliveriesMSTAirDistHeuristic']
+           'TruckDeliveriesMSTAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuristicForTests']
 
 
 class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
@@ -98,6 +98,47 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
                 for loc in all_junctions_in_remaining_truck_path]
             min_dist_idx = np.argmin(np.array([dist for _, dist in locs_and_dist]))
             next_location = locs_and_dist[min_dist_idx][0]
+            total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
+            last_location = next_location
+
+        return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_cost_of_greedily_built_path)
+
+
+class TruckDeliveriesSumAirDistHeuristicForTests(HeuristicFunction):
+    heuristic_name = 'TruckDeliveriesSumAirDist-ForTests-StaffSol'
+
+    def __init__(self, problem: GraphProblem):
+        super(TruckDeliveriesSumAirDistHeuristicForTests, self).__init__(problem)
+        assert isinstance(self.problem, DeliveriesTruckProblem)
+        self.cached_air_distance_calculator = CachedAirDistanceCalculator()
+
+    def estimate(self, state: GraphProblemState) -> float:
+        """
+        This heuristic evaluates the distance of the remaining truck route in the following way:
+        It builds a path that starts in the current truck's location, and each next junction in
+         the path is the (air-distance) nearest junction (to the previous one in the path) among
+         all junctions (in `all_junctions_in_remaining_truck_path`) that haven't been visited yet.
+        The remaining distance estimation is the cost of this built path.
+        Note that we ignore here the problem constraints (like picking before dropping and maximum number of packages
+         on the truck). We only make sure to visit all junctions in `all_junctions_in_remaining_truck_path`.
+        """
+        assert isinstance(self.problem, DeliveriesTruckProblem)
+        assert isinstance(state, DeliveriesTruckState)
+
+        all_junctions_in_remaining_truck_path = self.problem.get_all_junctions_in_remaining_truck_path(state)
+        all_junctions_in_remaining_truck_path = list(all_junctions_in_remaining_truck_path)
+        all_junctions_in_remaining_truck_path.sort(key=lambda junction: junction.index)
+
+        if len(all_junctions_in_remaining_truck_path) < 2:
+            return 0
+
+        last_location = state.current_location
+        total_cost_of_greedily_built_path = 0
+        while len(all_junctions_in_remaining_truck_path) > 1:
+            all_junctions_in_remaining_truck_path.remove(last_location)
+            next_location = min(
+                all_junctions_in_remaining_truck_path,
+                key=lambda loc: (self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc), loc.index))
             total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
             last_location = next_location
 
