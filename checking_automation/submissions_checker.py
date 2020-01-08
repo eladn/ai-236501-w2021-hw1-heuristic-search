@@ -156,7 +156,8 @@ def update_tests_suit_timeout_limit_wrt_staff_solution_time(
         for execution_idx in range(nr_staff_solution_executions)
     ]
     results_for_all_staff_submissions = run_tests_for_all_submissions(
-        tests_suit, new_staff_solution_submissions, store_execution_log=store_execution_log)
+        tests_suit, new_staff_solution_submissions, store_execution_log=store_execution_log,
+        nr_processes=nr_processes)
     print()
 
     if isinstance(test_exec_timeout_limit_factor, dict):
