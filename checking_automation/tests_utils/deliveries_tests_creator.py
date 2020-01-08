@@ -13,8 +13,9 @@ Done:
     [V] Fix A*eps tests
     [V] Fix AnytimeA* tests
     [V] In A*eps + AnytimeA* tests - use the stuff-sol A*
-    [V] Sum deliveries heuristic which is intended for the tests (sorts junctions by secondary sorting)
-    [V] add descriptive names to tests
+    [V] Add new implementation for the deliveries sum-air-heuristic which is intended for the tests (sorts junctions by secondary sorting)
+    [V] Add descriptive names to tests
+    [ ] Fix anytime-A* issue: using the greedy (A* with w=1) in the first iteration makes the result undefined.
 """
 
 
