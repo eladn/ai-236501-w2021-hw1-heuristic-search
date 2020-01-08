@@ -5,6 +5,16 @@ import types
 __all__ = ['DeliveriesTestsSuitCreator']
 
 
+"""
+TODO:
+    1. Use staff sol `cached_map_distance_finder.py` everywhere
+    2. Add dedicated `cached_map_distance_finder.py` test
+    3. Add time + money costs tests (+ their heuristics)
+    4. Fix A*eps tests
+    5. Fix AnytimeA* tests
+"""
+
+
 def fix_delivery_problem_method__all_junctions_in_remaining_truck_path(delivery_problem, solver):
     delivery_problem.__get_all_junctions_in_remaining_truck_path = delivery_problem.get_all_junctions_in_remaining_truck_path
 
