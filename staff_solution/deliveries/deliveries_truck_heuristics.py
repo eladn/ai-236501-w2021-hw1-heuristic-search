@@ -141,13 +141,13 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
         # raise NotImplemented()  # TODO: remove this line!
 
         junctions_graph = nx.Graph()
-        idx_to_junction = {idx: vertex for idx, vertex in enumerate(junctions)}
-        for junction1_idx, junction1 in idx_to_junction.items():
-            for junction2_idx, junction2 in idx_to_junction.items():
-                if junction1_idx == junction2_idx:
+        for junction1 in junctions:
+            for junction2 in junctions:
+                if junction1 == junction2:
                     continue
                 junctions_graph.add_edge(
-                    junction1_idx, junction2_idx,
+                    junction1, junction2,
                     weight=self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2))
         junctions_mst = nx.minimum_spanning_tree(junctions_graph)
-        return sum(d['weight'] for (u, v, d) in junctions_mst.edges(data=True))
+        return junctions_mst.size(weight='weight')
+        # return sum(d['weight'] for (u, v, d) in junctions_mst.edges(data=True))
