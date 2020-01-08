@@ -165,7 +165,7 @@ class DeliveriesTestsSuitCreator:
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(
-                name='AStar', heuristic_name='TruckDeliveriesMaxAirDistHeuristic', ctor_kwargs={'heuristic_weight': 0.7}),
+                name='AStar', heuristic_name='TruckDeliveriesMaxAirDistHeuristic', ctor_kwargs={'heuristic_weight': 0.85}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py'),
             execution_timeout=90)
