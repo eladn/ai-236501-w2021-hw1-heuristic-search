@@ -1,8 +1,8 @@
 import math
+import json
 import os
 import argparse
 import dataclasses
-import shutil
 import time
 from typing import *
 from functools import partial
@@ -59,8 +59,8 @@ class JobsStatus:
 
 
 def submission_tests_invoker(
-        submission: Submission, tests_suit: SubmissionTestsSuit, store_execution_log: bool = False) -> Dict[int, float]:
-    return submission.run_tests_suit_in_tests_environment(tests_suit, store_execution_log=store_execution_log)
+        submission: Submission, tests_indices: Tuple[int], store_execution_log: bool = False) -> Dict[int, float]:
+    return submission.run_tests_suit_in_tests_environment(tests_indices, store_execution_log=store_execution_log)
 
 
 def run_tests_for_all_submissions(
@@ -79,7 +79,7 @@ def run_tests_for_all_submissions(
 
     print(f'Running tests on {len(all_submissions)} submissions.')
     if use_processes_pool:
-        print(f'Using {nr_processes} processes.')
+        print(f'Using pool of {nr_processes} processes.')
     else:
         print('Run all tests on the main process.')
 
@@ -110,6 +110,7 @@ def run_tests_for_all_submissions(
             test_run_stderr.write(str(error))
 
     jobs_status.start_time = time.time()
+    tests_indices = tuple(test.index for test in tests_suit)
     for submission in all_submissions:
         if use_processes_pool:
             print('Spawning tests worker for submission: ids: {ids} -- submission-dir: {submission_dir}'.format(
@@ -118,7 +119,7 @@ def run_tests_for_all_submissions(
             ))
             jobs_status.total_nr_jobs += 1
             process_pool.apply_async(
-                submission_tests_invoker, (submission, tests_suit, store_execution_log),
+                submission_tests_invoker, (submission, tests_indices, store_execution_log),
                 callback=partial(submission_tests_invoker__on_success, submission),
                 error_callback=partial(submission_tests_invoker__on_error, submission))
         else:
@@ -126,7 +127,7 @@ def run_tests_for_all_submissions(
                 ids=submission.ids,
                 submission_dir=submission.main_submission_directory_name
             ))
-            submission_tests_invoker(submission, tests_suit, store_execution_log)
+            submission_tests_invoker(submission, tests_indices, store_execution_log)
     process_pool.close()
     process_pool.join()
 
@@ -208,6 +209,10 @@ def update_tests_suit_timeout_limit_wrt_staff_solution_time(
         for test in tests_suit
     }
 
+    with open(TEST_STAFF_SOLUTION_TIMES_PATH, 'w') as test_staff_solution_times_file:
+        test_staff_solution_times_file.write(json.dumps(compared_times_per_test))
+        test_staff_solution_times_file.write('\n')
+
     print('Compared new-vs-old tests execution timeout limitation: ')
     pprint({tests_suit.get_test_by_idx(test_idx).get_full_name(): times
             for test_idx, times in compared_times_per_test.items()})
@@ -242,8 +247,9 @@ if __name__ == '__main__':
                         help="IDs of submissions to check (if not specified runs on all submissions in dir)")
     parser.add_argument("--store-execution-log", dest='store_execution_log', action='store_true',
                         default=False, help='Whether to store the execution log')
-    parser.add_argument("--sample-submissions", dest='sample_submissions', action='store_true',
-                        help='Execute on a sample of the submissions')
+    parser.add_argument("--sample-submissions", dest='sample_submissions',
+                        nargs='?', required=False, type=float, default=False,
+                        help='Execute on a sample of the submissions (argument may be the sample size/rate)')
     parser.add_argument("--update-tests-timeout", dest='update_tests_timeout', action='store_true',
                         help='Update tests suit timeout limit wrt staff solution time')
     parser.add_argument("--no-use-processes-pool", dest='no_use_processes_pool', action='store_true',
@@ -285,9 +291,14 @@ if __name__ == '__main__':
 
     all_submissions = Submission.load_all_submissions(args.submissions_ids)
 
-    SUBMISSION_SAMPLE_SIZE = 15
-    if args.sample_submissions and len(all_submissions) > SUBMISSION_SAMPLE_SIZE:
-        all_submissions = np.random.choice(all_submissions, size=SUBMISSION_SAMPLE_SIZE, replace=False)
+    if args.sample_submissions or args.sample_submissions is None:
+        sample_size = DEFAULT_SUBMISSIONS_SAMPLE_SIZE
+        if args.sample_submissions is not None and args.sample_submissions >= 1:
+            sample_size = int(args.sample_submissions)
+        elif args.sample_submissions is not None and 0 <= args.sample_submissions < 1:
+            sample_size = math.ceil(len(all_submissions) * float(args.sample_submissions))
+        if len(all_submissions) > sample_size:
+            all_submissions = np.random.choice(all_submissions, size=sample_size, replace=False)
     run_tests_for_all_submissions(
         tests_suit, all_submissions, store_execution_log=args.store_execution_log,
         use_processes_pool=not args.no_use_processes_pool,

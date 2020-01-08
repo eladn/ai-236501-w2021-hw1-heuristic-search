@@ -322,9 +322,9 @@ class SubmissionTestsSuit:
     def get_test_by_idx(self, test_idx: int):
         return self._tests_by_idx_mapping[test_idx]
 
-    def filter_tests_by_idx(self, indeces: List[int]) -> 'SubmissionTestsSuit':
+    def filter_tests_by_idx(self, tests_indices: Union[List[int], Tuple[int]]) -> 'SubmissionTestsSuit':
         new_tests_suit = SubmissionTestsSuit()
-        for idx in indeces:
+        for idx in tests_indices:
             new_tests_suit._tests_by_idx_mapping[idx] = self.get_test_by_idx(idx)
         return new_tests_suit
 
@@ -453,7 +453,11 @@ class Submission:
                              os.path.join(test_environment_path_path, os.path.dirname(staff_solution_file)))
 
     def run_tests_suit_in_tests_environment(
-            self, tests_suit: SubmissionTestsSuit, store_execution_log: bool = False) -> Dict[int, float]:
+            self, tests_indices: Tuple[int], store_execution_log: bool = False) -> Dict[int, float]:
+        from .deliveries_tests_creator import DeliveriesTestsSuitCreator
+        tests_suit = DeliveriesTestsSuitCreator.create_tests_suit()
+        tests_suit = tests_suit.filter_tests_by_idx(tests_indices)
+
         self.make_clean_tests_environment(tests_suit)
 
         execution_time_per_test = {}
