@@ -13,9 +13,9 @@ import autopep8
 from .tests_consts import *
 
 __all__ = ['timeout_exec', 'TestResult', 'is_dir_contains_files', 'iterate_inner_directories',
-           'make_dirs_if_not_exist', 'dyn_load_module', 'Submission',
-           'SolverFactory', 'ProblemFactory', 'SubmissionTest', 'SubmissionTestsSuit',
-           'argparse_file_path_type', 'argparse_dir_path_type']
+           'make_dirs_if_not_exist', 'dyn_load_module', 'Submission', 'get_module_by_name',
+           'HeuristicFactory', 'SolverFactory', 'ProblemFactory', 'SubmissionTest', 'SubmissionTestsSuit',
+           'argparse_file_path_type', 'argparse_dir_path_type', 'copy_staff_solution_as_submission']
 
 
 # I tried to limit the execution time for each test separately.
@@ -85,34 +85,46 @@ def dyn_load_module(module_name: str, module_init_file_path: str, sys_module=Non
     assert module_name in globals()
 
 
+def get_module_by_name(name: str):
+    framework_module = importlib.import_module('framework')
+    deliveries_module = importlib.import_module('deliveries')
+    assert name in framework_module.__dict__ or name in deliveries_module.__dict__
+    if name in framework_module.__dict__:
+        return framework_module.__dict__[name]
+    else:
+        return deliveries_module.__dict__[name]
+
+
+class HeuristicFactory(NamedTuple):
+    name: str
+
+    def get_heuristic_ctor(self):
+        return get_module_by_name(self.name)
+
+
 class SolverFactory(NamedTuple):
     name: str
-    heuristic_name: Optional[str] = None
+    heuristic: Optional[HeuristicFactory] = None
     params: Tuple = ()
     ctor_kwargs: Dict = {}
 
     def create_instance(self):
         framework_module = importlib.import_module('framework')
-        deliveries_module = importlib.import_module('deliveries')
         solver_ctor = framework_module.__dict__[self.name]
         use_heuristic = self.name == 'AStar' or self.name == 'AnytimeAStar' or self.name == 'AStarEpsilon'
-        assert not use_heuristic or self.heuristic_name is not None
-        assert use_heuristic or self.heuristic_name is None
+        assert not use_heuristic or self.heuristic is not None
+        assert use_heuristic or self.heuristic is None
         solver_ctor_args = tuple(self.params)
         if use_heuristic:
-            assert self.heuristic_name in framework_module.__dict__ or self.heuristic_name in deliveries_module.__dict__
-            if self.heuristic_name in framework_module.__dict__:
-                heuristic_ctor = framework_module.__dict__[self.heuristic_name]
-            else:
-                heuristic_ctor = deliveries_module.__dict__[self.heuristic_name]
+            heuristic_ctor = self.heuristic.get_heuristic_ctor()
             solver_ctor_args = (heuristic_ctor,) + solver_ctor_args
         solver_instance = solver_ctor(*solver_ctor_args, **self.ctor_kwargs)
         return solver_instance
 
     def get_full_name(self):
         all_params = ()
-        if self.heuristic_name:
-            all_params = all_params + (self.heuristic_name, )
+        if self.heuristic:
+            all_params = all_params + (self.heuristic.name, )
         all_params = all_params + self.params
         params_str = ''
         all_params = [str(param) for param in all_params]
@@ -125,6 +137,7 @@ class ProblemFactory(NamedTuple):
     name: str
     input_name: Optional[str] = None
     params: Tuple = ()
+    kwargs_builder: Dict = {}
     inner_problem_solver: Optional[SolverFactory] = None
 
     def create_instance(self, roads):
@@ -135,7 +148,7 @@ class ProblemFactory(NamedTuple):
         assert not use_problem_input or self.input_name is not None
         assert use_problem_input or self.input_name is None
         problem_ctor_args = tuple(self.params)
-        problem_ctor_kwargs = {}
+        problem_ctor_kwargs = {key: value_ctor() for key, value_ctor in self.kwargs_builder.items()}
         if self.inner_problem_solver is not None:
             inner_problem_solver_instance = self.inner_problem_solver.create_instance()
             # problem_ctor_kwargs['inner_problem_solver'] = inner_problem_solver_instance
@@ -167,6 +180,7 @@ class ProblemFactory(NamedTuple):
 
 
 class SubmissionTest(NamedTuple):
+    name: str
     index: int
     problem_factory: ProblemFactory
     solver_factory: SolverFactory
@@ -195,9 +209,10 @@ class SubmissionTest(NamedTuple):
         numpy_random_seed = self.calc_seed()
         np.random.seed(numpy_random_seed)
 
-    def get_name(self) -> str:
-        return '{idx}:{solver_name}({problem_name})'.format(
+    def get_full_name(self) -> str:
+        return '{idx} :: {test_name} :: {solver_name}({problem_name})'.format(
             idx=self.index,
+            test_name=self.name,
             solver_name=self.solver_factory.get_full_name(),
             problem_name=self.problem_factory.get_full_name()
         )
@@ -325,7 +340,7 @@ class SubmissionTestsSuit:
         return sum(TEST_TIME_OVERHEAD_EST_IN_SECONDS + test.execution_timeout for test in self._tests_by_idx_mapping.values())
 
     def get_tests_names(self) -> List[str]:
-        return [test.get_name() for test in self._tests_by_idx_mapping.values()]
+        return [test.get_full_name() for test in self._tests_by_idx_mapping.values()]
 
     def create_astar_tests_for_weights_in_range(
             self,
@@ -543,6 +558,7 @@ class Submission:
     def load_all_submissions(ids_filter: Optional[Collection[int]] = None) -> List['Submission']:
         if ids_filter is not None:
             ids_filter = {int(identifier) for identifier in ids_filter}
+        copy_staff_solution_as_submission(STAFF_SOLUTION_DUMMY_ID)
         all_submissions_dirs = [
             os.path.join(SUBMISSIONS_PATH, submission_directory)
             for submission_directory in os.listdir(SUBMISSIONS_PATH)
@@ -600,3 +616,10 @@ def argparse_dir_path_type(input_path: str):
     if not os.path.isdir(input_path):
         raise argparse.ArgumentError(f'Given `{input_path}` is not a valid path of an existing file.')
     return input_path
+
+def copy_staff_solution_as_submission(submission_id: int) -> Submission:
+    staff_solution_submission_path = os.path.join(SUBMISSIONS_PATH, str(submission_id))
+    if os.path.isdir(staff_solution_submission_path):
+        shutil.rmtree(staff_solution_submission_path)
+    shutil.copytree(STAFF_SOLUTION_CODE_PATH, staff_solution_submission_path)
+    return Submission(staff_solution_submission_path)

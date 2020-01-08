@@ -63,7 +63,7 @@ def generate_tests_results():
             tests_results_file.write('\n')
             tests_results_file.write('\n')
             for test, test_binary_result in zip(tests_suit, submission_tests_results.pass_vector):
-                tests_results_file.write(test.get_name())
+                tests_results_file.write(test.get_full_name())
                 tests_results_file.write('\n')
                 tests_results_file.write('PASS' if test_binary_result else 'FAIL')
                 tests_results_file.write('\n')
@@ -88,7 +88,7 @@ def generate_tests_results():
 
     with open(os.path.join(TESTS_LOGS_PATH, 'tests.txt'), 'w') as tests_numpy_seeds_file:
         for test in tests_suit:
-            tests_numpy_seeds_file.write('Test name and index: {}\n'.format(test.get_name()))
+            tests_numpy_seeds_file.write('Test name and index: {}\n'.format(test.get_full_name()))
             tests_numpy_seeds_file.write('Wet grade weight: {weight:.4f}\n'.format(weight=tests_grade_weights_vector[test.index]))
             tests_numpy_seeds_file.write('Numpy seed: {seed}\n'.format(seed=test.calc_seed()))
             tests_numpy_seeds_file.write('\n')
@@ -105,7 +105,7 @@ def generate_tests_results():
     ]
 
     for test, test_distr in zip(tests_suit, results_distr_per_test):
-        print('Test: {}'.format(test.get_name()))
+        print('Test: {}'.format(test.get_full_name()))
         print([(freq,) + ('staff' if solution == staff_solution_tests_results[test.index].path else ('TIMEOUT' if solution is None else 'other'),)
                for solution, freq in test_distr.most_common()])
         print()
@@ -133,7 +133,7 @@ def generate_tests_results():
         # Sanity check: the staff solution is one of the most common results.
         if staff_solution not in most_common_solutions:
             warn('\nTest: {test_name}. \n\tThe staff solution is not one of the most common solutions. \n\tStaff solution freq: {staff_solution_freq} ({kth} most common). \n\tMost common solution freq: {most_common_solution_freq}. \n\t'.format(
-                test_name=test.get_name(),
+                test_name=test.get_full_name(),
                 staff_solution_freq=staff_solution_freq,
                 kth=ordinal(freq_to_commonness_order_mapping[staff_solution_freq]),
                 most_common_solution_freq=most_common_solution_freq))
@@ -141,7 +141,7 @@ def generate_tests_results():
         # Sanity check: there is only one most common solution.
         if len(most_common_solutions) > 1:
             warn('\nTest: {test_name}. \n\tThere are multiple solutions with the highest frequency ({freq}). \n\t'.format(
-                test_name=test.get_name(), freq=most_common_solution_freq))
+                test_name=test.get_full_name(), freq=most_common_solution_freq))
 
         for sol, freq in solutions_with_freq_ordered_by_freq:
             if sol == staff_solution_tests_results[test.index].path:
@@ -166,7 +166,7 @@ def generate_tests_results():
                 freq=freq,
                 kth=ordinal(freq_to_commonness_order_mapping[freq]),
                 staff_solution_freq=staff_solution_freq,
-                test_name=test.get_name(),
+                test_name=test.get_full_name(),
                 staff_solution=staff_solution,
                 nonaccepted_solution=sol if sol is not None else 'TIMEOUT',
                 submissions_used_this_solution=[submission.ids for submission in submissions_used_this_solution],

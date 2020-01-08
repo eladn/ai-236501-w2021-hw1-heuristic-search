@@ -191,7 +191,7 @@ def update_tests_suit_timeout_limit_wrt_staff_solution_time(
 
     with open(os.path.join(TESTS_LOGS_PATH, 'tests-calculated-timeouts-readable.txt'), 'w') as calculated_timeouts_file:
         for test in tests_suit:
-            calculated_timeouts_file.write(test.get_name())
+            calculated_timeouts_file.write(test.get_full_name())
             calculated_timeouts_file.write('\n')
             calculated_timeouts_file.write(f'execution timeout limit: {new_time_per_test[test.index]:.4f}\n\n')
 
@@ -209,7 +209,7 @@ def update_tests_suit_timeout_limit_wrt_staff_solution_time(
     }
 
     print('Compared new-vs-old tests execution timeout limitation: ')
-    pprint({tests_suit.get_test_by_idx(test_idx).get_name(): times
+    pprint({tests_suit.get_test_by_idx(test_idx).get_full_name(): times
             for test_idx, times in compared_times_per_test.items()})
     print()
 
@@ -234,14 +234,6 @@ def load_tests_suit_timeout_limit_from_stored_file(tests_suit: SubmissionTestsSu
     tests_suit.update_timeouts(loaded_timeout_per_test)
 
 
-def copy_staff_solution_as_submission(submission_id: int) -> Submission:
-    staff_solution_submission_path = os.path.join(SUBMISSIONS_PATH, str(submission_id))
-    if os.path.isdir(staff_solution_submission_path):
-        shutil.rmtree(staff_solution_submission_path)
-    shutil.copytree(STAFF_SOLUTION_CODE_PATH, staff_solution_submission_path)
-    return Submission(staff_solution_submission_path)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--tests-idxs", dest="tests_idxs", type=int, nargs='+', required=False,
@@ -262,17 +254,25 @@ if __name__ == '__main__':
 
     tests_suit = DeliveriesTestsSuitCreator.create_tests_suit()
 
+    with open(os.path.join(TESTS_LOGS_PATH, 'test_names.txt'), 'w') as test_names_file:
+        for test in tests_suit:
+            test_names_file.write(f'{test.get_full_name()}\n')
+
     # tests_suit = tests_suit.filter_tests_by_idx([1, 13])
 
-    # [optional] 1st arg may contain a list of test indices to run (otherwise run all tests).
+    # [optional] args may contain a list of test indices to run (otherwise run all tests).
     if args.tests_idxs:
         assert all(0 <= test_idx < len(tests_suit) for test_idx in args.tests_idxs)
         tests_suit = tests_suit.filter_tests_by_idx(args.tests_idxs)
 
+    print('Tests suit:')
+    for test in tests_suit:
+        print(f'    {test.get_full_name()}')
+
     # Update the timeout limitations for tests to be proportional
     # to the execution time of the staff solution.
     if args.update_tests_timeout:
-        timeout_limit_factor_steps_func = {0.5: 4, 1.2: 3.5, 2: 3, 4: 2.5, 6: 2.3, 14: 2.1, 20: 2, 25: 1.8, np.inf: 1.7}
+        timeout_limit_factor_steps_func = {0.5: 4, 1.2: 3.5, 2: 3, 4: 2.5, 6: 2.3, 14: 2.1, 20: 1.7, 25: 1.6, np.inf: 1.4}
         update_tests_suit_timeout_limit_wrt_staff_solution_time(
             tests_suit=tests_suit, nr_processes=args.nr_processes,
             store_execution_log=args.store_execution_log,
