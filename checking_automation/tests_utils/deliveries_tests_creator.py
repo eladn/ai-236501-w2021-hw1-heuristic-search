@@ -90,14 +90,14 @@ class DeliveriesTestsSuitCreator:
                 problem_factory=small_deliveries_problem_factory,
                 solver_factory=SolverFactory(name='AStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests'), params=(w,)),
                 fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-                files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+                files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
                 execution_timeout=90)
         tests_suit.create_test(
             name='astar',
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(name='AStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests'), params=(0.7,)),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
             execution_timeout=90)
 
     @staticmethod
@@ -134,7 +134,7 @@ class DeliveriesTestsSuitCreator:
                     'max_focal_size': 30, 'focal_epsilon': 0.04,
                     'within_focal_priority_function': within_focal_deliveries_h_sum_priority_function}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
             execution_timeout=200)
 
     @staticmethod
@@ -159,7 +159,7 @@ class DeliveriesTestsSuitCreator:
                 name='AnytimeAStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests'),
                 ctor_kwargs={'max_nr_states_to_expand_per_iteration': 50}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
             files_to_override_from_adhoc_code_fixes=('framework/graph_search/astar.py', ),
             execution_timeout=90)
         tests_suit.create_test(
@@ -169,7 +169,7 @@ class DeliveriesTestsSuitCreator:
                 name='AnytimeAStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests'),
                 ctor_kwargs={'max_nr_states_to_expand_per_iteration': 150}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
             files_to_override_from_adhoc_code_fixes=('framework/graph_search/astar.py', ),
             execution_timeout=90)
 
@@ -184,7 +184,7 @@ class DeliveriesTestsSuitCreator:
             solver_factory=SolverFactory(
                 name='AStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests')),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
             execution_timeout=90)
         tests_suit.create_test(
             name='deliveries_truck_problem',
@@ -192,7 +192,7 @@ class DeliveriesTestsSuitCreator:
             solver_factory=SolverFactory(
                 name='AStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests'), ctor_kwargs={'heuristic_weight': 0.7}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
             execution_timeout=90)
 
     @staticmethod
@@ -211,7 +211,7 @@ class DeliveriesTestsSuitCreator:
                 name='AStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests')),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=(
-            'framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py',
+            'framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py',
             'deliveries/cached_map_distance_finder.py'),
             execution_timeout=90)
         tests_suit.create_test(
@@ -221,7 +221,7 @@ class DeliveriesTestsSuitCreator:
                 name='AStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests')),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=(
-            'framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py',
+            'framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py',
             'deliveries/cached_map_distance_finder.py'),
             execution_timeout=90)
 
@@ -331,7 +331,7 @@ class DeliveriesTestsSuitCreator:
             solver_factory=SolverFactory(
                 name='AStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests')),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
             execution_timeout=90)
         tests_suit.create_test(
             name='astar_and_deliveries_truck_problem',
@@ -339,7 +339,7 @@ class DeliveriesTestsSuitCreator:
             solver_factory=SolverFactory(
                 name='AStar', heuristic=HeuristicFactory('TruckDeliveriesSumAirDistHeuristicForTests'), ctor_kwargs={'heuristic_weight': 0.7}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('deliveries/deliveries_truck_heuristics.py', 'deliveries/cached_map_distance_finder.py'),
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_heuristics.py', 'deliveries/__init__.py', 'deliveries/cached_map_distance_finder.py'),
             execution_timeout=90)
 
     @staticmethod
