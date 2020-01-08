@@ -42,7 +42,7 @@ class DeliveriesTestsSuitCreator:
             problem_factory=simple_map_problem_factory,
             solver_factory=SolverFactory(name='AStar', heuristic_name='AirDistHeuristic'),
             files_to_override_from_staff_solution=('deliveries/map_heuristics.py', 'framework/graph_search/astar.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
     @staticmethod
     def _create_map_air_dist_heuristic_tests(tests_suit: SubmissionTestsSuit):
@@ -51,7 +51,7 @@ class DeliveriesTestsSuitCreator:
             problem_factory=simple_map_problem_factory,
             solver_factory=SolverFactory(name='AStar', heuristic_name='AirDistHeuristic'),
             files_to_override_from_staff_solution=('deliveries/map_problem.py', 'framework/graph_search/astar.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
     @staticmethod
     def _create_basic_astar_test(tests_suit: SubmissionTestsSuit):
@@ -63,19 +63,19 @@ class DeliveriesTestsSuitCreator:
                 problem_factory=simple_map_problem_factory,
                 solver_factory=SolverFactory(name='AStar', heuristic_name='AirDistHeuristic', params=(w,)),
                 files_to_override_from_staff_solution=('deliveries/map_problem.py', 'deliveries/map_heuristics.py'),
-                execution_timeout=25)
+                execution_timeout=90)
             tests_suit.create_test(
                 problem_factory=small_deliveries_problem_factory,
                 solver_factory=SolverFactory(name='AStar', heuristic_name='TruckDeliveriesMSTAirDistHeuristic', params=(w,)),
                 fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
                 files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py'),
-                execution_timeout=25)
+                execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic', params=(0.7,)),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
     @staticmethod
     def _create_basic_astar_epsilon_test(tests_suit: SubmissionTestsSuit):
@@ -89,19 +89,19 @@ class DeliveriesTestsSuitCreator:
             problem_factory=simple_map_problem_factory,
             solver_factory=SolverFactory(name='AStarEpsilon', heuristic_name='AirDistHeuristic', ctor_kwargs={}),
             files_to_override_from_staff_solution=('deliveries/map_problem.py', 'deliveries/map_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=small_deliveries_problem_factory,
             solver_factory=SolverFactory(name='AStarEpsilon', heuristic_name='TruckDeliveriesMSTAirDistHeuristic', ctor_kwargs={}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(name='AStarEpsilon', heuristic_name='TruckDeliveriesSumAirDistHeuristic', ctor_kwargs={}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
 
     @staticmethod
@@ -114,21 +114,21 @@ class DeliveriesTestsSuitCreator:
 
         tests_suit.create_test(
             problem_factory=simple_map_problem_factory,
-            solver_factory=SolverFactory(name='AStarEpsilon', heuristic_name='AirDistHeuristic', ctor_kwargs={}),
+            solver_factory=SolverFactory(name='AnytimeAStar', heuristic_name='AirDistHeuristic', ctor_kwargs={}),
             files_to_override_from_staff_solution=('deliveries/map_problem.py', 'deliveries/map_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=small_deliveries_problem_factory,
-            solver_factory=SolverFactory(name='AStarEpsilon', heuristic_name='TruckDeliveriesMSTAirDistHeuristic', ctor_kwargs={}),
+            solver_factory=SolverFactory(name='AnytimeAStar', heuristic_name='TruckDeliveriesMSTAirDistHeuristic', ctor_kwargs={}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
-            solver_factory=SolverFactory(name='AStarEpsilon', heuristic_name='TruckDeliveriesSumAirDistHeuristic', ctor_kwargs={}),
+            solver_factory=SolverFactory(name='AnytimeAStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic', ctor_kwargs={}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('deliveries/deliveries_truck_problem.py', 'deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
     @staticmethod
     def _create_deliveries_truck_problem_test(tests_suit: SubmissionTestsSuit):
@@ -141,14 +141,14 @@ class DeliveriesTestsSuitCreator:
                 name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic'),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(
                 name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic', ctor_kwargs={'heuristic_weight': 0.7}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
     @staticmethod
     def _create_deliveries_max_air_heuristic_test(tests_suit: SubmissionTestsSuit):
@@ -161,14 +161,14 @@ class DeliveriesTestsSuitCreator:
                 name='AStar', heuristic_name='TruckDeliveriesMaxAirDistHeuristic'),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py'),
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(
                 name='AStar', heuristic_name='TruckDeliveriesMaxAirDistHeuristic', ctor_kwargs={'heuristic_weight': 0.7}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
     @staticmethod
     def _create_deliveries_sum_air_heuristic_test(tests_suit: SubmissionTestsSuit):
@@ -181,14 +181,14 @@ class DeliveriesTestsSuitCreator:
                 name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic'),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py'),
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(
                 name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic', ctor_kwargs={'heuristic_weight': 0.7}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
     @staticmethod
     def _create_deliveries_mst_air_heuristic_test(tests_suit: SubmissionTestsSuit):
@@ -201,14 +201,14 @@ class DeliveriesTestsSuitCreator:
                 name='AStar', heuristic_name='TruckDeliveriesMSTAirDistHeuristic'),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py'),
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(
                 name='AStar', heuristic_name='TruckDeliveriesMSTAirDistHeuristic', ctor_kwargs={'heuristic_weight': 0.7}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
             files_to_override_from_staff_solution=('framework/graph_search/astar.py', 'deliveries/deliveries_truck_problem.py'),
-            execution_timeout=25)
+            execution_timeout=90)
 
     @staticmethod
     def _create_astar_and_deliveries_truck_problem_test(tests_suit: SubmissionTestsSuit):
@@ -220,15 +220,15 @@ class DeliveriesTestsSuitCreator:
             solver_factory=SolverFactory(
                 name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic'),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_heuristics.py',),
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(
                 name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic', ctor_kwargs={'heuristic_weight': 0.7}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            files_to_override_from_staff_solution=('deliveries/deliveries_truck_heuristics.py'),
-            execution_timeout=25)
+            files_to_override_from_staff_solution=('deliveries/deliveries_truck_heuristics.py',),
+            execution_timeout=90)
 
     @staticmethod
     def _create_astar_and_deliveries_truck_problem_and_deliveries_sum_air_heuristic_test(tests_suit: SubmissionTestsSuit):
@@ -240,10 +240,10 @@ class DeliveriesTestsSuitCreator:
             solver_factory=SolverFactory(
                 name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic'),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            execution_timeout=25)
+            execution_timeout=90)
         tests_suit.create_test(
             problem_factory=medium_deliveries_problem_factory,
             solver_factory=SolverFactory(
                 name='AStar', heuristic_name='TruckDeliveriesSumAirDistHeuristic', ctor_kwargs={'heuristic_weight': 0.7}),
             fn_to_execute_before_solving=fix_delivery_problem_method__all_junctions_in_remaining_truck_path,
-            execution_timeout=25)
+            execution_timeout=90)
