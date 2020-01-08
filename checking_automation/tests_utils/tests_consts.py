@@ -26,9 +26,9 @@ __all__ = [
 ]
 
 PYTHON_INTERPRETER_FOR_SUBMISSIONS_TESTS = '/usr/local/Cellar/python/3.7.6_1/bin/python3.7'
-SUBMISSIONS_PATH = '/Users/eladn/Downloads/HW1-3240001574168428_236501_Winter2019-2020_unzipped'
-TESTS_ENVIRONMENTS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-submissions/tests/'
-TESTS_LOGS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-submissions/tests-logs/'
+SUBMISSIONS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-all-submissions-unzipped/'
+TESTS_ENVIRONMENTS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-submissions-checking/tests/'
+TESTS_LOGS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-submissions-checking/tests-logs/'
 CLEAN_SUPPLIED_CODE_ENV_PATH = '../supplied_code/'
 STAFF_SOLUTION_CODE_PATH = '../staff_solution/'
 ADHOC_CODE_FIXES_FOR_CHECKING_PATH = '../adhoc_code_fixes_for_checking/'
@@ -37,7 +37,7 @@ TEST_CALCULATED_TIMEOUTS_PATH = os.path.join(TESTS_LOGS_PATH, 'tests-calculated-
 TEST_STAFF_SOLUTION_TIMES_PATH = os.path.join(TESTS_LOGS_PATH, 'tests-staff-solution-times.txt')
 STAFF_SOLUTION_DUMMY_ID = 1111118
 NUMPY_RANDOM_SEED_BASE = 238435
-NR_ATTEMPTS_PER_TEST = 2
+NR_ATTEMPTS_PER_TEST = 3
 TEST_TIME_OVERHEAD_EST_IN_SECONDS = 4  # for creating a process and load the roads
 DEFAULT_NR_PROCESSES = 2
 DEFAULT_SUBMISSIONS_SAMPLE_SIZE = 15
