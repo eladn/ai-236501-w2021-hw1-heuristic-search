@@ -8,6 +8,7 @@ import subprocess
 import time
 import numpy as np
 import importlib
+import autopep8
 
 from .tests_consts import *
 
@@ -94,7 +95,7 @@ class SolverFactory(NamedTuple):
         framework_module = importlib.import_module('framework')
         deliveries_module = importlib.import_module('deliveries')
         solver_ctor = framework_module.__dict__[self.name]
-        use_heuristic = self.name == 'AStar' or self.name == 'GreedyStochastic'
+        use_heuristic = self.name == 'AStar' or self.name == 'AnytimeAStar' or self.name == 'AStarEpsilon'
         assert not use_heuristic or self.heuristic_name is not None
         assert use_heuristic or self.heuristic_name is None
         solver_ctor_args = tuple(self.params)
@@ -361,7 +362,7 @@ class Submission:
     code_dir: Optional[str]
     code_path: Optional[str]
     followed_assignment_instructions: bool
-    test_environment_path: str
+    tests_environment_path: str
 
     def __init__(self, main_submission_path: str):
         self.main_submission_path = main_submission_path
@@ -371,12 +372,8 @@ class Submission:
         self.code_dir = self.code_dirs[0] if len(self.code_dirs) > 0 else None
         self.code_path = os.path.join(self.main_submission_path, self.code_dir) if self.code_dir is not None else None
         self.followed_assignment_instructions = self.check_if_followed_assignment_instructions()
-        self.test_environment_path = os.path.join(TESTS_ENVIRONMENTS_PATH, self.main_submission_directory_name)
-        self.test_logs_dir_path = os.path.join(TESTS_LOGS_PATH, self.main_submission_directory_name)
-
-    @property
-    def test_results_file_path(self) -> str:
-        return os.path.join(self.test_logs_dir_path, 'test-results.txt')
+        self.tests_environment_path = os.path.join(TESTS_ENVIRONMENTS_PATH, self.main_submission_directory_name)
+        self.tests_logs_dir_path = os.path.join(TESTS_LOGS_PATH, self.main_submission_directory_name)
 
     def check_if_followed_assignment_instructions(self):
         return self.code_dir == 'AI1' and \
@@ -392,39 +389,57 @@ class Submission:
                                          VITAL_REQUIRED_SUBMISSION_CODE_FILES)
             ]
 
-    def make_clean_tests_environment(self, test_environment_path: str = None, override_if_exists: bool = True):
-        if test_environment_path is None:
-            test_environment_path = self.test_environment_path
-        if os.path.exists(test_environment_path):
+    def make_clean_tests_environment(self, tests_suit: SubmissionTestsSuit, tests_environment_path: str = None, override_if_exists: bool = True):
+        if tests_environment_path is None:
+            tests_environment_path = self.tests_environment_path
+        if os.path.exists(tests_environment_path):
             if not override_if_exists:
                 return
-            shutil.rmtree(test_environment_path)
-        os.mkdir(test_environment_path)
-        if os.path.exists(self.test_logs_dir_path):
-            shutil.rmtree(self.test_logs_dir_path)
-        os.mkdir(self.test_logs_dir_path)
-        for submitted_file in VITAL_REQUIRED_SUBMISSION_CODE_FILES:
-            make_dirs_if_not_exist(test_environment_path, os.path.dirname(submitted_file))
-            shutil.copy2(os.path.join(self.code_path, submitted_file),
-                         os.path.join(test_environment_path, os.path.dirname(submitted_file)))
-        for submitted_file in NONVITAL_REQUIRED_SUBMISSION_CODE_FILES:
-            if not os.path.isfile(os.path.join(self.code_path, submitted_file)):
-                continue
-            make_dirs_if_not_exist(test_environment_path, os.path.dirname(submitted_file))
-            shutil.copy2(os.path.join(self.code_path, submitted_file),
-                         os.path.join(test_environment_path, os.path.dirname(submitted_file)))
-        for file in FILES_TO_COPY_FROM_CLEAN_SUPPLIED_CODE:
-            make_dirs_if_not_exist(test_environment_path, os.path.dirname(file))
-            shutil.copy2(os.path.join(CLEAN_SUPPLIED_CODE_ENV_PATH, file),
-                         os.path.join(test_environment_path, os.path.dirname(file)))
-        for test_file in TEST_SCRIPT_FILES:
-            make_dirs_if_not_exist(test_environment_path, os.path.dirname(test_file))
-            shutil.copy2(os.path.join(CHECK_AUTOMATION_CODE_PATH, test_file),
-                         os.path.join(test_environment_path, os.path.dirname(test_file)))
+            shutil.rmtree(tests_environment_path)
+        os.mkdir(tests_environment_path)
+
+        if os.path.exists(self.tests_logs_dir_path):
+            shutil.rmtree(self.tests_logs_dir_path)
+        os.mkdir(self.tests_logs_dir_path)
+
+        for test in tests_suit:
+            test_environment_path_path = os.path.join(tests_environment_path, f'test-{test.index}')
+            os.mkdir(test_environment_path_path)
+            files_to_override_from_staff_solution = set()
+            if test.files_to_override_from_staff_solution is not None:
+                files_to_override_from_staff_solution = set(test.files_to_override_from_staff_solution)
+            for submitted_file in set(VITAL_REQUIRED_SUBMISSION_CODE_FILES) - set(files_to_override_from_staff_solution):
+                make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(submitted_file))
+                shutil.copy2(os.path.join(self.code_path, submitted_file),
+                             os.path.join(test_environment_path_path, os.path.dirname(submitted_file)))
+                if submitted_file.split('.')[-1] == 'py':
+                    filepath = os.path.join(test_environment_path_path, submitted_file)
+                    autopep8.fix_file(filepath, options=autopep8.parse_args([filepath, '-i']))
+            for submitted_file in set(NONVITAL_REQUIRED_SUBMISSION_CODE_FILES) - set(files_to_override_from_staff_solution):
+                if not os.path.isfile(os.path.join(self.code_path, submitted_file)):
+                    continue
+                make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(submitted_file))
+                shutil.copy2(os.path.join(self.code_path, submitted_file),
+                             os.path.join(test_environment_path_path, os.path.dirname(submitted_file)))
+                if submitted_file.split('.')[-1] == 'py':
+                    filepath = os.path.join(test_environment_path_path, submitted_file)
+                    autopep8.fix_file(filepath, options=autopep8.parse_args([filepath, '-i']))
+            for file in set(FILES_TO_COPY_FROM_CLEAN_SUPPLIED_CODE) - set(files_to_override_from_staff_solution):
+                make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(file))
+                shutil.copy2(os.path.join(CLEAN_SUPPLIED_CODE_ENV_PATH, file),
+                             os.path.join(test_environment_path_path, os.path.dirname(file)))
+            for test_file in set(TEST_SCRIPT_FILES) - set(files_to_override_from_staff_solution):
+                make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(test_file))
+                shutil.copy2(os.path.join(CHECK_AUTOMATION_CODE_PATH, test_file),
+                             os.path.join(test_environment_path_path, os.path.dirname(test_file)))
+            for staff_solution_file in files_to_override_from_staff_solution:
+                make_dirs_if_not_exist(test_environment_path_path, os.path.dirname(staff_solution_file))
+                shutil.copy2(os.path.join(STAFF_SOLUTION_CODE_PATH, staff_solution_file),
+                             os.path.join(test_environment_path_path, os.path.dirname(staff_solution_file)))
 
     def run_tests_suit_in_tests_environment(
             self, tests_suit: SubmissionTestsSuit, store_execution_log: bool = False) -> Dict[int, float]:
-        self.make_clean_tests_environment()
+        self.make_clean_tests_environment(tests_suit)
 
         execution_time_per_test = {}
 
@@ -440,7 +455,7 @@ class Submission:
         while len(tests_to_run) > 0:
             cur_test_to_run, cur_test_attempt_nr = tests_to_run.pop()
             test_str = f'test-{cur_test_to_run.index}'
-            test_out_path = os.path.join(self.test_logs_dir_path, test_str)
+            test_out_path = os.path.join(self.tests_logs_dir_path, test_str)
 
             # files_to_override_from_staff_solution
 
@@ -464,11 +479,12 @@ class Submission:
                 # TODO [staff]: maybe we would like another mechanism to limit the timeout here.
                 timeout *= 10
 
+            test_environment_path_path = os.path.join(self.tests_environment_path, f'test-{cur_test_to_run.index}')
             start_time = time.time()
             try:
                 submission_test_process = subprocess.run(
                     run_args,
-                    cwd=self.test_environment_path,
+                    cwd=test_environment_path_path,
                     capture_output=True,
                     timeout=timeout
                 )
@@ -499,12 +515,12 @@ class Submission:
         self.make_clean_tests_environment()
         assert os.getcwd() in sys.path
         sys.path.remove(os.getcwd())
-        sys.path.append(self.test_environment_path)
-        os.chdir(self.test_environment_path)
+        sys.path.append(self.tests_environment_path)
+        os.chdir(self.tests_environment_path)
 
         try:
-            framework_path = os.path.join(self.test_environment_path, "framework/__init__.py")
-            deliveries_path = os.path.join(self.test_environment_path, "deliveries/__init__.py")
+            framework_path = os.path.join(self.tests_environment_path, "framework/__init__.py")
+            deliveries_path = os.path.join(self.tests_environment_path, "deliveries/__init__.py")
 
             # make `os`, `sys` packages unusable.
             # local_modules = dict(sys.modules)
@@ -541,17 +557,17 @@ class Submission:
         all_results = []
         for test in tests_suit:
             test_result_filename = 'test-{idx}.res'.format(idx=test.index)
-            test_result_file_path = os.path.join(self.test_logs_dir_path, test_result_filename)
+            test_result_file_path = os.path.join(self.tests_logs_dir_path, test_result_filename)
             test_result = TestResult.load_from_file(test_result_file_path)
             all_results.append(test_result)
         return SubmissionTestsResults(all_results)
 
     def remove_all_files(self):
         shutil.rmtree(self.main_submission_path)
-        if os.path.isdir(self.test_logs_dir_path):
-            shutil.rmtree(self.test_logs_dir_path)
-        if os.path.isdir(self.test_environment_path):
-            shutil.rmtree(self.test_environment_path)
+        if os.path.isdir(self.tests_logs_dir_path):
+            shutil.rmtree(self.tests_logs_dir_path)
+        if os.path.isdir(self.tests_environment_path):
+            shutil.rmtree(self.tests_environment_path)
 
 
 class SubmissionTestsResults(List[Optional[TestResult]]):

@@ -6,14 +6,14 @@ import shutil
 import time
 from typing import *
 from functools import partial
-from tests_utils import *
+from checking_automation.tests_utils import *
 import numpy as np
 from pprint import pprint
 
 """
 
 Goes throughout submitted directories. For each submission:
-1. find the path the relevant python files.
+1. find the path the relevant python files in the submission dir.
 2. if not consistent with the assignment instruction - mark the `followed-assignment-instruction-test` as failed.
 3. open new directory for the tests.
 4. copy our files to this new directory.
@@ -106,7 +106,7 @@ def run_tests_for_all_submissions(
         jobs_status.last_completed_or_failed_job_time = time.time()
         jobs_status.nr_failed_jobs += 1
         jobs_status.print_progress()
-        with open(os.path.join(submission.test_logs_dir_path, 'test-run-stderr.txt'), 'w') as test_run_stderr:
+        with open(os.path.join(submission.tests_logs_dir_path, 'test-run-stderr.txt'), 'w') as test_run_stderr:
             test_run_stderr.write(str(error))
 
     jobs_status.start_time = time.time()
@@ -244,9 +244,9 @@ def copy_staff_solution_as_submission(submission_id: int) -> Submission:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--tests-idxs", dest="tests_idxs", type=int, nargs='?', required=False,
+    parser.add_argument("--tests-idxs", dest="tests_idxs", type=int, nargs='+', required=False,
                         help="Tests indices to use (if not specified runs all tests in tests suit)")
-    parser.add_argument("--submissions-ids", dest="submissions_ids", type=int, nargs='?', required=False,
+    parser.add_argument("--submissions-ids", dest="submissions_ids", type=int, nargs='+', required=False,
                         help="IDs of submissions to check (if not specified runs on all submissions in dir)")
     parser.add_argument("--store-execution-log", dest='store_execution_log', action='store_true',
                         default=False, help='Whether to store the execution log')
@@ -285,8 +285,9 @@ if __name__ == '__main__':
 
     all_submissions = Submission.load_all_submissions(args.submissions_ids)
 
-    if args.sample_submissions:
-        all_submissions = np.random.choice(all_submissions, size=15, replace=False)
+    SUBMISSION_SAMPLE_SIZE = 15
+    if args.sample_submissions and len(all_submissions) > SUBMISSION_SAMPLE_SIZE:
+        all_submissions = np.random.choice(all_submissions, size=SUBMISSION_SAMPLE_SIZE, replace=False)
     run_tests_for_all_submissions(
         tests_suit, all_submissions, store_execution_log=args.store_execution_log,
         use_processes_pool=not args.no_use_processes_pool,
