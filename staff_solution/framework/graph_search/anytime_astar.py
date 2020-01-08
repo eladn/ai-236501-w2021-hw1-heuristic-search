@@ -24,7 +24,7 @@ class AnytimeAStar(GraphProblemSolver):
      (again, constrained to max_nr_states_to_expand_per_iteration) using w2).
     """
 
-    solver_name = 'Anytime-A*'
+    solver_name = 'Anytime-A*-StaffSol'
 
     def __init__(self,
                  heuristic_function_type: HeuristicFunctionType,

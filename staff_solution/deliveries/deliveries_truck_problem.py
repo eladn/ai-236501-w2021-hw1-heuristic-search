@@ -136,7 +136,7 @@ class DeliveriesTruckProblem(GraphProblem):
     An instance of this class represents a deliveries truck problem.
     """
 
-    name = 'Deliveries'
+    name = 'Deliveries-StaffSol'
 
     def __init__(self,
                  problem_input: DeliveriesTruckProblemInput,

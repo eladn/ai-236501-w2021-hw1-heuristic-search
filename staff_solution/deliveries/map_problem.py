@@ -32,7 +32,7 @@ class MapProblem(GraphProblem):
     The problem is defined by a source location on the map and a destination.
     """
 
-    name = 'StreetsMap'
+    name = 'StreetsMap-StaffSol'
 
     def __init__(self, streets_map: StreetsMap, source_junction_id: int, target_junction_id: int,
                  road_cost_fn: Optional[Callable[[Link], Cost]] = None,

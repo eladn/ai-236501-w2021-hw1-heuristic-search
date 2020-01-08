@@ -12,7 +12,7 @@ __all__ = ['TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuri
 
 
 class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'TruckDeliveriesMaxAirDist'
+    heuristic_name = 'TruckDeliveriesMaxAirDist-StaffSol'
 
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesMaxAirDistHeuristic, self).__init__(problem)
@@ -58,7 +58,7 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
 
 
 class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'TruckDeliveriesSumAirDist'
+    heuristic_name = 'TruckDeliveriesSumAirDist-StaffSol'
 
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesSumAirDistHeuristic, self).__init__(problem)
@@ -105,7 +105,7 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
 
 
 class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'TruckDeliveriesMSTAirDist'
+    heuristic_name = 'TruckDeliveriesMSTAirDist-StaffSol'
 
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesMSTAirDistHeuristic, self).__init__(problem)

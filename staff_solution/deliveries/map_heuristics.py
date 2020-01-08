@@ -3,7 +3,7 @@ from .map_problem import MapProblem, MapState
 
 
 class AirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'AirDist'
+    heuristic_name = 'AirDist-StaffSol'
 
     def estimate(self, state: GraphProblemState) -> float:
         """
