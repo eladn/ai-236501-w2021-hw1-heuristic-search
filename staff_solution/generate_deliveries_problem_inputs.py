@@ -248,7 +248,25 @@ def generate_supplied_truck_deliveries_problem_inputs_files(roads: StreetsMap):
             nr_deliveries=15,
             max_nr_loaded_packages_in_truck=9,
             nr_packages_options=(2, 3, 4, 5),
-            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3))
+            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3)),
+        generate_truck_deliveries_problem_input(
+            roads,
+            input_name='test_deliveries_small',
+            choosing_junctions_seed=0x2482424,
+            limit_to_radius=6000,
+            nr_deliveries=5,
+            max_nr_loaded_packages_in_truck=9,
+            nr_packages_options=(2, 3, 4, 5),
+            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3)),
+        generate_truck_deliveries_problem_input(
+            roads,
+            input_name='test_deliveries_medium',
+            choosing_junctions_seed=0x2482424,
+            limit_to_radius=6000,
+            nr_deliveries=8,
+            max_nr_loaded_packages_in_truck=9,
+            nr_packages_options=(2, 3, 4, 5),
+            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3)),
     ]
     for problem_input in inputs:
         problem_input.store_to_file(problem_input.input_name + '.in')
