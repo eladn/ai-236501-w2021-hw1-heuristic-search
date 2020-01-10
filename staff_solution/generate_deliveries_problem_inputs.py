@@ -252,7 +252,7 @@ def generate_supplied_truck_deliveries_problem_inputs_files(roads: StreetsMap):
         generate_truck_deliveries_problem_input(
             roads,
             input_name='test_deliveries_small',
-            choosing_junctions_seed=0x2482424,
+            choosing_junctions_seed=0x2484424,
             limit_to_radius=6000,
             nr_deliveries=5,
             max_nr_loaded_packages_in_truck=9,
@@ -261,7 +261,7 @@ def generate_supplied_truck_deliveries_problem_inputs_files(roads: StreetsMap):
         generate_truck_deliveries_problem_input(
             roads,
             input_name='test_deliveries_medium',
-            choosing_junctions_seed=0x2482424,
+            choosing_junctions_seed=0x2484424,
             limit_to_radius=6000,
             nr_deliveries=8,
             max_nr_loaded_packages_in_truck=9,
