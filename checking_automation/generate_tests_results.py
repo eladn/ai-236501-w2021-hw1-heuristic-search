@@ -2,7 +2,7 @@ import os
 import sys
 from itertools import zip_longest
 from collections import Counter
-from staff_aux.checking_automation.tests_utils import *
+from checking_automation.tests_utils import *
 import numpy as np
 from typing import *
 from warnings import warn
@@ -15,7 +15,7 @@ def generate_tests_results():
     all_submissions = Submission.load_all_submissions()
     tests_suit = DeliveriesTestsSuitCreator.create_tests_suit()
 
-    print('#submissions: {} -- #tests_pre_submission: {}'.format(len(all_submissions), len(tests_suit)))
+    print(f'#submissions: {len(all_submissions)} -- #tests_per_submission: {len(tests_suit)}')
 
     staff_solution_submission = [submission for submission in all_submissions if submission.ids[0] == STAFF_SOLUTION_DUMMY_ID][0]  # TODO: move this logic to `SubmissionsContainer`
     staff_solution_tests_results = staff_solution_submission.load_tests_results(tests_suit)
@@ -56,7 +56,7 @@ def generate_tests_results():
     print()
 
     for submission_idx, submission, submission_tests_results in results_per_submission:
-        with open(os.path.join(submission.test_logs_dir_path, 'tests_results_summary.txt'), 'w') as tests_results_file:
+        with open(os.path.join(submission.tests_logs_dir_path, 'tests_results_summary.txt'), 'w') as tests_results_file:
             tests_results_file.write('followed-assignment-instructions')
             tests_results_file.write('\n')
             tests_results_file.write('PASS' if submission.followed_assignment_instructions else 'FAIL')
