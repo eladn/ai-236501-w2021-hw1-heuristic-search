@@ -394,7 +394,7 @@ class Submission:
         self.tests_logs_dir_path = os.path.join(TESTS_LOGS_PATH, self.main_submission_directory_name)
 
     def check_if_followed_assignment_instructions(self):
-        return self.code_dir == 'AI1' and \
+        return self.code_dir == 'ai_hw1' and \
                is_dir_contains_files(self.code_path, VITAL_REQUIRED_SUBMISSION_CODE_FILES) and \
                is_dir_contains_files(self.code_path, NONVITAL_REQUIRED_SUBMISSION_CODE_FILES) and \
                not is_dir_contains_files(self.code_path, FILES_ASKED_NOT_TO_SUBMIT)
@@ -533,7 +533,7 @@ class Submission:
                 exec_time = end_time - start_time
                 execution_time_per_test[cur_test_to_run.index] = exec_time
                 with open(test_out_path + '.err', 'w') as test_run_stderr:
-                    test_run_stderr.write('error: timeout reached during tests subprocess execution.')
+                    test_run_stderr.write('error: timeout reached during tests subprocess execution.\n')
                 with open(test_out_path + '.exec_time', 'w') as test_exec_time_file:
                     test_exec_time_file.write('execution time: {} sec.\n'.format(exec_time))
                 if cur_test_attempt_nr < NR_ATTEMPTS_PER_TEST:
