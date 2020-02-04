@@ -6,7 +6,8 @@ import dataclasses
 import time
 from typing import *
 from functools import partial
-from checking_automation.tests_utils import *
+from tests_utils import *
+#from checking_automation.tests_utils import *
 import numpy as np
 from pprint import pprint
 
