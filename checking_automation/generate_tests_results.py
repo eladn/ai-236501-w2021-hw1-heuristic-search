@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 from itertools import zip_longest
 from collections import Counter
 from checking_automation.tests_utils import *
@@ -11,8 +12,10 @@ from warnings import warn
 ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
 
 
-def generate_tests_results():
-    all_submissions = Submission.load_all_submissions()
+def generate_tests_results(submissions_ids_filter: Optional[Collection[int]]):
+    if submissions_ids_filter:
+        submissions_ids_filter = [STAFF_SOLUTION_DUMMY_ID] + list(submissions_ids_filter)
+    all_submissions = Submission.load_all_submissions(submissions_ids_filter)
     tests_suit = DeliveriesTestsSuitCreator.create_tests_suit()
 
     print(f'#submissions: {len(all_submissions)} -- #tests_per_submission: {len(tests_suit)}')
@@ -175,4 +178,8 @@ def generate_tests_results():
 
 
 if __name__ == '__main__':
-    generate_tests_results()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--submissions-ids", dest="submissions_ids", type=int, nargs='+', required=False,
+                        help="IDs of submissions to check (if not specified runs on all submissions in dir)")
+    args = parser.parse_args()
+    generate_tests_results(args.submissions_ids)
