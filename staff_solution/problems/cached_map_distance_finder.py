@@ -11,15 +11,9 @@ class CachedMapDistanceFinder:
      `GraphProblemSolver`. `CachedMapDistanceFinder` receives the solver to use in its c'tor.
     """
 
-    def __init__(self,
-                 streets_map: StreetsMap,
-                 map_problem_solver: GraphProblemSolver,
-                 road_cost_fn: Optional[Callable[[Link], Cost]] = None,
-                 zero_road_cost: Optional[Cost] = None):
+    def __init__(self, streets_map: StreetsMap, map_problem_solver: GraphProblemSolver):
         self.streets_map = streets_map
         self.map_problem_solver = map_problem_solver
-        self.road_cost_fn = road_cost_fn
-        self.zero_road_cost = zero_road_cost
 
         self._cache: Dict[Tuple[int, int], Optional[Cost]] = {}
         self.nr_cache_hits = 0
@@ -47,8 +41,6 @@ class CachedMapDistanceFinder:
          the solution in the cache, and finally return the cost of the solution. If the solver has not found a
          solution (the `final_search_node` field of the solver's result is None), the returned value should also
          be None. Even in this case (no solution found), you also should use the cache (store None in the cache).
-        When creating the `MapProblem` don't forget to specify the parameters `road_cost_fn` and `zero_road_cost`
-         (their valued are stored as fields in this object).
         Use `_is_in_cache()`, `_get_from_cache()` and `_insert_to_cache()` methods to access the cache. Do not
          access the `_cache` field directly.
         The cache key should include the source & target indices.
@@ -61,8 +53,7 @@ class CachedMapDistanceFinder:
             return self._get_from_cache(cache_key)
         map_problem = MapProblem(streets_map=self.streets_map,
                                  source_junction_id=src_junction.index,
-                                 target_junction_id=tgt_junction.index,
-                                 road_cost_fn=self.road_cost_fn, zero_road_cost=self.zero_road_cost)
+                                 target_junction_id=tgt_junction.index)
         map_problem_result = self.map_problem_solver.solve_problem(map_problem)
         map_distance = map_problem_result.solution_cost if map_problem_result.is_solution_found else None
         self._insert_to_cache(cache_key, map_distance)
