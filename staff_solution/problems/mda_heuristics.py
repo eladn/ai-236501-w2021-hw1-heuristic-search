@@ -3,7 +3,7 @@ import networkx as nx
 from typing import *
 
 from framework import *
-from .deliveries_truck_problem import *
+from .mda_problem import *
 from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
 

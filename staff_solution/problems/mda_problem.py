@@ -5,7 +5,7 @@ from enum import Enum
 from framework import *
 from .map_heuristics import AirDistHeuristic
 from .cached_map_distance_finder import CachedMapDistanceFinder
-from .deliveries_truck_problem_input import *
+from .mda_problem_input import *
 
 
 __all__ = ['MDAState', 'MDACost', 'MDAProblem', 'MDAOptimizationObjective']
@@ -146,7 +146,7 @@ class MDAProblem(GraphProblem):
         self.name += f'({problem_input.input_name}({len(problem_input.reported_apartments)}):{optimization_objective.name})'
         initial_state = MDAState(
             nr_matoshim_on_ambulance=problem_input.ambulance.initial_nr_matoshim,
-            nr_available_matoshim_per_laboratory=tuple(lab.max_nr_matoshim for lab in problem_input.laboratories),
+            nr_available_matoshim_in_laboratories=tuple(lab.max_nr_matoshim for lab in problem_input.laboratories),
             tests_on_ambulance=frozenset(),
             tests_transferred_to_lab=frozenset(),
             current_site=problem_input.ambulance.initial_location)
