@@ -272,7 +272,7 @@ class MDAProblem(GraphProblem):
         # raise NotImplementedError  # TODO: remove this line!
         return (set(self.problem_input.reported_apartments) - state.tests_transferred_to_lab) - state.tests_on_ambulance
 
-    def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> Set[Junction]:
+    def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
         This method returns a set of all junctions that are part of the remaining route of the truck.
         This includes the truck's current location, the pick locations of the deliveries that haven't
@@ -285,5 +285,6 @@ class MDAProblem(GraphProblem):
                 a set of the items {0, 10, 20, 30, ..., 990}
         """
         # raise NotImplementedError  # TODO: remove this line!
-        return {report.location for report in self.get_reported_apartments_waiting_to_visit(state)} | \
-               {state.current_location}
+        return sorted(
+            {report.location for report in self.get_reported_apartments_waiting_to_visit(state)} | \
+            {state.current_location}, key=lambda junc: junc.index)

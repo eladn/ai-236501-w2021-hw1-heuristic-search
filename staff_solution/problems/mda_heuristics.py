@@ -108,6 +108,7 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
         assert isinstance(state, MDAState)
 
         all_junctions_in_remaining_truck_path = self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
+        all_junctions_in_remaining_truck_path = set(all_junctions_in_remaining_truck_path)
 
         if len(all_junctions_in_remaining_truck_path) < 2:
             return 0
@@ -192,7 +193,7 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
         return self._calculate_junctions_mst_weight_using_air_distance(
             self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state))
 
-    def _calculate_junctions_mst_weight_using_air_distance(self, junctions: Set[Junction]) -> float:
+    def _calculate_junctions_mst_weight_using_air_distance(self, junctions: List[Junction]) -> float:
         """
         TODO [Ex.23]: Implement this method.
               Use `networkx` (nx) package (already imported in this file) to calculate the weight
