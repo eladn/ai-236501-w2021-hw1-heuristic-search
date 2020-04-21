@@ -1,6 +1,6 @@
 from framework import *
 
-from typing import Iterator, Optional, Callable
+from typing import Iterator
 from dataclasses import dataclass
 
 
