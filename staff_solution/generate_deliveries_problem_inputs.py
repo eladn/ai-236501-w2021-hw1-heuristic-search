@@ -59,9 +59,12 @@ Joaquina Olsson
 Jeane Ravencraft
 """.strip().split('\n')
 PERSON_FULL_NAMES = [name.strip() for name in PERSON_FULL_NAMES if name.strip()]
+assert all(len(name.split(' ')) == 2 for name in PERSON_FULL_NAMES)
+PERSON_FIRST_NAMES = list(set(name.split()[0].strip() for name in PERSON_FULL_NAMES))
+PERSON_LAST_NAMES = list(set(name.split()[1].strip() for name in PERSON_FULL_NAMES) - set(PERSON_FIRST_NAMES))
 
 
-def generate_deliveries_problem_input_junctions(
+def get_rand_input_junctions(
         roads: StreetsMap,
         nr_junctions: int,
         random_state: np.random.RandomState,
@@ -84,231 +87,120 @@ def generate_deliveries_problem_input_junctions(
     return [roads[idx] for idx in chosen_junction_idxs]
 
 
-# def generate_multiple_agents_pizzas_network_deliveries_problem_input(
-#         input_name: str,
-#         roads: StreetsMap,
-#         nr_orders: int,
-#         nr_pizza_places: int,
-#         delivery_vehicles_without_start_location: Tuple[DeliveriesVehicle, ...],
-#         choosing_junctions_seed: int = 0,
-#         limit_to_radius: Optional[float] = None) -> DeliveriesProblemInput:
-#     random_state = np.random.RandomState(choosing_junctions_seed)
-#     nr_delivery_vehicles = len(delivery_vehicles_without_start_location)
-#     all_sampled_junctions = generate_deliveries_problem_input_junctions(
-#         roads=roads,
-#         nr_junctions=nr_orders+nr_pizza_places+nr_delivery_vehicles,
-#         random_state=random_state, limit_to_radius=limit_to_radius
-#     )
-#
-#     orders_junctions = all_sampled_junctions[0:nr_orders]
-#     assert len(orders_junctions) == nr_orders
-#     pizza_places_junctions = all_sampled_junctions[nr_orders:nr_orders+nr_pizza_places]
-#     assert len(pizza_places_junctions) == nr_pizza_places
-#     delivery_vehicles_start_location_junctions = all_sampled_junctions[nr_orders+nr_pizza_places:]
-#     assert len(delivery_vehicles_start_location_junctions) == nr_delivery_vehicles
-#
-#     orders = tuple(
-#         PizzaOrder(order_id=order_id, location=order_junction,
-#                    nr_pizzas=random_state.choice([1, 2, 3], p=[0.55, 0.3, 0.15]))
-#         for order_id, order_junction in enumerate(orders_junctions)
-#     )
-#
-#     pizza_stores = tuple(
-#         PizzaStore(store_id=store_id, location=pizza_place_junction,
-#                    max_nr_visits=random_state.choice([2, 3, 4], p=[0.5, 0.4, 0.1]))  # random_state.choice([2, 3, 4], p=[0.5, 0.4, 0.1]))
-#         for store_id, pizza_place_junction in enumerate(pizza_places_junctions)
-#     )
-#
-#     deliveries_vehicles = tuple(
-#         DeliveriesVehicle(**{**delivery_vehicle.__dict__, 'start_location': start_location})
-#         for delivery_vehicle, start_location
-#         in zip(delivery_vehicles_without_start_location, delivery_vehicles_start_location_junctions)
-#     )
-#
-#     return DeliveriesProblemInput(
-#         input_name=input_name,
-#         orders=orders,
-#         pizza_stores=pizza_stores,
-#         deliveries_vehicles=deliveries_vehicles
-#     )
-
-
-# def generate_supplied_multiple_agents_pizzas_network_deliveries_problem_inputs_files(roads: StreetsMap):
-#     inputs = [
-#         generate_multiple_agents_pizzas_network_deliveries_problem_input(
-#             input_name='deliveries_problem_input',
-#             roads=roads,
-#             nr_orders=10,
-#             nr_pizza_places=2,
-#             delivery_vehicles_without_start_location=(
-#                 # DeliveriesVehicle(
-#                 #     name='Drony',
-#                 #     vehicle_type=DeliveriesVehicleType.Drone,
-#                 #     fuel_tank_capacity=10000,
-#                 #     fuel_tank_initial_level=7000,
-#                 #     pizzas_capacity=1,
-#                 #     start_location=None
-#                 # ),
-#                 DeliveriesVehicle(
-#                     name='Giyora',
-#                     vehicle_type=DeliveriesVehicleType.Car,
-#                     fuel_tank_capacity=200000,
-#                     fuel_tank_initial_level=11000,
-#                     pizzas_capacity=10,
-#                     start_location=None
-#                 ),
-#                 DeliveriesVehicle(
-#                     name='Valentin',
-#                     vehicle_type=DeliveriesVehicleType.Motorcycle,
-#                     fuel_tank_capacity=150000,
-#                     fuel_tank_initial_level=11000,
-#                     pizzas_capacity=2,
-#                     start_location=None
-#                 ),
-#             ),
-#             choosing_junctions_seed=0x5739574,
-#             limit_to_radius=6000)
-#     ]
-#     for problem_input in inputs:
-#         problem_input.store_to_file(problem_input.input_name + '.in')
-
-
-def generate_truck_deliveries_problem_input(
+def generate_MDA_problem_input(
         roads: StreetsMap,
-        input_name: str = 'packages_truck_deliveries_problem_input',
+        input_name: str,
         choosing_junctions_seed: int = 0x5739574,
         limit_to_radius: int = 6000,
-        nr_deliveries: int = 5,
-        max_nr_loaded_packages_in_truck: int = 7,
-        nr_packages_options: Tuple[int, ...] = (2, 3, 4, 5),
-        nr_packages_probabilities: Tuple[float, ...] = (0.2, 0.3, 0.2, 0.3)) -> DeliveriesTruckProblemInput:
+        nr_reported_apartments: int = 5,
+        nr_laboratories: int = 5,
+        ambulance_taken_tests_storage_capacity: int = 7,
+        initial_nr_matoshim_on_ambulance: int = 2,
+        nr_roommates_options: Tuple[int, ...] = (2, 3, 4, 5),
+        nr_roommates_probabilities: Tuple[float, ...] = (0.2, 0.3, 0.2, 0.3),
+        nr_free_matoshim_in_lab_options: Tuple[int, ...] = (4, 5, 6, 7, 8),
+        nr_free_matoshim_in_lab_probabilities: Tuple[float, ...] = (0.2, 0.3, 0.2, 0.2, 0.1)) -> MDAProblemInput:
 
     random_state = np.random.RandomState(choosing_junctions_seed)
-    all_sampled_junctions = generate_deliveries_problem_input_junctions(
+    all_sampled_junctions = get_rand_input_junctions(
         roads=roads,
-        nr_junctions=2 * nr_deliveries + 1,
+        nr_junctions=nr_reported_apartments + nr_laboratories + 1,
         random_state=random_state, limit_to_radius=limit_to_radius
     )
 
-    deliveries_pick_junctions = all_sampled_junctions[0:nr_deliveries]
-    assert len(deliveries_pick_junctions) == nr_deliveries
-    deliveries_drop_junctions = all_sampled_junctions[nr_deliveries:2*nr_deliveries]
-    assert len(deliveries_drop_junctions) == nr_deliveries
-    initial_truck_location = all_sampled_junctions[2*nr_deliveries]
+    reported_apartments_junctions = all_sampled_junctions[0:nr_reported_apartments]
+    assert len(reported_apartments_junctions) == nr_reported_apartments
+    laboratories_junctions = all_sampled_junctions[nr_reported_apartments:nr_reported_apartments + nr_laboratories]
+    assert len(laboratories_junctions) == nr_laboratories
+    initial_truck_location = all_sampled_junctions[nr_reported_apartments + nr_laboratories]
 
     names = random_state.permutation(PERSON_FULL_NAMES)
-    if nr_deliveries > len(names):
-        warn(f'More deliveries to generate ({nr_deliveries}) than names ({len(names)}).')
+    if nr_reported_apartments > len(names):
+        warn(f'More reported apartments to generate ({nr_reported_apartments}) than names ({len(names)}).')
 
-    return DeliveriesTruckProblemInput(
+    last_names_permutation = random_state.permutation(PERSON_LAST_NAMES)
+    labs_names = [f'{name1}-{name2}'
+                  for pair_idx, (name1, name2) in enumerate(zip(last_names_permutation, last_names_permutation[1:]))
+                  if pair_idx % 2 == 0]
+    if nr_laboratories > len(labs_names):
+        warn(f'More laboratories to generate ({nr_laboratories}) than last names pairs ({len(labs_names)}).')
+
+    return MDAProblemInput(
         input_name=input_name,
-        deliveries=tuple(
-            Delivery(
-                delivery_id=delivery_idx + 1,
-                client_name=names[delivery_idx % len(names)],
-                pick_location=pick_junction,
-                drop_location=drop_junction,
-                nr_packages=random_state.choice(nr_packages_options, p=nr_packages_probabilities)
+        reported_apartments=tuple(
+            ApartmentWithSymptomsReport(
+                report_id=report_idx + 1,
+                reporter_name=names[report_idx % len(names)],
+                location=junction,
+                nr_roommates=random_state.choice(nr_roommates_options, p=nr_roommates_probabilities)
             )
-            for delivery_idx, (pick_junction, drop_junction)
-            in enumerate(zip(deliveries_pick_junctions, deliveries_drop_junctions))
-        ),
-        delivery_truck=DeliveriesTruck(
-            max_nr_loaded_packages=max_nr_loaded_packages_in_truck,
+            for report_idx, junction
+            in enumerate(reported_apartments_junctions)),
+        ambulance=Ambulance(
+            initial_nr_matoshim=initial_nr_matoshim_on_ambulance,
+            taken_tests_storage_capacity=ambulance_taken_tests_storage_capacity,
             initial_location=initial_truck_location),
-        toll_road_cost_per_meter=0.001  # TODO: set a meaningful value here
-    )
+        laboratories=tuple(
+            Laboratory(
+                lab_id=lab_id, name=labs_names[lab_id % len(labs_names)], location=junction,
+                max_nr_matoshim=random_state.choice(
+                    nr_free_matoshim_in_lab_options, p=nr_free_matoshim_in_lab_probabilities))
+            for lab_id, junction in enumerate(laboratories_junctions)))
 
 
-def generate_supplied_truck_deliveries_problem_inputs_files(roads: StreetsMap):
+def generate_MDA_problem_inputs_files(roads: StreetsMap):
     inputs = [
-        generate_truck_deliveries_problem_input(
+        generate_MDA_problem_input(
             roads,
-            input_name='small_delivery',
+            input_name='small_MDA',
             choosing_junctions_seed=0x5739574,
             limit_to_radius=6000,
-            nr_deliveries=5,
-            max_nr_loaded_packages_in_truck=9,
-            nr_packages_options=(2, 3, 4, 5),
-            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3)),
-        generate_truck_deliveries_problem_input(
+            nr_reported_apartments=5,
+            ambulance_taken_tests_storage_capacity=9,
+            nr_roommates_options=(2, 3, 4, 5),
+            nr_roommates_probabilities=(0.2, 0.3, 0.2, 0.3)),
+        generate_MDA_problem_input(
             roads,
-            input_name='moderate_delivery',
+            input_name='moderate_MDA',
             choosing_junctions_seed=0x5739574,
             limit_to_radius=6000,
-            nr_deliveries=8,
-            max_nr_loaded_packages_in_truck=9,
-            nr_packages_options=(2, 3, 4, 5),
-            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3)),
-        generate_truck_deliveries_problem_input(
+            nr_reported_apartments=8,
+            nr_laboratories=4,
+            ambulance_taken_tests_storage_capacity=6,
+            initial_nr_matoshim_on_ambulance=3,
+            nr_roommates_options=(1, 2, 3, 4),
+            nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2)),
+        generate_MDA_problem_input(
             roads,
-            input_name='big_delivery',
+            input_name='big_MDA',
             choosing_junctions_seed=0x5739574,
             limit_to_radius=6000,
-            nr_deliveries=15,
-            max_nr_loaded_packages_in_truck=9,
-            nr_packages_options=(2, 3, 4, 5),
-            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3)),
-        generate_truck_deliveries_problem_input(
+            nr_reported_apartments=15,
+            nr_laboratories=5,
+            ambulance_taken_tests_storage_capacity=5,
+            nr_roommates_options=(2, 3, 4, 5),
+            nr_roommates_probabilities=(0.2, 0.3, 0.2, 0.3)),
+        generate_MDA_problem_input(
             roads,
-            input_name='test_deliveries_small',
+            input_name='test_MDA_small',
             choosing_junctions_seed=0x2484424,
             limit_to_radius=6000,
-            nr_deliveries=5,
-            max_nr_loaded_packages_in_truck=9,
-            nr_packages_options=(2, 3, 4, 5),
-            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3)),
-        generate_truck_deliveries_problem_input(
+            nr_reported_apartments=5,
+            ambulance_taken_tests_storage_capacity=9,
+            nr_roommates_options=(2, 3, 4, 5),
+            nr_roommates_probabilities=(0.2, 0.3, 0.2, 0.3)),
+        generate_MDA_problem_input(
             roads,
-            input_name='test_deliveries_medium',
+            input_name='test_MDA_medium',
             choosing_junctions_seed=0x2484424,
             limit_to_radius=6000,
-            nr_deliveries=8,
-            max_nr_loaded_packages_in_truck=9,
-            nr_packages_options=(2, 3, 4, 5),
-            nr_packages_probabilities=(0.2, 0.3, 0.2, 0.3)),
+            nr_reported_apartments=8,
+            ambulance_taken_tests_storage_capacity=9,
+            nr_roommates_options=(2, 3, 4, 5),
+            nr_roommates_probabilities=(0.2, 0.3, 0.2, 0.3)),
     ]
     for problem_input in inputs:
         problem_input.store_to_file(problem_input.input_name + '.in')
-
-
-def generate_test_deliveries_problem_inputs_files(roads: StreetsMap):
-    # TODO: change seeds, junctions, tank-capacities!
-    inputs = [
-        DeliveriesProblemInput('test1_small_delivery',
-                               *generate_deliveries_problem_input_junctions(roads, 5, 9, 0x82e67c83 % 2**32, 5000),
-                               7000, 7000),
-        DeliveriesProblemInput('test1_big_delivery',
-                               *generate_deliveries_problem_input_junctions(roads, 8, 30, 0x2bd883a83e % 2**32),
-                               20000, 20000),
-    ]
-    for problem_input in inputs:
-        problem_input.store_to_file(problem_input.input_name + '.in')
-
-
-def data_generation_test(roads: StreetsMap):
-    """Just for sanity checks of generations"""
-
-    from staff_aux.staff_solution.deliveries import DeliveriesProblemInput, RelaxedDeliveriesProblem, \
-        StrictDeliveriesProblem, MSTAirDistHeuristic, AirDistHeuristic
-
-    inputs = DeliveriesProblemInput.load_all_inputs(roads)
-
-    for problem_input in inputs:
-        from itertools import combinations
-        all_points = problem_input.drop_points | problem_input.gas_stations
-        max_dist = max(junc1.calc_air_distance_from(junc2) for junc1, junc2 in combinations(all_points, r=2))
-        print(problem_input.input_name, 'max dist between points:', max_dist)
-
-    for problem_input in inputs:
-        relaxed_problem = RelaxedDeliveriesProblem(problem_input)
-        strict_problem = StrictDeliveriesProblem(problem_input, roads, AStar(AirDistHeuristic))
-        astar = AStar(MSTAirDistHeuristic)
-        res = astar.solve_problem(relaxed_problem)
-        print(res)
-        if len(problem_input.drop_points) <= 5:
-            res = astar.solve_problem(strict_problem)
-            print(res)
 
 
 def update_streets_map():
@@ -330,7 +222,4 @@ if __name__ == '__main__':
     # update_streets_map()
     # exit()
     streets_map = StreetsMap.load_from_csv(Consts.get_data_file_path('tlv_streets_map.csv'))
-    generate_supplied_truck_deliveries_problem_inputs_files(streets_map)
-    # generate_supplied_multiple_agents_pizzas_network_deliveries_problem_inputs_files(streets_map)
-    # generate_test_deliveries_problem_inputs_files(streets_map)
-    # data_generation_test(streets_map)
+    generate_MDA_problem_inputs_files(streets_map)
