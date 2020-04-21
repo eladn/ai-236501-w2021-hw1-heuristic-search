@@ -9,9 +9,10 @@ from .cached_air_distance_calculator import CachedAirDistanceCalculator
 __all__ = [
     'AirDistHeuristic',
     'MapState', 'MapProblem',
-    'Delivery', 'DeliveriesTruck', 'DeliveriesTruckState', 'OptimizationObjective',
-    'DeliveriesTruckProblemInput', 'DeliveriesTruckProblem',
+    'ApartmentWithSymptomsReport', 'Ambulance', 'Laboratory', 'MDAState', 'MDAOptimizationObjective',
+    'MDAProblemInput', 'MDAProblem',
     'TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesMSTAirDistHeuristic',
     'TruckDeliveriesSumAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuristicForTests',
+    'TruckDeliveriesTimeObjectiveSumOfMinAirDistFromLabHeuristic',
     'CachedMapDistanceFinder', 'CachedAirDistanceCalculator'
 ]

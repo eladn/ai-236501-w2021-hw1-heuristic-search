@@ -8,7 +8,34 @@ from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
 
 __all__ = ['TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuristic',
-           'TruckDeliveriesMSTAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuristicForTests']
+           'TruckDeliveriesMSTAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuristicForTests',
+           'TruckDeliveriesTimeObjectiveSumOfMinAirDistFromLabHeuristic']
+
+
+class TruckDeliveriesTimeObjectiveSumOfMinAirDistFromLabHeuristic(HeuristicFunction):
+    heuristic_name = 'TruckDeliveriesTimeObjectiveSumOfMinAirDistFromLab-StaffSol'
+
+    def __init__(self, problem: GraphProblem):
+        super(TruckDeliveriesTimeObjectiveSumOfMinAirDistFromLabHeuristic, self).__init__(problem)
+        assert isinstance(self.problem, MDAProblem)
+        self.cached_air_distance_calculator = CachedAirDistanceCalculator()
+
+    def estimate(self, state: GraphProblemState) -> float:
+        """
+        TODO: write here instructions & expanations.
+        """
+        assert isinstance(self.problem, MDAProblem)
+        assert isinstance(state, MDAState)
+
+        def air_dist_to_closest_lab(junc: Junction) -> float:
+            return min(
+                self.cached_air_distance_calculator.get_air_distance_between_junctions(junc, lab.location)
+                for lab in self.problem.problem_input.laboratories)
+
+        dist_for_cur_state = len(state.tests_on_ambulance) * air_dist_to_closest_lab(state.current_location)
+        return dist_for_cur_state + sum(
+            air_dist_to_closest_lab(delivery.location)
+            for delivery in set(self.problem.problem_input.reported_apartments) - (state.tests_on_ambulance | state.tests_transferred_to_lab))
 
 
 class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
@@ -16,7 +43,7 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
 
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesMaxAirDistHeuristic, self).__init__(problem)
-        assert isinstance(self.problem, DeliveriesTruckProblem)
+        assert isinstance(self.problem, MDAProblem)
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
@@ -40,21 +67,19 @@ class TruckDeliveriesMaxAirDistHeuristic(HeuristicFunction):
         >>>     for item2 in some_items_collection
         >>>     if <some condition over item1 & item2>)
         """
-        assert isinstance(self.problem, DeliveriesTruckProblem)
-        assert isinstance(state, DeliveriesTruckState)
+        assert isinstance(self.problem, MDAProblem)
+        assert isinstance(state, MDAState)
 
-        all_junctions_in_remaining_truck_path = self.problem.get_all_junctions_in_remaining_truck_path(state)
+        all_junctions_in_remaining_truck_path = self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
         if len(all_junctions_in_remaining_truck_path) < 2:
             return 0
 
-        total_distance_lower_bound = 10  # TODO: modify this line.
-        total_distance_lower_bound = max(
+        return 10  # TODO: modify this line.
+        return max(
             self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2)
             for junction1 in all_junctions_in_remaining_truck_path
             for junction2 in all_junctions_in_remaining_truck_path
             if junction1 != junction2)
-
-        return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_distance_lower_bound)
 
 
 class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
@@ -62,7 +87,7 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
 
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesSumAirDistHeuristic, self).__init__(problem)
-        assert isinstance(self.problem, DeliveriesTruckProblem)
+        assert isinstance(self.problem, MDAProblem)
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
@@ -79,15 +104,15 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
              distance calculations.
         """
-        assert isinstance(self.problem, DeliveriesTruckProblem)
-        assert isinstance(state, DeliveriesTruckState)
+        assert isinstance(self.problem, MDAProblem)
+        assert isinstance(state, MDAState)
 
-        all_junctions_in_remaining_truck_path = self.problem.get_all_junctions_in_remaining_truck_path(state)
+        all_junctions_in_remaining_truck_path = self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
 
         if len(all_junctions_in_remaining_truck_path) < 2:
             return 0
 
-        # raise NotImplemented()  # TODO: remove this line and complete the missing part here!
+        # raise NotImplementedError  # TODO: remove this line and complete the missing part here!
 
         last_location = state.current_location
         total_cost_of_greedily_built_path = 0
@@ -101,7 +126,7 @@ class TruckDeliveriesSumAirDistHeuristic(HeuristicFunction):
             total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
             last_location = next_location
 
-        return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_cost_of_greedily_built_path)
+        return total_cost_of_greedily_built_path
 
 
 class TruckDeliveriesSumAirDistHeuristicForTests(HeuristicFunction):
@@ -109,7 +134,7 @@ class TruckDeliveriesSumAirDistHeuristicForTests(HeuristicFunction):
 
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesSumAirDistHeuristicForTests, self).__init__(problem)
-        assert isinstance(self.problem, DeliveriesTruckProblem)
+        assert isinstance(self.problem, MDAProblem)
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
@@ -122,10 +147,10 @@ class TruckDeliveriesSumAirDistHeuristicForTests(HeuristicFunction):
         Note that we ignore here the problem constraints (like picking before dropping and maximum number of packages
          on the truck). We only make sure to visit all junctions in `all_junctions_in_remaining_truck_path`.
         """
-        assert isinstance(self.problem, DeliveriesTruckProblem)
-        assert isinstance(state, DeliveriesTruckState)
+        assert isinstance(self.problem, MDAProblem)
+        assert isinstance(state, MDAState)
 
-        all_junctions_in_remaining_truck_path = self.problem.get_all_junctions_in_remaining_truck_path(state)
+        all_junctions_in_remaining_truck_path = self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
         all_junctions_in_remaining_truck_path = list(all_junctions_in_remaining_truck_path)
         all_junctions_in_remaining_truck_path.sort(key=lambda junction: junction.index)
 
@@ -142,7 +167,7 @@ class TruckDeliveriesSumAirDistHeuristicForTests(HeuristicFunction):
             total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
             last_location = next_location
 
-        return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_cost_of_greedily_built_path)
+        return total_cost_of_greedily_built_path
 
 
 class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
@@ -150,7 +175,7 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
 
     def __init__(self, problem: GraphProblem):
         super(TruckDeliveriesMSTAirDistHeuristic, self).__init__(problem)
-        assert isinstance(self.problem, DeliveriesTruckProblem)
+        assert isinstance(self.problem, MDAProblem)
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
@@ -161,12 +186,11 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
          are the junctions in the remaining truck route, and the edges weights (edge between each
          junctions pair) are the air-distances between the junctions.
         """
-        assert isinstance(self.problem, DeliveriesTruckProblem)
-        assert isinstance(state, DeliveriesTruckState)
+        assert isinstance(self.problem, MDAProblem)
+        assert isinstance(state, MDAState)
 
-        total_distance_lower_bound = self._calculate_junctions_mst_weight_using_air_distance(
-            self.problem.get_all_junctions_in_remaining_truck_path(state))
-        return self.problem.get_cost_lower_bound_from_distance_lower_bound(total_distance_lower_bound)
+        return self._calculate_junctions_mst_weight_using_air_distance(
+            self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state))
 
     def _calculate_junctions_mst_weight_using_air_distance(self, junctions: Set[Junction]) -> float:
         """
@@ -179,7 +203,7 @@ class TruckDeliveriesMSTAirDistHeuristic(HeuristicFunction):
                to calculate the air distance between the two junctions.
               Google for how to use `networkx` package for this purpose.
         """
-        # raise NotImplemented()  # TODO: remove this line!
+        # raise NotImplementedError  # TODO: remove this line!
 
         junctions_graph = nx.Graph()
         for junction1 in junctions:
