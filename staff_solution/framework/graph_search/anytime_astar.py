@@ -80,7 +80,7 @@ class AnytimeAStar(GraphProblemSolver):
                 #   (SearchResult object) found with the best g-cost (use `solution_g_cost` field of SearchResult to
                 #   obtain the g-cost of a solution).
                 #  Make sure to also read the big comment in the head of this class.
-                # raise NotImplementedError()   # TODO: remove this line!
+                # raise NotImplementedError   # TODO: remove this line!
 
                 mid_heuristic_weight = (low_heuristic_weight + high_heuristic_weight) / 2
                 # print(f'low: {low_heuristic_weight} -- mid: {mid_heuristic_weight} -- high: {high_heuristic_weight}')  # TODO: remove!

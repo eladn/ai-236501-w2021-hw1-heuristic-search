@@ -54,7 +54,7 @@ class CachedMapDistanceFinder:
         The cache key should include the source & target indices.
         """
 
-        # raise NotImplementedError()  # TODO: remove this line!
+        # raise NotImplementedError  # TODO: remove this line!
 
         cache_key = (src_junction.index, tgt_junction.index)
         if self._is_in_cache(cache_key):

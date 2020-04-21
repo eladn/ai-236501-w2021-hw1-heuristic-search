@@ -69,7 +69,7 @@ class AStarEpsilon(AStar):
          for the extracted (and returned) node.
         """
 
-        # raise NotImplemented()  # TODO: remove!
+        # raise NotImplementedError  # TODO: remove!
 
         if self.open.is_empty():
             return None
