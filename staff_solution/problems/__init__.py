@@ -11,8 +11,8 @@ __all__ = [
     'MapState', 'MapProblem',
     'ApartmentWithSymptomsReport', 'Ambulance', 'Laboratory', 'MDAState', 'MDAOptimizationObjective',
     'MDAProblemInput', 'MDAProblem',
-    'TruckDeliveriesMaxAirDistHeuristic', 'TruckDeliveriesMSTAirDistHeuristic',
-    'TruckDeliveriesSumAirDistHeuristic', 'TruckDeliveriesSumAirDistHeuristicForTests',
-    'TruckDeliveriesTimeObjectiveSumOfMinAirDistFromLabHeuristic',
+    'MDAMaxAirDistHeuristic', 'MDAMSTAirDistHeuristic',
+    'MDASumAirDistHeuristic', 'MDASumAirDistHeuristicForTests',
+    'MDATimeObjectiveSumOfMinAirDistFromLabHeuristic',
     'CachedMapDistanceFinder', 'CachedAirDistanceCalculator'
 ]
