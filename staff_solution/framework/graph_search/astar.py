@@ -1,6 +1,6 @@
 from .graph_problem_interface import *
 from .best_first_search import BestFirstSearch
-from typing import Optional
+from typing import Optional, Callable
 
 
 class AStar(BestFirstSearch):
@@ -12,7 +12,8 @@ class AStar(BestFirstSearch):
     solver_name = 'A*-StaffSol'
 
     def __init__(self, heuristic_function_type: HeuristicFunctionType, heuristic_weight: float = 0.5,
-                 max_nr_states_to_expand: Optional[int] = None):
+                 max_nr_states_to_expand: Optional[int] = None,
+                 open_criterion: Optional[Callable[[SearchNode], bool]] = None):
         """
         :param heuristic_function_type: The A* solver stores the constructor of the heuristic
                                         function, rather than an instance of that heuristic.
@@ -22,7 +23,8 @@ class AStar(BestFirstSearch):
                                  the heuristic value and the node's cost. Default is 0.5.
         """
         # A* is a graph search algorithm. Hence, we use close set.
-        super(AStar, self).__init__(use_close=True, max_nr_states_to_expand=max_nr_states_to_expand)
+        super(AStar, self).__init__(
+            use_close=True, max_nr_states_to_expand=max_nr_states_to_expand, open_criterion=open_criterion)
         self.heuristic_function_type = heuristic_function_type
         self.heuristic_function = None
         self.heuristic_weight = heuristic_weight

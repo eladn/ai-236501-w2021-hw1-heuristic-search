@@ -1,7 +1,7 @@
 from .graph_problem_interface import *
 from .utils.timer import Timer
 from .utils.heapdict import heapdict
-from typing import Optional, Dict
+from typing import Optional, Dict, Callable
 import abc
 
 
@@ -101,11 +101,13 @@ class BestFirstSearch(GraphProblemSolver):
 
     solver_name: str = 'BestFirstSearch'
 
-    def __init__(self, use_close: bool = True, max_nr_states_to_expand: Optional[int] = None):
+    def __init__(self, use_close: bool = True, max_nr_states_to_expand: Optional[int] = None,
+                 open_criterion: Optional[Callable[[SearchNode], bool]] = None):
         self.open: SearchNodesPriorityQueue = None
         self.close: Optional[SearchNodesCollection] = None
         self.use_close = use_close
         self.max_nr_states_to_expand = max_nr_states_to_expand
+        self.open_criterion = open_criterion
         self.max_nr_stored_states = 0
 
     def solve_problem(self, problem: GraphProblem) -> SearchResult:
@@ -159,7 +161,8 @@ class BestFirstSearch(GraphProblemSolver):
                         operator_cost=operator_result.operator_cost,
                         operator_name=operator_result.operator_name)
                     successor_node.expanding_priority = self._calc_node_expanding_priority(successor_node)
-                    self._open_successor_node(problem, successor_node)
+                    if self.open_criterion is None or self.open_criterion(successor_node):
+                        self._open_successor_node(problem, successor_node)
                     max_nr_stored_states = max(max_nr_stored_states, _get_current_nr_stored_states())
 
         stop_reason = StopReason.ExceededMaxNrStatesToExpand if exceeded_max_nr_expanded_states \
