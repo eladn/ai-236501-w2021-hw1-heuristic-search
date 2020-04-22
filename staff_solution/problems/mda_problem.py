@@ -22,7 +22,7 @@ class MDAState(GraphProblemState):
     """
 
     nr_matoshim_on_ambulance: int
-    nr_available_matoshim_in_laboratories: Tuple[int]
+    nr_available_matoshim_in_laboratories: Tuple[int, ...]  # TODO [staff]: change to visited_labs: FrozenSet[Laboratory]
     tests_on_ambulance: FrozenSet[ApartmentWithSymptomsReport]
     tests_transferred_to_lab: FrozenSet[ApartmentWithSymptomsReport]
     current_site: Union[Junction, Laboratory, ApartmentWithSymptomsReport]
@@ -87,7 +87,7 @@ class MDAState(GraphProblemState):
 
 class MDAOptimizationObjective(Enum):
     Distance = 'Distance'
-    TestsTimeInAmbulance = 'TestsTimeInAmbulance'
+    TestsTravelDistance = 'TestsTravelDistance'
 
 
 @dataclass(frozen=True)
@@ -109,7 +109,7 @@ class MDACost(ExtendedCost):
     Having said that, note that during this assignment we will mostly use the distance objective.
     """
     distance_cost: float = 0.0
-    tests_time_in_ambulance_cost: float = 0.0
+    tests_travel_distance_cost: float = 0.0
     optimization_objective: MDAOptimizationObjective = MDAOptimizationObjective.Distance
 
     def __add__(self, other):
@@ -118,18 +118,18 @@ class MDACost(ExtendedCost):
         return MDACost(
             optimization_objective=self.optimization_objective,
             distance_cost=self.distance_cost + other.distance_cost,
-            tests_time_in_ambulance_cost=self.tests_time_in_ambulance_cost + other.tests_time_in_ambulance_cost)
+            tests_travel_distance_cost=self.tests_travel_distance_cost + other.tests_travel_distance_cost)
 
     def get_g_cost(self) -> float:
         if self.optimization_objective == MDAOptimizationObjective.Distance:
             return self.distance_cost
-        assert self.optimization_objective == MDAOptimizationObjective.TestsTimeInAmbulance
-        return self.tests_time_in_ambulance_cost
+        assert self.optimization_objective == MDAOptimizationObjective.TestsTravelDistance
+        return self.tests_travel_distance_cost
 
     def __repr__(self):
         return f'MDACost(' \
                f'dist={self.distance_cost:11.3f} meter, ' \
-               f'time={self.tests_time_in_ambulance_cost:11.3f} minutes)'
+               f'time={self.tests_travel_distance_cost:11.3f} minutes)'
 
 
 class MDAProblem(GraphProblem):
@@ -201,16 +201,9 @@ class MDAProblem(GraphProblem):
                 tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab,
                 current_site=reported_apartment
             )
-            map_distance = self.map_distance_finder.get_map_cost_between(
-                state_to_expand.current_location, reported_apartment.location)
-            time_cost = map_distance * len(state_to_expand.tests_on_ambulance)
-            operator_cost = MDACost(distance_cost=map_distance, tests_time_in_ambulance_cost=time_cost,
-                                    optimization_objective=self.optimization_objective)
-            assert isinstance(operator_cost, MDACost)
-            assert operator_cost.optimization_objective == self.optimization_objective
             yield OperatorResult(
                 successor_state=new_state,
-                operator_cost=operator_cost,
+                operator_cost=self.get_operator_cost(state_to_expand, new_state),
                 operator_name=f'take test from {reported_apartment.reporter_name}')
 
         # Go to lab
@@ -227,17 +220,20 @@ class MDAProblem(GraphProblem):
                 tests_transferred_to_lab=frozenset(
                     state_to_expand.tests_transferred_to_lab | state_to_expand.tests_on_ambulance),
                 current_site=laboratory)
-            map_distance = self.map_distance_finder.get_map_cost_between(
-                state_to_expand.current_location, laboratory.location)
-            time_cost = map_distance * len(state_to_expand.tests_on_ambulance)
-            operator_cost = MDACost(distance_cost=map_distance, tests_time_in_ambulance_cost=time_cost,
-                                    optimization_objective=self.optimization_objective)
-            assert isinstance(operator_cost, MDACost)
-            assert operator_cost.optimization_objective == self.optimization_objective
             yield OperatorResult(
                 successor_state=new_state,
-                operator_cost=operator_cost,
+                operator_cost=self.get_operator_cost(state_to_expand, new_state),
                 operator_name=f'go to lab {laboratory.name}')
+
+    def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
+        """
+        TODO [staff]: instructions!
+        """
+        map_distance = self.map_distance_finder.get_map_cost_between(
+            prev_state.current_location, succ_state.current_location)
+        time_cost = map_distance * len(prev_state.tests_on_ambulance)
+        return MDACost(distance_cost=map_distance, tests_travel_distance_cost=time_cost,
+                       optimization_objective=self.optimization_objective)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
