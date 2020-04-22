@@ -1,5 +1,5 @@
 from framework import *
-from deliveries import *
+from problems import *
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -42,7 +42,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # See documentation here:
     # https://matplotlib.org/2.0.0/api/_as_gen/matplotlib.axes.Axes.plot.html
     # You can also Google for additional examples.
-    # raise NotImplemented()  # TODO: remove this line!
+    # raise NotImplementedError  # TODO: remove this line!
     p1, = ax1.plot(weights, total_cost, 'b-', label='Solution cost')
 
     # ax1: Make the y-axis label, ticks and tick labels match the line color.
@@ -57,7 +57,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # TODO: ax2: Make the y-axis label, ticks and tick labels match the line color.
     # TODO: Make this curve colored red with solid line style.
     # TODO: Set its label to be '#Expanded states'.
-    # raise NotImplemented()  # TODO: remove this line!
+    # raise NotImplementedError  # TODO: remove this line!
     p2, = ax2.plot(weights, total_nr_expanded, 'r-', label='#Expanded states')
     ax2.set_ylabel('states expanded', color='r')
     ax2.tick_params('y', colors='r')
@@ -86,7 +86,7 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
     #     Don't forget to pass `max_nr_states_to_expand` to the AStar c'tor.
     #  3. Call the function `plot_distance_and_expanded_wrt_weight_figure()`
     #     with these 3 generated lists.
-    # raise NotImplemented()  # TODO: remove this line!
+    # raise NotImplementedError  # TODO: remove this line!
     total_cost = []
     total_nr_expanded = []
     weights = np.linspace(0.5, 1, n)
@@ -145,21 +145,21 @@ def toy_map_problem_experiments():
 
 
 # --------------------------------------------------------------------
-# --------------------- Truck Deliveries Problem ---------------------
+# ---------------------------- MDA Problem ---------------------------
 # --------------------------------------------------------------------
 
 loaded_problem_inputs_by_size = {}
 loaded_problems_by_size_and_opt_obj = {}
 
 
-def get_deliveries_problem(problem_input_size: str = 'small', optimization_objective: OptimizationObjective = OptimizationObjective.Distance):
+def get_mda_problem(problem_input_size: str = 'small', optimization_objective: MDAOptimizationObjective = MDAOptimizationObjective.Distance):
     if (problem_input_size, optimization_objective) in loaded_problems_by_size_and_opt_obj:
         return loaded_problems_by_size_and_opt_obj[(problem_input_size, optimization_objective)]
     assert problem_input_size in {'small', 'moderate', 'big'}
     if problem_input_size not in loaded_problem_inputs_by_size:
-        loaded_problem_inputs_by_size[problem_input_size] = DeliveriesTruckProblemInput.load_from_file(
-            f'{problem_input_size}_delivery.in', streets_map)
-    problem = DeliveriesTruckProblem(
+        loaded_problem_inputs_by_size[problem_input_size] = MDAProblemInput.load_from_file(
+            f'{problem_input_size}_mda.in', streets_map)
+    problem = MDAProblem(
         problem_input=loaded_problem_inputs_by_size[problem_input_size],
         streets_map=streets_map,
         optimization_objective=optimization_objective)
@@ -167,113 +167,122 @@ def get_deliveries_problem(problem_input_size: str = 'small', optimization_objec
     return problem
 
 
-def basic_deliveries_truck_problem_experiments():
+def basic_mda_problem_experiments():
     print()
-    print('Solve the truck deliveries problem (small input, only distance objective, UniformCost).')
+    print('Solve the MDA problem (small input, only distance objective, UniformCost).')
 
-    small_delivery_problem_with_distance_cost = get_deliveries_problem('small', OptimizationObjective.Distance)
+    small_mda_problem_with_distance_cost = get_mda_problem('small', MDAOptimizationObjective.Distance)
 
     # Ex.16
-    # TODO: create an instance of `UniformCost`, solve the `small_delivery_problem_with_distance_cost`
+    # TODO: create an instance of `UniformCost`, solve the `small_mda_problem_with_distance_cost`
     #       with it and print the results.
     # exit()  # TODO: remove!
     uniform_cost = UniformCost()
-    res = uniform_cost.solve_problem(small_delivery_problem_with_distance_cost)
+    res = uniform_cost.solve_problem(small_mda_problem_with_distance_cost)
     print(res)
 
 
-def deliveries_truck_problem_with_astar_experiments():
+def mda_problem_with_astar_experiments():
     print()
-    print('Solve the truck deliveries problem (moderate input, only distance objective, A*, MaxAirDist & SumAirDist & MSTAirDist heuristics).')
+    print('Solve the MDA problem (moderate input, only distance objective, A*, MaxAirDist & SumAirDist & MSTAirDist heuristics).')
 
-    moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
+    moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
     # Ex.18
     # TODO: create an instance of `AStar` with the `TruckDeliveriesMaxAirDistHeuristic`,
-    #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
+    #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
-    astar = AStar(TruckDeliveriesMaxAirDistHeuristic)
-    res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    astar = AStar(MDAMaxAirDistHeuristic)
+    res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
     # Ex.21
     # TODO: create an instance of `AStar` with the `TruckDeliveriesSumAirDistHeuristic`,
-    #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
+    #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
-    astar = AStar(TruckDeliveriesSumAirDistHeuristic)
-    res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    astar = AStar(MDASumAirDistHeuristic)
+    res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
     # Ex.24
     # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
-    #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
+    #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
-    astar = AStar(TruckDeliveriesMSTAirDistHeuristic)
-    res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    astar = AStar(MDAMSTAirDistHeuristic)
+    res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
 
-def deliveries_truck_problem_with_weighted_astar_experiments():
+def mda_problem_with_weighted_astar_experiments():
     print()
-    print('Solve the truck deliveries problem (small & moderate input, only distance objective, wA*).')
+    print('Solve the MDA problem (small & moderate input, only distance objective, wA*).')
 
-    small_delivery_problem_with_distance_cost = get_deliveries_problem('small', OptimizationObjective.Distance)
-    moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
+    small_mda_problem_with_distance_cost = get_mda_problem('small', MDAOptimizationObjective.Distance)
+    moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
     # Ex.26
     # TODO: Call here the function `run_astar_for_weights_in_range()`
-    #       with `TruckDeliveriesMSTAirDistHeuristic`
-    #       over the `small_delivery_problem_with_distance_cost`.
+    #       with `MDAMSTAirDistHeuristic`
+    #       over the `small_mda_problem_with_distance_cost`.
     # exit()  # TODO: remove!
-    run_astar_for_weights_in_range(TruckDeliveriesMSTAirDistHeuristic, small_delivery_problem_with_distance_cost)
+    run_astar_for_weights_in_range(MDAMSTAirDistHeuristic, small_mda_problem_with_distance_cost)
 
     # Ex.26
     # TODO: Call here the function `run_astar_for_weights_in_range()`
-    #       with `TruckDeliveriesSumAirDistHeuristic`
-    #       over the `moderate_delivery_problem_with_distance_cost`.
+    #       with `MDASumAirDistHeuristic`
+    #       over the `moderate_mda_problem_with_distance_cost`.
     # exit()  # TODO: remove!
-    run_astar_for_weights_in_range(TruckDeliveriesSumAirDistHeuristic, moderate_delivery_problem_with_distance_cost)
+    run_astar_for_weights_in_range(MDASumAirDistHeuristic, moderate_mda_problem_with_distance_cost)
 
 
-def multiple_objectives_deliveries_truck_problem_experiments():
+def two_objectives_eps_solver():
+    pass
+
+
+def multiple_objectives_mda_problem_experiments():
     print()
-    print('Solve the truck deliveries problem (small input, time & money objectives).')
+    print('Solve the MDA problem (small input, time & money objectives).')
 
-    small_delivery_problem_with_time_cost = get_deliveries_problem('small', OptimizationObjective.Time)
-    small_delivery_problem_with_money_cost = get_deliveries_problem('small', OptimizationObjective.Money)
+    moderate_delivery_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
+    moderate_delivery_problem_with_time_cost = get_mda_problem('moderate', MDAOptimizationObjective.TestsTravelDistance)
 
     # Ex.29
     # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
-    #       solve the `small_delivery_problem_with_time_cost` with it and print the results.
+    #       solve the `moderate_delivery_problem_with_time_cost` with it and print the results.
     # exit()  # TODO: remove!
-    astar = AStar(TruckDeliveriesMSTAirDistHeuristic)
-    res = astar.solve_problem(small_delivery_problem_with_time_cost)
+    astar = AStar(MDATestsTravelDistToNearestLabHeuristic)
+    res = astar.solve_problem(moderate_delivery_problem_with_time_cost)
     print(res)
 
     # Ex.29
-    # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
-    #       solve the `small_delivery_problem_with_money_cost` with it and print the results.
+    # TODO [staff]: WRITE HERE INSTRUCTIONS!
     # exit()  # TODO: remove!
-    astar = AStar(TruckDeliveriesMSTAirDistHeuristic)
-    res = astar.solve_problem(small_delivery_problem_with_money_cost)
-    print(res)
+    distance_astar = AStar(MDAMSTAirDistHeuristic)
+    distance_res = distance_astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    optimal_distance_cost = distance_res.solution_g_cost
+    eps = 0.15
+    max_distance_cost = optimal_distance_cost * (1 + eps)
+    time_astar = AStar(MDATestsTravelDistToNearestLabHeuristic,
+                       open_criterion=lambda node: node.cost.distance_cost <= max_distance_cost)
+    time_res = time_astar.solve_problem(moderate_delivery_problem_with_time_cost)
+    print(time_res)
 
 
-def deliveries_truck_problem_with_astar_epsilon_experiments():
+def mda_problem_with_astar_epsilon_experiments():
     print()
-    print('Solve the truck deliveries problem (moderate input, distance objective, using A*eps, use non-acceptable '
+    print('Solve the MDA problem (moderate input, distance objective, using A*eps, use non-acceptable '
           'heuristic as focal heuristic).')
 
-    moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
+    moderate_delivery_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
     # Firstly solve the problem with AStar & MST heuristic for having a reference for #devs.
-    astar = AStar(TruckDeliveriesMSTAirDistHeuristic)
+    astar = AStar(MDAMSTAirDistHeuristic)
     res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
 
     def within_focal_h_sum_priority_function(node: SearchNode, problem: GraphProblem, solver: AStarEpsilon):
         if not hasattr(solver, '__focal_heuristic'):
-            setattr(solver, '__focal_heuristic', TruckDeliveriesSumAirDistHeuristic(problem=problem))
+            setattr(solver, '__focal_heuristic', MDASumAirDistHeuristic(problem=problem))
         focal_heuristic = getattr(solver, '__focal_heuristic')
         return focal_heuristic.estimate(node.state)
 
@@ -285,35 +294,35 @@ def deliveries_truck_problem_with_astar_epsilon_experiments():
     #       use within_focal_priority_function=within_focal_h_sum_priority_function
     # exit()  # TODO: remove!
     astar_eps = AStarEpsilon(
-        TruckDeliveriesMSTAirDistHeuristic, within_focal_priority_function=within_focal_h_sum_priority_function,
+        MDAMSTAirDistHeuristic, within_focal_priority_function=within_focal_h_sum_priority_function,
         max_nr_states_to_expand=8_000, max_focal_size=40, focal_epsilon=0.03)
     res = astar_eps.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
 
 
-def deliveries_truck_problem_anytime_astar_experiments():
+def mda_problem_anytime_astar_experiments():
     print()
-    print('Solve the truck deliveries problem (moderate input, only distance objective, Anytime-A*, '
+    print('Solve the MDA problem (moderate input, only distance objective, Anytime-A*, '
           'MSTAirDist heuristics).')
 
-    moderate_delivery_problem_with_distance_cost = get_deliveries_problem('moderate', OptimizationObjective.Distance)
+    moderate_delivery_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
     # Ex.35
     # TODO: create an instance of `AnytimeAStar` once with the `TruckDeliveriesMSTAirDistHeuristic`, with
     #       `max_nr_states_to_expand_per_iteration` set to 50, solve the
     #       `moderate_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
-    anytime_astar = AnytimeAStar(TruckDeliveriesMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=50)
+    anytime_astar = AnytimeAStar(MDAMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=50)
     res = anytime_astar.solve_problem(moderate_delivery_problem_with_distance_cost)
     print(res)
 
 
-def big_deliveries_truck_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments():
+def big_mda_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments():
     print()
-    print('Solve the truck deliveries problem (big input, only distance objective, Anytime-A*, '
+    print('Solve the MDA problem (big input, only distance objective, Anytime-A*, '
           'SumAirDist & MSTAirDist heuristics).')
 
-    big_delivery_problem_with_distance_cost = get_deliveries_problem('big', OptimizationObjective.Distance)
+    big_delivery_problem_with_distance_cost = get_mda_problem('big', MDAOptimizationObjective.Distance)
 
     # Ex.35
     # TODO: create an instance of `AnytimeAStar` once with the `TruckDeliveriesSumAirDistHeuristic`,
@@ -321,24 +330,40 @@ def big_deliveries_truck_problem_with_non_acceptable_heuristic_and_anytime_astar
     #       set to 400, solve the `big_delivery_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
 
-    anytime_astar = AnytimeAStar(TruckDeliveriesSumAirDistHeuristic, max_nr_states_to_expand_per_iteration=400)
+    anytime_astar = AnytimeAStar(MDASumAirDistHeuristic, max_nr_states_to_expand_per_iteration=400)
     res = anytime_astar.solve_problem(big_delivery_problem_with_distance_cost)
     print(res)
 
-    anytime_astar = AnytimeAStar(TruckDeliveriesMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=400)
+    anytime_astar = AnytimeAStar(MDAMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=400)
     res = anytime_astar.solve_problem(big_delivery_problem_with_distance_cost)
+    print(res)
+
+
+def test4():
+    moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
+    astar = AStar(MDAMSTAirDistHeuristic, heuristic_weight=0.5)
+    res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
+    print(res)
+
+
+def test5():
+    moderate_mda_problem_with_time_cost = get_mda_problem('moderate', MDAOptimizationObjective.TestsTravelDistance)
+    astar = AStar(MDATestsTravelDistToNearestLabHeuristic, heuristic_weight=0.5)
+    res = astar.solve_problem(moderate_mda_problem_with_time_cost)
     print(res)
 
 
 def run_all_experiments():
-    toy_map_problem_experiments()
-    basic_deliveries_truck_problem_experiments()
-    deliveries_truck_problem_with_astar_experiments()
-    deliveries_truck_problem_with_weighted_astar_experiments()
-    multiple_objectives_deliveries_truck_problem_experiments()
-    deliveries_truck_problem_with_astar_epsilon_experiments()
-    deliveries_truck_problem_anytime_astar_experiments()
-    big_deliveries_truck_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments()
+    # test4()
+    # test5()
+    # toy_map_problem_experiments()
+    # basic_mda_problem_experiments()
+    # mda_problem_with_astar_experiments()
+    # mda_problem_with_weighted_astar_experiments()
+    multiple_objectives_mda_problem_experiments()
+    # mda_problem_with_astar_epsilon_experiments()
+    # mda_problem_anytime_astar_experiments()
+    # big_mda_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments()
 
 
 if __name__ == '__main__':
