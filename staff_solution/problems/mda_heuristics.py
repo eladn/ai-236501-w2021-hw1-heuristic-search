@@ -9,20 +9,21 @@ from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
 __all__ = ['MDAMaxAirDistHeuristic', 'MDASumAirDistHeuristic',
            'MDAMSTAirDistHeuristic', 'MDASumAirDistHeuristicForTests',
-           'MDATimeObjectiveSumOfMinAirDistFromLabHeuristic']
+           'MDATestsTravelDistToNearestLabHeuristic']
 
 
-class MDATimeObjectiveSumOfMinAirDistFromLabHeuristic(HeuristicFunction):
+class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
     heuristic_name = 'MDA-TimeObjectiveSumOfMinAirDistFromLab-StaffSol'
 
     def __init__(self, problem: GraphProblem):
-        super(MDATimeObjectiveSumOfMinAirDistFromLabHeuristic, self).__init__(problem)
+        super(MDATestsTravelDistToNearestLabHeuristic, self).__init__(problem)
         assert isinstance(self.problem, MDAProblem)
+        assert self.problem.optimization_objective == MDAOptimizationObjective.TestsTravelDistance
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
         """
-        TODO: write here instructions & expanations.
+        TODO: write here instructions & explanations.
         """
         assert isinstance(self.problem, MDAProblem)
         assert isinstance(state, MDAState)
@@ -45,6 +46,7 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(MDAMaxAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, MDAProblem)
+        assert self.problem.optimization_objective == MDAOptimizationObjective.Distance
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
@@ -89,6 +91,7 @@ class MDASumAirDistHeuristic(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(MDASumAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, MDAProblem)
+        assert self.problem.optimization_objective == MDAOptimizationObjective.Distance
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
@@ -137,6 +140,7 @@ class MDASumAirDistHeuristicForTests(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(MDASumAirDistHeuristicForTests, self).__init__(problem)
         assert isinstance(self.problem, MDAProblem)
+        assert self.problem.optimization_objective == MDAOptimizationObjective.Distance
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:
@@ -178,6 +182,7 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
     def __init__(self, problem: GraphProblem):
         super(MDAMSTAirDistHeuristic, self).__init__(problem)
         assert isinstance(self.problem, MDAProblem)
+        assert self.problem.optimization_objective == MDAOptimizationObjective.Distance
         self.cached_air_distance_calculator = CachedAirDistanceCalculator()
 
     def estimate(self, state: GraphProblemState) -> float:

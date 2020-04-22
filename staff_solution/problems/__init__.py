@@ -13,6 +13,6 @@ __all__ = [
     'MDAProblemInput', 'MDAProblem',
     'MDAMaxAirDistHeuristic', 'MDAMSTAirDistHeuristic',
     'MDASumAirDistHeuristic', 'MDASumAirDistHeuristicForTests',
-    'MDATimeObjectiveSumOfMinAirDistFromLabHeuristic',
+    'MDATestsTravelDistToNearestLabHeuristic',
     'CachedMapDistanceFinder', 'CachedAirDistanceCalculator'
 ]
