@@ -22,7 +22,7 @@ class MDAState(GraphProblemState):
     """
 
     nr_matoshim_on_ambulance: int
-    nr_available_matoshim_in_laboratories: Tuple[int, ...]  # TODO [staff]: change to visited_labs: FrozenSet[Laboratory]
+    visited_labs: FrozenSet[Laboratory]
     tests_on_ambulance: FrozenSet[ApartmentWithSymptomsReport]
     tests_transferred_to_lab: FrozenSet[ApartmentWithSymptomsReport]
     current_site: Union[Junction, Laboratory, ApartmentWithSymptomsReport]
@@ -146,7 +146,7 @@ class MDAProblem(GraphProblem):
         self.name += f'({problem_input.input_name}({len(problem_input.reported_apartments)}):{optimization_objective.name})'
         initial_state = MDAState(
             nr_matoshim_on_ambulance=problem_input.ambulance.initial_nr_matoshim,
-            nr_available_matoshim_in_laboratories=tuple(lab.max_nr_matoshim for lab in problem_input.laboratories),
+            visited_labs=frozenset(),
             tests_on_ambulance=frozenset(),
             tests_transferred_to_lab=frozenset(),
             current_site=problem_input.ambulance.initial_location)
@@ -196,11 +196,10 @@ class MDAProblem(GraphProblem):
                 continue
             new_state = MDAState(
                 nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - reported_apartment.nr_roommates,
-                nr_available_matoshim_in_laboratories=state_to_expand.nr_available_matoshim_in_laboratories,
+                visited_labs=state_to_expand.visited_labs,
                 tests_on_ambulance=frozenset(state_to_expand.tests_on_ambulance | {reported_apartment}),
                 tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab,
-                current_site=reported_apartment
-            )
+                current_site=reported_apartment)
             yield OperatorResult(
                 successor_state=new_state,
                 operator_cost=self.get_operator_cost(state_to_expand, new_state),
@@ -208,14 +207,12 @@ class MDAProblem(GraphProblem):
 
         # Go to lab
         for laboratory in self.problem_input.laboratories:
-            prev_nr_matoshim_in_lab = state_to_expand.nr_available_matoshim_in_laboratories[laboratory.lab_id]
-            if prev_nr_matoshim_in_lab < 1 and len(state_to_expand.tests_on_ambulance) < 1:
+            nr_available_matoshim_in_lab = laboratory.max_nr_matoshim * int(laboratory not in state_to_expand.visited_labs)
+            if nr_available_matoshim_in_lab < 1 and len(state_to_expand.tests_on_ambulance) < 1:
                 continue
-            new_nr_available_matoshim_per_laboratory = list(state_to_expand.nr_available_matoshim_in_laboratories)
-            new_nr_available_matoshim_per_laboratory[laboratory.lab_id] = 0
             new_state = MDAState(
-                nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + prev_nr_matoshim_in_lab,
-                nr_available_matoshim_in_laboratories=tuple(new_nr_available_matoshim_per_laboratory),
+                nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + nr_available_matoshim_in_lab,
+                visited_labs=frozenset(state_to_expand.visited_labs | {laboratory}),
                 tests_on_ambulance=frozenset(),
                 tests_transferred_to_lab=frozenset(
                     state_to_expand.tests_transferred_to_lab | state_to_expand.tests_on_ambulance),
