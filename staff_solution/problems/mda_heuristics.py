@@ -23,7 +23,10 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
 
     def estimate(self, state: GraphProblemState) -> float:
         """
-        TODO: write here instructions & explanations.
+        TODO [staff]: write here instructions & explanations.
+        TODO [staff]: move to the bottom of this file.
+        TODO [Ex.29]:
+            Complete the implementation of this method.
         """
         assert isinstance(self.problem, MDAProblem)
         assert isinstance(state, MDAState)
@@ -55,7 +58,7 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
          by calculating the maximum distance within the group of air distances between each
          two junctions in the remaining truck path.
 
-        TODO [Ex.xx]:
+        TODO [Ex.16]:
             Calculate the `total_distance_lower_bound` by taking the maximum over the group
                 {airDistanceBetween(j1,j2) | j1,j2 in JunctionsInRemainingTruckPath s.t. j1 != j2}
             Use the method `get_all_junctions_in_remaining_truck_path()` of the MDA problem.
@@ -103,7 +106,7 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         The remaining distance estimation is the cost of this built path.
         Note that we ignore here the problem constraints (like picking before dropping and maximum number of packages
          on the truck). We only make sure to visit all junctions in `all_junctions_in_remaining_truck_path`.
-        TODO [Ex.xx]:
+        TODO [Ex.19]:
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
              distance calculations.
@@ -190,7 +193,7 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
         This heuristic returns a lower bound for the remaining cost, that is based on a lower bound
          of the distance of the remaining route of the truck. Here this remaining distance is bounded
          (from below) by the weight of the minimum-spanning-tree of the graph in-which the vertices
-         are the junctions in the remaining truck route, and the edges weights (edge between each
+         are the junctions in the remaining ambulance route, and the edges weights (edge between each
          junctions pair) are the air-distances between the junctions.
         """
         assert isinstance(self.problem, MDAProblem)
@@ -201,7 +204,7 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
 
     def _calculate_junctions_mst_weight_using_air_distance(self, junctions: List[Junction]) -> float:
         """
-        TODO [Ex.xx]: Implement this method.
+        TODO [Ex.22]: Implement this method.
               Use `networkx` (nx) package (already imported in this file) to calculate the weight
                of the minimum-spanning-tree of the graph in which the vertices are the given junctions
                and there is an edge between each pair of distinct junctions (no self-loops) for which

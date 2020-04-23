@@ -14,18 +14,33 @@ __all__ = ['MDAState', 'MDACost', 'MDAProblem', 'MDAOptimizationObjective']
 @dataclass(frozen=True)
 class MDAState(GraphProblemState):
     """
-    An instance of this class represents a state of deliveries problem.
-    This state includes the deliveries which are currently loaded on the
-     truck, the deliveries which had already been dropped, and the current
-     location of the truck (which is either the initial location or the
-     last pick/drop location.
+    An instance of this class represents a state of MDA problem.
+    This state includes:
+        `current_site`:
+            The current site where the ambulate is at.
+            The initial state stored in this field the initial ambulance location (which is a `Junction` object).
+            Other states stores the last visited reported apartment (object of type `ApartmentWithSymptomsReport`),
+             or the last visited laboratory (object of type `Laboratory`).
+        `tests_on_ambulance`:
+            Stores the reported-apartments (objects of type `ApartmentWithSymptomsReport`) which had been visited,
+             and their tests are still stored on the ambulance (hasn't been transferred to a laboratory yet).
+        `tests_transferred_to_lab`:
+            Stores the reported-apartments (objects of type `ApartmentWithSymptomsReport`) which had been visited,
+             and their tests had already been transferred to a laboratory.
+        `nr_matoshim_on_ambulance`:
+            The number of matoshim currently stored on the ambulance.
+            Whenever visiting a reported apartment, this number is decreased by the #roommates in this apartment.
+            Whenever visiting a laboratory for the first time, we transfer the available matoshim from this lab
+             to the ambulance.
+        `visited_labs`:
+            Stores the laboratories (objects of type `Laboratory`) that had been visited at least once.
     """
 
-    nr_matoshim_on_ambulance: int
-    visited_labs: FrozenSet[Laboratory]
+    current_site: Union[Junction, Laboratory, ApartmentWithSymptomsReport]
     tests_on_ambulance: FrozenSet[ApartmentWithSymptomsReport]
     tests_transferred_to_lab: FrozenSet[ApartmentWithSymptomsReport]
-    current_site: Union[Junction, Laboratory, ApartmentWithSymptomsReport]
+    nr_matoshim_on_ambulance: int
+    visited_labs: FrozenSet[Laboratory]
 
     @property
     def current_location(self):
@@ -42,9 +57,15 @@ class MDAState(GraphProblemState):
         return 'initial-location'
 
     def __str__(self):
-        return f'(tests transferred to lab: {list(self.tests_transferred_to_lab)} ' \
-               f'tests on ambulance: {list(self.tests_on_ambulance)} ' \
-               f'ambulance loc: {self.get_current_location_short_description()})'
+        return f'(' \
+               f'loc: {self.get_current_location_short_description()} ' \
+               f'tests on ambulance: ' \
+               f'{[f"{reported_apartment.reporter_name} ({reported_apartment.nr_roommates})" for reported_apartment in self.tests_on_ambulance]} ' \
+               f'tests transferred to lab: ' \
+               f'{[f"{reported_apartment.reporter_name} ({reported_apartment.nr_roommates})" for reported_apartment in self.tests_transferred_to_lab]} ' \
+               f'#matoshim: {self.nr_matoshim_on_ambulance} ' \
+               f'visited labs: {[lab.name for lab in self.visited_labs]}' \
+               f')'
 
     def __eq__(self, other):
         """
@@ -52,16 +73,18 @@ class MDAState(GraphProblemState):
         """
         assert isinstance(other, MDAState)
 
-        # TODO [Ex.xx]: Complete the implementation of this method!
+        # TODO [Ex.13]: Complete the implementation of this method!
         #  Note that you can simply compare two instances of `Junction` type
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
         #   are also comparable (in the same manner).
         # raise NotImplementedError  # TODO: remove this line.
 
-        return self.tests_on_ambulance == other.tests_on_ambulance \
+        return self.current_site == other.current_site \
+               and self.tests_on_ambulance == other.tests_on_ambulance \
                and self.tests_transferred_to_lab == other.tests_transferred_to_lab \
-               and self.current_site == other.current_site
+               and self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance \
+               and self.visited_labs == other.visited_labs
 
     def __hash__(self):
         """
@@ -70,12 +93,13 @@ class MDAState(GraphProblemState):
          or as an item in a set.
         It is critical that two objects representing the same state would have the same hash!
         """
-        return hash((self.tests_on_ambulance, self.tests_transferred_to_lab, self.current_location))
+        return hash((self.current_site, self.tests_on_ambulance, self.tests_transferred_to_lab,
+                     self.nr_matoshim_on_ambulance, self.visited_labs))
 
     def get_total_nr_tests_taken_and_stored_on_ambulance(self) -> int:
         """
         This method returns the total number of packages that are loaded on the truck in this state.
-        TODO [Ex.xx]: Implement this method.
+        TODO [Ex.13]: Implement this method.
          Notice that this method can be implemented using a single line of code - do so!
          Use python's built-it `sum()` function.
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
@@ -159,7 +183,7 @@ class MDAProblem(GraphProblem):
 
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
-        TODO [Ex.xx]: Implement this method!
+        TODO [Ex.13]: Implement this method!
         This method represents the `Succ: S -> P(S)` function of the deliveries truck problem.
         The `Succ` function is defined by the problem operators as shown in class.
         The deliveries truck problem operators are defined in the assignment instructions.
@@ -226,6 +250,7 @@ class MDAProblem(GraphProblem):
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
         """
         TODO [staff]: instructions!
+        TODO [Ex.13]: implement this method!
         """
         map_distance = self.map_distance_finder.get_map_cost_between(
             prev_state.current_location, succ_state.current_location)
@@ -236,7 +261,7 @@ class MDAProblem(GraphProblem):
     def is_goal(self, state: GraphProblemState) -> bool:
         """
         This method receives a state and returns whether this state is a goal.
-        TODO [Ex.xx]: implement this method using a single `return` line!
+        TODO [Ex.13]: implement this method using a single `return` line!
          Use sets/frozensets comparison (`some_set == some_other_set`).
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
@@ -256,7 +281,7 @@ class MDAProblem(GraphProblem):
     def get_reported_apartments_waiting_to_visit(self, state: MDAState) -> Set[ApartmentWithSymptomsReport]:
         """
         This method returns a set of all deliveries that haven't been neither picked nor dropped yet.
-        TODO [Ex.xx]: Implement this method.
+        TODO [Ex.13]: Implement this method.
             Use sets difference operation (`some_set - some_other_set`).
             Note: Given a collection of items, you can create a new set of these items simply by
                 `set(my_collection_of_items)`. Then you can use set operations over this newly
@@ -272,7 +297,7 @@ class MDAProblem(GraphProblem):
         This includes the ambulance's current location, and the locations of the reported apartments
          that hasn't been visited yet.
         The list should be ordered by the junctions index ascendingly (small to big).
-        TODO [Ex.xx]: Implement this method.
+        TODO [Ex.16]: Implement this method.
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
             Use python's `sorted(..., key=...)` function.
         """
