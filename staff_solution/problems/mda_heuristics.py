@@ -209,6 +209,8 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
               Use the method `self.cached_air_distance_calculator.get_air_distance_between_junctions()`
                to calculate the air distance between the two junctions.
               Google for how to use `networkx` package for this purpose.
+              Use `nx.minimum_spanning_tree()` to get an MST. Calculate the MST size using the method
+              `.size(weight='weight')`. Do not manually sum the edges' weights.
         """
         # raise NotImplementedError  # TODO: remove this line!
 
