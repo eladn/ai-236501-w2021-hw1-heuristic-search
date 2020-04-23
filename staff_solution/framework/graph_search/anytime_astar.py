@@ -46,7 +46,7 @@ class AnytimeAStar(GraphProblemSolver):
             max_nr_stored_states = max(max_nr_stored_states, acceptable_astar_res.max_nr_stored_states)
             if acceptable_astar_res.is_solution_found:
                 return acceptable_astar_res._replace(
-                    solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)  #, 0.5
+                    solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)
 
             greedy = AStar(heuristic_function_type=self.heuristic_function_type,
                            heuristic_weight=self.initial_high_heuristic_weight_bound,
@@ -56,7 +56,7 @@ class AnytimeAStar(GraphProblemSolver):
             max_nr_stored_states = max(max_nr_stored_states, greedy_res.max_nr_stored_states)
             if not greedy_res.is_solution_found:
                 return greedy_res._replace(
-                    solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)  # 1
+                    solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)
             best_solution = greedy_res
             best_heuristic_weight = self.initial_high_heuristic_weight_bound
 
