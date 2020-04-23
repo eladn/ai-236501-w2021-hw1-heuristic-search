@@ -78,7 +78,8 @@ class AnytimeAStar(GraphProblemSolver):
                 #  You might need to use the field `is_solution_found` of the search result obtained from the AStar.
                 #  Update `best_solution` and `best_heuristic_weight` if needed. `best_solution` stores the solution
                 #   (SearchResult object) found with the best g-cost (use `solution_g_cost` field of SearchResult to
-                #   obtain the g-cost of a solution).
+                #   obtain the g-cost of a solution). Update iff the current inspected solution cost < the cost of
+                #   the best found solution so far.
                 #  Make sure to also read the big comment in the head of this class.
                 # raise NotImplementedError   # TODO: remove this line!
 
