@@ -24,13 +24,15 @@ class AnytimeAStar(GraphProblemSolver):
      (again, constrained to max_nr_states_to_expand_per_iteration) using w2).
     """
 
-    solver_name = 'Anytime-A*'
+    solver_name = 'Anytime-A*-StaffSol'
 
     def __init__(self,
                  heuristic_function_type: HeuristicFunctionType,
-                 max_nr_states_to_expand_per_iteration: int):
+                 max_nr_states_to_expand_per_iteration: int,
+                 initial_high_heuristic_weight_bound: float = 0.9):
         self.heuristic_function_type = heuristic_function_type
         self.max_nr_states_to_expand_per_iteration = max_nr_states_to_expand_per_iteration
+        self.initial_high_heuristic_weight_bound = initial_high_heuristic_weight_bound
 
     def solve_problem(self, problem: GraphProblem) -> SearchResult:
         with Timer(print_title=False) as timer:
@@ -44,26 +46,27 @@ class AnytimeAStar(GraphProblemSolver):
             max_nr_stored_states = max(max_nr_stored_states, acceptable_astar_res.max_nr_stored_states)
             if acceptable_astar_res.is_solution_found:
                 return acceptable_astar_res._replace(
-                    solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)  #, 0.5
+                    solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)
 
-            greedy = AStar(heuristic_function_type=self.heuristic_function_type, heuristic_weight=1,
+            greedy = AStar(heuristic_function_type=self.heuristic_function_type,
+                           heuristic_weight=self.initial_high_heuristic_weight_bound,
                            max_nr_states_to_expand=self.max_nr_states_to_expand_per_iteration)
             greedy_res = greedy.solve_problem(problem)
             total_nr_expanded_states += greedy_res.nr_expanded_states
             max_nr_stored_states = max(max_nr_stored_states, greedy_res.max_nr_stored_states)
             if not greedy_res.is_solution_found:
                 return greedy_res._replace(
-                    solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)  # 1
+                    solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)
             best_solution = greedy_res
-            best_heuristic_weight = 1
+            best_heuristic_weight = self.initial_high_heuristic_weight_bound
 
             # Invariant being hold during the loop:
             #   There is a solution using `high_heuristic_weight`,
             #   but there is no solution using `low_heuristic_weight`.
             low_heuristic_weight = 0.5
-            high_heuristic_weight = 1.0
+            high_heuristic_weight = self.initial_high_heuristic_weight_bound
             while (high_heuristic_weight - low_heuristic_weight) > 0.01:
-                # TODO [Ex.34]:
+                # TODO [Ex.40]:
                 #  Complete the missing part inside this loop.
                 #  Perform a binary search over the possible values of `heuristic_weight`.
                 #  In each iteration, create an AStar solver with:
@@ -78,11 +81,28 @@ class AnytimeAStar(GraphProblemSolver):
                 #  You might need to use the field `is_solution_found` of the search result obtained from the AStar.
                 #  Update `best_solution` and `best_heuristic_weight` if needed. `best_solution` stores the solution
                 #   (SearchResult object) found with the best g-cost (use `solution_g_cost` field of SearchResult to
-                #   obtain the g-cost of a solution).
+                #   obtain the g-cost of a solution). Update iff the current inspected solution cost < the cost of
+                #   the best found solution so far.
                 #  Make sure to also read the big comment in the head of this class.
-                raise NotImplementedError()   # TODO: remove this line!
+                # raise NotImplementedError   # TODO: remove this line!
+
+                mid_heuristic_weight = (low_heuristic_weight + high_heuristic_weight) / 2
+                # print(f'low: {low_heuristic_weight} -- mid: {mid_heuristic_weight} -- high: {high_heuristic_weight}')  # TODO: remove!
+                astar = AStar(heuristic_function_type=self.heuristic_function_type,
+                              heuristic_weight=mid_heuristic_weight,
+                              max_nr_states_to_expand=self.max_nr_states_to_expand_per_iteration)
+                res = astar.solve_problem(problem)
+                total_nr_expanded_states += res.nr_expanded_states
+                max_nr_stored_states = max(max_nr_stored_states, res.max_nr_stored_states)
+                if res.is_solution_found:
+                    high_heuristic_weight = mid_heuristic_weight
+                    if res.solution_g_cost < best_solution.solution_g_cost:
+                        best_solution = res
+                        best_heuristic_weight = mid_heuristic_weight
+                else:
+                    low_heuristic_weight = mid_heuristic_weight
 
         self.solver_name = f'{self.__class__.solver_name} (h={best_solution.solver.heuristic_function.heuristic_name}, w={best_heuristic_weight:.3f})'
         return best_solution._replace(
             solver=self, nr_expanded_states=total_nr_expanded_states, max_nr_stored_states=max_nr_stored_states,
-            solving_time=timer.elapsed)  #, high_heuristic_weight
+            solving_time=timer.elapsed)
