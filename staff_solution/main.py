@@ -40,13 +40,14 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # TODO: Make this curve colored blue with solid line style.
     # TODO: Set its label to be 'Solution cost'.
     # See documentation here:
-    # https://matplotlib.org/2.0.0/api/_as_gen/matplotlib.axes.Axes.plot.html
+    # https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html
     # You can also Google for additional examples.
     # raise NotImplementedError  # TODO: remove this line!
+    # p1, = ax1.plot(...)  # TODO: pass the relevant params instead of `...`.
     p1, = ax1.plot(weights, total_cost, 'b-', label='Solution cost')
 
     # ax1: Make the y-axis label, ticks and tick labels match the line color.
-    ax1.set_ylabel('solution cost', color='b')
+    ax1.set_ylabel('Solution cost', color='b')
     ax1.tick_params('y', colors='b')
     ax1.set_xlabel('weight')
 
@@ -54,12 +55,14 @@ def plot_distance_and_expanded_wrt_weight_figure(
     ax2 = ax1.twinx()
 
     # TODO: Plot the total expanded with ax2. Use `ax2.plot(...)`.
-    # TODO: ax2: Make the y-axis label, ticks and tick labels match the line color.
     # TODO: Make this curve colored red with solid line style.
     # TODO: Set its label to be '#Expanded states'.
     # raise NotImplementedError  # TODO: remove this line!
+    # p2, = ax2.plot(...)  # TODO: pass the relevant params instead of `...`.
     p2, = ax2.plot(weights, total_nr_expanded, 'r-', label='#Expanded states')
-    ax2.set_ylabel('states expanded', color='r')
+
+    # ax2: Make the y-axis label, ticks and tick labels match the line color.
+    ax2.set_ylabel('#Expanded states', color='r')
     ax2.tick_params('y', colors='r')
 
     curves = [p1, p2]
@@ -73,7 +76,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
 def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, problem: GraphProblem, n: int = 30,
                                    max_nr_states_to_expand: Optional[int] = 30_000):
     # TODO [Ex.xx]:
-    #  1. Create an array of 20 numbers equally spread in [0.5, 1]
+    #  1. Create an array of `n` numbers equally spread in [0.5, 1]
     #     (including the edges). You can use `np.linspace()` for that.
     #  2. For each weight in that array run the wA* algorithm, with the
     #     given `heuristic_type` over the given problem. For each such run,
