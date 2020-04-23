@@ -63,7 +63,7 @@ class AnytimeAStar(GraphProblemSolver):
             low_heuristic_weight = 0.5
             high_heuristic_weight = 1.0
             while (high_heuristic_weight - low_heuristic_weight) > 0.01:
-                # TODO [Ex.34]:
+                # TODO [Ex.xx]:
                 #  Complete the missing part inside this loop.
                 #  Perform a binary search over the possible values of `heuristic_weight`.
                 #  In each iteration, create an AStar solver with:

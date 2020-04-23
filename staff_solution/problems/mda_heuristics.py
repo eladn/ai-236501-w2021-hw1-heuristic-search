@@ -55,7 +55,7 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
          by calculating the maximum distance within the group of air distances between each
          two junctions in the remaining truck path.
 
-        TODO [Ex.17]:
+        TODO [Ex.xx]:
             Calculate the `total_distance_lower_bound` by taking the maximum over the group
                 {airDistanceBetween(j1,j2) | j1,j2 in JunctionsInRemainingTruckPath s.t. j1 != j2}
             Use the method `get_all_junctions_in_remaining_truck_path()` of the MDA problem.
@@ -103,7 +103,7 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         The remaining distance estimation is the cost of this built path.
         Note that we ignore here the problem constraints (like picking before dropping and maximum number of packages
          on the truck). We only make sure to visit all junctions in `all_junctions_in_remaining_truck_path`.
-        TODO [Ex.20]:
+        TODO [Ex.xx]:
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
              distance calculations.
@@ -201,7 +201,7 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
 
     def _calculate_junctions_mst_weight_using_air_distance(self, junctions: List[Junction]) -> float:
         """
-        TODO [Ex.23]: Implement this method.
+        TODO [Ex.xx]: Implement this method.
               Use `networkx` (nx) package (already imported in this file) to calculate the weight
                of the minimum-spanning-tree of the graph in which the vertices are the given junctions
                and there is an edge between each pair of distinct junctions (no self-loops) for which

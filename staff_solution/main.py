@@ -26,7 +26,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     """
     Use `matplotlib` to generate a figure of the distance & #expanded-nodes
      w.r.t. the weight.
-    TODO [Ex.14]: Complete the implementation of this method.
+    TODO [Ex.xx]: Complete the implementation of this method.
     """
     weights, total_cost, total_nr_expanded = np.array(weights), np.array(total_cost), np.array(total_nr_expanded)
     assert len(weights) == len(total_cost) == len(total_nr_expanded)
@@ -72,7 +72,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
 
 def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, problem: GraphProblem, n: int = 30,
                                    max_nr_states_to_expand: Optional[int] = 30_000):
-    # TODO [Ex.14]:
+    # TODO [Ex.xx]:
     #  1. Create an array of 20 numbers equally spread in [0.5, 1]
     #     (including the edges). You can use `np.linspace()` for that.
     #  2. For each weight in that array run the wA* algorithm, with the
@@ -106,14 +106,14 @@ def toy_map_problem_experiments():
     print()
     print('Solve the map problem.')
 
-    # Ex.10
+    # Ex.xx
     # TODO: Just run it and inspect the printed result.
     toy_map_problem = MapProblem(streets_map, 54, 549)
     uc = UniformCost()
     res = uc.solve_problem(toy_map_problem)
     print(res)
 
-    # Ex.12
+    # Ex.xx
     # TODO: create an instance of `AStar` with the `NullHeuristic`,
     #       solve the same `toy_map_problem` with it and print the results (as before).
     # Notice: AStar constructor receives the heuristic *type* (ex: `MyHeuristicClass`),
@@ -123,7 +123,7 @@ def toy_map_problem_experiments():
     res = astar.solve_problem(toy_map_problem)
     print(res)
 
-    # Ex.13
+    # Ex.xx
     # TODO: create an instance of `AStar` with the `AirDistHeuristic`,
     #       solve the same `toy_map_problem` with it and print the results (as before).
     # exit()  # TODO: remove!
@@ -131,7 +131,7 @@ def toy_map_problem_experiments():
     res = astar.solve_problem(toy_map_problem)
     print(res)
 
-    # Ex.14
+    # Ex.xx
     # TODO:
     #  1. Complete the implementation of the function
     #     `run_astar_for_weights_in_range()` (upper in this file).
@@ -173,7 +173,7 @@ def basic_mda_problem_experiments():
 
     small_mda_problem_with_distance_cost = get_mda_problem('small', MDAOptimizationObjective.Distance)
 
-    # Ex.16
+    # Ex.xx
     # TODO: create an instance of `UniformCost`, solve the `small_mda_problem_with_distance_cost`
     #       with it and print the results.
     # exit()  # TODO: remove!
@@ -188,7 +188,7 @@ def mda_problem_with_astar_experiments():
 
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
-    # Ex.18
+    # Ex.xx
     # TODO: create an instance of `AStar` with the `MDAMaxAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
@@ -196,7 +196,7 @@ def mda_problem_with_astar_experiments():
     res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
-    # Ex.21
+    # Ex.xx
     # TODO: create an instance of `AStar` with the `MDASumAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
@@ -204,7 +204,7 @@ def mda_problem_with_astar_experiments():
     res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
-    # Ex.24
+    # Ex.xx
     # TODO: create an instance of `AStar` with the `MDAMSTAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
@@ -220,14 +220,14 @@ def mda_problem_with_weighted_astar_experiments():
     small_mda_problem_with_distance_cost = get_mda_problem('small', MDAOptimizationObjective.Distance)
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
-    # Ex.26
+    # Ex.xx
     # TODO: Call here the function `run_astar_for_weights_in_range()`
     #       with `MDAMSTAirDistHeuristic`
     #       over the `small_mda_problem_with_distance_cost`.
     # exit()  # TODO: remove!
     run_astar_for_weights_in_range(MDAMSTAirDistHeuristic, small_mda_problem_with_distance_cost)
 
-    # Ex.26
+    # Ex.xx
     # TODO: Call here the function `run_astar_for_weights_in_range()`
     #       with `MDASumAirDistHeuristic`
     #       over the `moderate_mda_problem_with_distance_cost`.
@@ -246,7 +246,7 @@ def multiple_objectives_mda_problem_experiments():
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
     moderate_mda_problem_with_time_cost = get_mda_problem('moderate', MDAOptimizationObjective.TestsTravelDistance)
 
-    # Ex.29
+    # Ex.xx
     # TODO: create an instance of `AStar` with the `MDATestsTravelDistToNearestLabHeuristic`,
     #       solve the `moderate_mda_problem_with_time_cost` with it and print the results.
     # exit()  # TODO: remove!
@@ -254,7 +254,7 @@ def multiple_objectives_mda_problem_experiments():
     res = astar.solve_problem(moderate_mda_problem_with_time_cost)
     print(res)
 
-    # Ex.29
+    # Ex.xx
     # TODO [staff]: WRITE HERE INSTRUCTIONS!
     # exit()  # TODO: remove!
     distance_astar = AStar(MDAMSTAirDistHeuristic)
@@ -286,7 +286,7 @@ def mda_problem_with_astar_epsilon_experiments():
         focal_heuristic = getattr(solver, '__focal_heuristic')
         return focal_heuristic.estimate(node.state)
 
-    # Ex.33
+    # Ex.xx
     # Try using A*eps to improve the speed (#dev) with a non-acceptable heuristic.
     # TODO: create an instance of `AStarEpsilon` with the `MDAMSTAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
@@ -307,7 +307,7 @@ def mda_problem_anytime_astar_experiments():
 
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
-    # Ex.35
+    # Ex.xx
     # TODO: create an instance of `AnytimeAStar` once with the `MDAMSTAirDistHeuristic`, with
     #       `max_nr_states_to_expand_per_iteration` set to 50, solve the
     #       `moderate_mda_problem_with_distance_cost` with it and print the results.
@@ -324,7 +324,7 @@ def big_mda_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments(
 
     big_mda_problem_with_distance_cost = get_mda_problem('big', MDAOptimizationObjective.Distance)
 
-    # Ex.35
+    # Ex.xx
     # TODO: create an instance of `AnytimeAStar` once with the `MDASumAirDistHeuristic`,
     #       and then with the `MDAMSTAirDistHeuristic`, both with `max_nr_states_to_expand_per_iteration`
     #       set to 400, solve the `big_mda_problem_with_distance_cost` with it and print the results.
@@ -339,31 +339,15 @@ def big_mda_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments(
     print(res)
 
 
-def test4():
-    moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
-    astar = AStar(MDAMSTAirDistHeuristic, heuristic_weight=0.5)
-    res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
-    print(res)
-
-
-def test5():
-    moderate_mda_problem_with_time_cost = get_mda_problem('moderate', MDAOptimizationObjective.TestsTravelDistance)
-    astar = AStar(MDATestsTravelDistToNearestLabHeuristic, heuristic_weight=0.5)
-    res = astar.solve_problem(moderate_mda_problem_with_time_cost)
-    print(res)
-
-
 def run_all_experiments():
-    # test4()
-    # test5()
-    # toy_map_problem_experiments()
-    # basic_mda_problem_experiments()
-    # mda_problem_with_astar_experiments()
-    # mda_problem_with_weighted_astar_experiments()
+    toy_map_problem_experiments()
+    basic_mda_problem_experiments()
+    mda_problem_with_astar_experiments()
+    mda_problem_with_weighted_astar_experiments()
     multiple_objectives_mda_problem_experiments()
-    # mda_problem_with_astar_epsilon_experiments()
-    # mda_problem_anytime_astar_experiments()
-    # big_mda_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments()
+    mda_problem_with_astar_epsilon_experiments()
+    mda_problem_anytime_astar_experiments()
+    big_mda_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments()
 
 
 if __name__ == '__main__':

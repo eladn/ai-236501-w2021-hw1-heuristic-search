@@ -52,7 +52,7 @@ class MDAState(GraphProblemState):
         """
         assert isinstance(other, MDAState)
 
-        # TODO [Ex.15]: Complete the implementation of this method!
+        # TODO [Ex.xx]: Complete the implementation of this method!
         #  Note that you can simply compare two instances of `Junction` type
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
@@ -75,7 +75,7 @@ class MDAState(GraphProblemState):
     def get_total_nr_tests_taken_and_stored_on_ambulance(self) -> int:
         """
         This method returns the total number of packages that are loaded on the truck in this state.
-        TODO [Ex.15]: Implement this method.
+        TODO [Ex.xx]: Implement this method.
          Notice that this method can be implemented using a single line of code - do so!
          Use python's built-it `sum()` function.
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
@@ -159,7 +159,7 @@ class MDAProblem(GraphProblem):
 
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
-        TODO [Ex.15]: Implement this method!
+        TODO [Ex.xx]: Implement this method!
         This method represents the `Succ: S -> P(S)` function of the deliveries truck problem.
         The `Succ` function is defined by the problem operators as shown in class.
         The deliveries truck problem operators are defined in the assignment instructions.
@@ -235,7 +235,7 @@ class MDAProblem(GraphProblem):
     def is_goal(self, state: GraphProblemState) -> bool:
         """
         This method receives a state and returns whether this state is a goal.
-        TODO [Ex.15]: implement this method using a single `return` line!
+        TODO [Ex.xx]: implement this method using a single `return` line!
          Use sets/frozensets comparison (`some_set == some_other_set`).
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
@@ -255,7 +255,7 @@ class MDAProblem(GraphProblem):
     def get_reported_apartments_waiting_to_visit(self, state: MDAState) -> Set[ApartmentWithSymptomsReport]:
         """
         This method returns a set of all deliveries that haven't been neither picked nor dropped yet.
-        TODO [Ex.15]: Implement this method.
+        TODO [Ex.xx]: Implement this method.
             Use `set` difference operations.
             Note: Given a collection of items, you can create a new set of these items simply by
                 `set(my_collection_of_items)`. Then you can use set operations over this newly
@@ -270,7 +270,7 @@ class MDAProblem(GraphProblem):
         This method returns a set of all junctions that are part of the remaining route of the truck.
         This includes the truck's current location, the pick locations of the deliveries that haven't
          been picked yet, and the drop location of the deliveries that haven't been dropped yet.
-        TODO [Ex.17]: Implement this method.
+        TODO [Ex.xx]: Implement this method.
             Use `set` union operations.
             Use the method `self.get_deliveries_waiting_to_pick(state)`.
             Note: `set-comprehension` technique might be useful here. It works similar to the
