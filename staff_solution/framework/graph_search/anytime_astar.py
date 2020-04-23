@@ -28,9 +28,11 @@ class AnytimeAStar(GraphProblemSolver):
 
     def __init__(self,
                  heuristic_function_type: HeuristicFunctionType,
-                 max_nr_states_to_expand_per_iteration: int):
+                 max_nr_states_to_expand_per_iteration: int,
+                 initial_high_heuristic_weight_bound: float = 0.9):
         self.heuristic_function_type = heuristic_function_type
         self.max_nr_states_to_expand_per_iteration = max_nr_states_to_expand_per_iteration
+        self.initial_high_heuristic_weight_bound = initial_high_heuristic_weight_bound
 
     def solve_problem(self, problem: GraphProblem) -> SearchResult:
         with Timer(print_title=False) as timer:
@@ -46,7 +48,8 @@ class AnytimeAStar(GraphProblemSolver):
                 return acceptable_astar_res._replace(
                     solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)  #, 0.5
 
-            greedy = AStar(heuristic_function_type=self.heuristic_function_type, heuristic_weight=1,
+            greedy = AStar(heuristic_function_type=self.heuristic_function_type,
+                           heuristic_weight=self.initial_high_heuristic_weight_bound,
                            max_nr_states_to_expand=self.max_nr_states_to_expand_per_iteration)
             greedy_res = greedy.solve_problem(problem)
             total_nr_expanded_states += greedy_res.nr_expanded_states
@@ -55,13 +58,13 @@ class AnytimeAStar(GraphProblemSolver):
                 return greedy_res._replace(
                     solver=self, nr_expanded_states=total_nr_expanded_states, solving_time=timer.elapsed)  # 1
             best_solution = greedy_res
-            best_heuristic_weight = 1
+            best_heuristic_weight = self.initial_high_heuristic_weight_bound
 
             # Invariant being hold during the loop:
             #   There is a solution using `high_heuristic_weight`,
             #   but there is no solution using `low_heuristic_weight`.
             low_heuristic_weight = 0.5
-            high_heuristic_weight = 1.0
+            high_heuristic_weight = self.initial_high_heuristic_weight_bound
             while (high_heuristic_weight - low_heuristic_weight) > 0.01:
                 # TODO [Ex.xx]:
                 #  Complete the missing part inside this loop.
