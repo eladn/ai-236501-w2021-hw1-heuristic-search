@@ -39,8 +39,8 @@ class CachedMapDistanceFinder:
         If the distance has not been stored in the cache yet, create a `MapProblem` with the given source & target,
          solve this problem using the `self.map_problem_solver` (that is given in the c'tor), store the cost of
          the solution in the cache, and finally return the cost of the solution. If the solver has not found a
-         solution (the `final_search_node` field of the solver's result is None), the returned value should also
-         be None. Even in this case (no solution found), you also should use the cache (store None in the cache).
+         solution (the `is_solution_found` field is negative), the returned value should also be None. Even in this
+         case (no solution found), you also should use the cache (store None in the cache).
         Use `_is_in_cache()`, `_get_from_cache()` and `_insert_to_cache()` methods to access the cache. Do not
          access the `_cache` field directly.
         The cache key should include the source & target indices.
