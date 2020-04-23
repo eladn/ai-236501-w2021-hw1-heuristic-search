@@ -134,7 +134,7 @@ class MDACost(ExtendedCost):
 
 class MDAProblem(GraphProblem):
     """
-    An instance of this class represents a deliveries truck problem.
+    An instance of this class represents an MDA problem.
     """
 
     name = 'MDA-StaffSol'
@@ -183,6 +183,7 @@ class MDAProblem(GraphProblem):
             - Python's built-in method `frozenset()` to create a new frozen set (for fields that
               expect this type).
             - Other fields of the state and the problem input.
+            - Python's sets union operation (`some_set_or_frozenset | some_other_set_or_frozenset`).
         """
 
         assert isinstance(state_to_expand, MDAState)
@@ -256,28 +257,26 @@ class MDAProblem(GraphProblem):
         """
         This method returns a set of all deliveries that haven't been neither picked nor dropped yet.
         TODO [Ex.xx]: Implement this method.
-            Use `set` difference operations.
+            Use sets difference operation (`some_set - some_other_set`).
             Note: Given a collection of items, you can create a new set of these items simply by
                 `set(my_collection_of_items)`. Then you can use set operations over this newly
                 generated set.
-            Note: This method can be implemented using a single line of code.
+            Note: This method can be implemented using a single line of code. Try to do so.
         """
         # raise NotImplementedError  # TODO: remove this line!
         return (set(self.problem_input.reported_apartments) - state.tests_transferred_to_lab) - state.tests_on_ambulance
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
-        This method returns a set of all junctions that are part of the remaining route of the truck.
-        This includes the truck's current location, the pick locations of the deliveries that haven't
-         been picked yet, and the drop location of the deliveries that haven't been dropped yet.
+        This method returns a list of junctions that are part of the remaining route of the ambulance.
+        This includes the ambulance's current location, and the locations of the reported apartments
+         that hasn't been visited yet.
+        The list should be ordered by the junctions index ascendingly (small to big).
         TODO [Ex.xx]: Implement this method.
-            Use `set` union operations.
-            Use the method `self.get_deliveries_waiting_to_pick(state)`.
-            Note: `set-comprehension` technique might be useful here. It works similar to the
-                `list-comprehension` technique. Example: {i * 10 for i in range(100)} would create
-                a set of the items {0, 10, 20, 30, ..., 990}
+            Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
+            Use python's `sorted(..., key=...)` function.
         """
         # raise NotImplementedError  # TODO: remove this line!
         return sorted(
-            {report.location for report in self.get_reported_apartments_waiting_to_visit(state)} | \
-            {state.current_location}, key=lambda junc: junc.index)
+            [report.location for report in self.get_reported_apartments_waiting_to_visit(state)] + \
+            [state.current_location], key=lambda junc: junc.index)
