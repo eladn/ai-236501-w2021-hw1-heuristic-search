@@ -54,14 +54,14 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
 
     def estimate(self, state: GraphProblemState) -> float:
         """
-        This method calculated a lower bound of the cost of the remaining path of the truck,
-         by calculating the maximum distance within the group of air distances between each
-         two junctions in the remaining truck path.
+        This method calculated a lower bound of the distance of the remaining path of the ambulance,
+         by calculating the maximum distance within the group of air distances between each two
+         junctions in the remaining ambulance path. We don't consider laboratories here because we
+         do not know what laboratories would be visited in an optimal solution.
 
         TODO [Ex.16]:
             Calculate the `total_distance_lower_bound` by taking the maximum over the group
-                {airDistanceBetween(j1,j2) | j1,j2 in JunctionsInRemainingTruckPath s.t. j1 != j2}
-            Use the method `get_all_junctions_in_remaining_truck_path()` of the MDA problem.
+                {airDistanceBetween(j1,j2) | j1,j2 in CertainJunctionsInRemainingAmbulancePath s.t. j1 != j2}
             Notice: The problem is accessible via the `self.problem` field.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
                 distance calculations.
@@ -76,15 +76,16 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
         assert isinstance(self.problem, MDAProblem)
         assert isinstance(state, MDAState)
 
-        all_junctions_in_remaining_truck_path = self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
-        if len(all_junctions_in_remaining_truck_path) < 2:
+        all_certain_junctions_in_remaining_ambulance_path = \
+            self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
+        if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
 
         # return 10  # TODO: modify this line.
         return max(
             self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2)
-            for junction1 in all_junctions_in_remaining_truck_path
-            for junction2 in all_junctions_in_remaining_truck_path
+            for junction1 in all_certain_junctions_in_remaining_ambulance_path
+            for junction2 in all_certain_junctions_in_remaining_ambulance_path
             if junction1 != junction2)
 
 
@@ -99,13 +100,15 @@ class MDASumAirDistHeuristic(HeuristicFunction):
 
     def estimate(self, state: GraphProblemState) -> float:
         """
-        This heuristic evaluates the distance of the remaining truck route in the following way:
-        It builds a path that starts in the current truck's location, and each next junction in
+        This heuristic evaluates the distance of the remaining ambulance route in the following way:
+        It builds a path that starts in the current ambulance's location, and each next junction in
          the path is the (air-distance) nearest junction (to the previous one in the path) among
-         all junctions (in `all_junctions_in_remaining_truck_path`) that haven't been visited yet.
+         all certain junctions (in `all_certain_junctions_in_remaining_ambulance_path`) that haven't
+         been visited yet.
         The remaining distance estimation is the cost of this built path.
-        Note that we ignore here the problem constraints (like picking before dropping and maximum number of packages
-         on the truck). We only make sure to visit all junctions in `all_junctions_in_remaining_truck_path`.
+        Note that we ignore here the problem constraints (like enforcing the #matoshim and free
+         space in the ambulance's fridge). We only make sure to visit all certain junctions in
+         `all_certain_junctions_in_remaining_ambulance_path`.
         TODO [Ex.19]:
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
@@ -114,21 +117,22 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         assert isinstance(self.problem, MDAProblem)
         assert isinstance(state, MDAState)
 
-        all_junctions_in_remaining_truck_path = self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
-        all_junctions_in_remaining_truck_path = set(all_junctions_in_remaining_truck_path)
+        all_certain_junctions_in_remaining_ambulance_path = \
+            self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
+        all_certain_junctions_in_remaining_ambulance_path = set(all_certain_junctions_in_remaining_ambulance_path)
 
-        if len(all_junctions_in_remaining_truck_path) < 2:
+        if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
 
         # raise NotImplementedError  # TODO: remove this line and complete the missing part here!
 
         last_location = state.current_location
         total_cost_of_greedily_built_path = 0
-        while len(all_junctions_in_remaining_truck_path) > 1:
-            all_junctions_in_remaining_truck_path.remove(last_location)
+        while len(all_certain_junctions_in_remaining_ambulance_path) > 1:
+            all_certain_junctions_in_remaining_ambulance_path.remove(last_location)
             locs_and_dist = [
                 (loc, self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc))
-                for loc in all_junctions_in_remaining_truck_path]
+                for loc in all_certain_junctions_in_remaining_ambulance_path]
             min_dist_idx = np.argmin(np.array([dist for _, dist in locs_and_dist]))
             next_location = locs_and_dist[min_dist_idx][0]
             total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
@@ -138,6 +142,9 @@ class MDASumAirDistHeuristic(HeuristicFunction):
 
 
 class MDASumAirDistHeuristicForTests(HeuristicFunction):
+    """
+    Used for tests only (for determinism).
+    """
     heuristic_name = 'MDA-Sum-AirDist-ForTests-StaffSol'
 
     def __init__(self, problem: GraphProblem):
@@ -148,30 +155,25 @@ class MDASumAirDistHeuristicForTests(HeuristicFunction):
 
     def estimate(self, state: GraphProblemState) -> float:
         """
-        This heuristic evaluates the distance of the remaining truck route in the following way:
-        It builds a path that starts in the current truck's location, and each next junction in
-         the path is the (air-distance) nearest junction (to the previous one in the path) among
-         all junctions (in `all_junctions_in_remaining_truck_path`) that haven't been visited yet.
-        The remaining distance estimation is the cost of this built path.
-        Note that we ignore here the problem constraints (like picking before dropping and maximum number of packages
-         on the truck). We only make sure to visit all junctions in `all_junctions_in_remaining_truck_path`.
+        Used for tests only (for determinism).
         """
         assert isinstance(self.problem, MDAProblem)
         assert isinstance(state, MDAState)
 
-        all_junctions_in_remaining_truck_path = self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
-        all_junctions_in_remaining_truck_path = list(all_junctions_in_remaining_truck_path)
-        all_junctions_in_remaining_truck_path.sort(key=lambda junction: junction.index)
+        all_certain_junctions_in_remaining_ambulance_path = \
+            self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
+        all_certain_junctions_in_remaining_ambulance_path = list(all_certain_junctions_in_remaining_ambulance_path)
+        all_certain_junctions_in_remaining_ambulance_path.sort(key=lambda junction: junction.index)
 
-        if len(all_junctions_in_remaining_truck_path) < 2:
+        if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
 
         last_location = state.current_location
         total_cost_of_greedily_built_path = 0
-        while len(all_junctions_in_remaining_truck_path) > 1:
-            all_junctions_in_remaining_truck_path.remove(last_location)
+        while len(all_certain_junctions_in_remaining_ambulance_path) > 1:
+            all_certain_junctions_in_remaining_ambulance_path.remove(last_location)
             next_location = min(
-                all_junctions_in_remaining_truck_path,
+                all_certain_junctions_in_remaining_ambulance_path,
                 key=lambda loc: (self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc), loc.index))
             total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
             last_location = next_location
@@ -190,11 +192,10 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
 
     def estimate(self, state: GraphProblemState) -> float:
         """
-        This heuristic returns a lower bound for the remaining cost, that is based on a lower bound
-         of the distance of the remaining route of the truck. Here this remaining distance is bounded
-         (from below) by the weight of the minimum-spanning-tree of the graph in-which the vertices
-         are the junctions in the remaining ambulance route, and the edges weights (edge between each
-         junctions pair) are the air-distances between the junctions.
+        This heuristic returns a lower bound for the distance of the remaining route of the ambulance.
+        Here this remaining distance is bounded (from below) by the weight of the minimum-spanning-tree
+         of the graph, in-which the vertices are the junctions in the remaining ambulance route, and the
+         edges weights (edge between each junctions pair) are the air-distances between the junctions.
         """
         assert isinstance(self.problem, MDAProblem)
         assert isinstance(state, MDAState)
