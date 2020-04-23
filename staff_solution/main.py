@@ -189,7 +189,7 @@ def mda_problem_with_astar_experiments():
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
     # Ex.18
-    # TODO: create an instance of `AStar` with the `TruckDeliveriesMaxAirDistHeuristic`,
+    # TODO: create an instance of `AStar` with the `MDAMaxAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
     astar = AStar(MDAMaxAirDistHeuristic)
@@ -197,7 +197,7 @@ def mda_problem_with_astar_experiments():
     print(res)
 
     # Ex.21
-    # TODO: create an instance of `AStar` with the `TruckDeliveriesSumAirDistHeuristic`,
+    # TODO: create an instance of `AStar` with the `MDASumAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
     astar = AStar(MDASumAirDistHeuristic)
@@ -205,7 +205,7 @@ def mda_problem_with_astar_experiments():
     print(res)
 
     # Ex.24
-    # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
+    # TODO: create an instance of `AStar` with the `MDAMSTAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
     astar = AStar(MDAMSTAirDistHeuristic)
@@ -243,28 +243,28 @@ def multiple_objectives_mda_problem_experiments():
     print()
     print('Solve the MDA problem (small input, time & money objectives).')
 
-    moderate_delivery_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
-    moderate_delivery_problem_with_time_cost = get_mda_problem('moderate', MDAOptimizationObjective.TestsTravelDistance)
+    moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
+    moderate_mda_problem_with_time_cost = get_mda_problem('moderate', MDAOptimizationObjective.TestsTravelDistance)
 
     # Ex.29
-    # TODO: create an instance of `AStar` with the `TruckDeliveriesMSTAirDistHeuristic`,
-    #       solve the `moderate_delivery_problem_with_time_cost` with it and print the results.
+    # TODO: create an instance of `AStar` with the `MDATestsTravelDistToNearestLabHeuristic`,
+    #       solve the `moderate_mda_problem_with_time_cost` with it and print the results.
     # exit()  # TODO: remove!
     astar = AStar(MDATestsTravelDistToNearestLabHeuristic)
-    res = astar.solve_problem(moderate_delivery_problem_with_time_cost)
+    res = astar.solve_problem(moderate_mda_problem_with_time_cost)
     print(res)
 
     # Ex.29
     # TODO [staff]: WRITE HERE INSTRUCTIONS!
     # exit()  # TODO: remove!
     distance_astar = AStar(MDAMSTAirDistHeuristic)
-    distance_res = distance_astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    distance_res = distance_astar.solve_problem(moderate_mda_problem_with_distance_cost)
     optimal_distance_cost = distance_res.solution_g_cost
     eps = 0.15
     max_distance_cost = optimal_distance_cost * (1 + eps)
     time_astar = AStar(MDATestsTravelDistToNearestLabHeuristic,
                        open_criterion=lambda node: node.cost.distance_cost <= max_distance_cost)
-    time_res = time_astar.solve_problem(moderate_delivery_problem_with_time_cost)
+    time_res = time_astar.solve_problem(moderate_mda_problem_with_time_cost)
     print(time_res)
 
 
@@ -273,11 +273,11 @@ def mda_problem_with_astar_epsilon_experiments():
     print('Solve the MDA problem (moderate input, distance objective, using A*eps, use non-acceptable '
           'heuristic as focal heuristic).')
 
-    moderate_delivery_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
+    moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
     # Firstly solve the problem with AStar & MST heuristic for having a reference for #devs.
     astar = AStar(MDAMSTAirDistHeuristic)
-    res = astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    res = astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
     def within_focal_h_sum_priority_function(node: SearchNode, problem: GraphProblem, solver: AStarEpsilon):
@@ -288,15 +288,15 @@ def mda_problem_with_astar_epsilon_experiments():
 
     # Ex.33
     # Try using A*eps to improve the speed (#dev) with a non-acceptable heuristic.
-    # TODO: create an instance of `AStarEpsilon` with the `TruckDeliveriesMSTAirDistHeuristic`,
-    #       solve the `moderate_delivery_problem_with_distance_cost` with it and print the results.
+    # TODO: create an instance of `AStarEpsilon` with the `MDAMSTAirDistHeuristic`,
+    #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
     #       use focal_epsilon=0.03, and  max_focal_size=40.
     #       use within_focal_priority_function=within_focal_h_sum_priority_function
     # exit()  # TODO: remove!
     astar_eps = AStarEpsilon(
         MDAMSTAirDistHeuristic, within_focal_priority_function=within_focal_h_sum_priority_function,
         max_nr_states_to_expand=8_000, max_focal_size=40, focal_epsilon=0.03)
-    res = astar_eps.solve_problem(moderate_delivery_problem_with_distance_cost)
+    res = astar_eps.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
 
@@ -305,15 +305,15 @@ def mda_problem_anytime_astar_experiments():
     print('Solve the MDA problem (moderate input, only distance objective, Anytime-A*, '
           'MSTAirDist heuristics).')
 
-    moderate_delivery_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
+    moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
     # Ex.35
-    # TODO: create an instance of `AnytimeAStar` once with the `TruckDeliveriesMSTAirDistHeuristic`, with
+    # TODO: create an instance of `AnytimeAStar` once with the `MDAMSTAirDistHeuristic`, with
     #       `max_nr_states_to_expand_per_iteration` set to 50, solve the
-    #       `moderate_delivery_problem_with_distance_cost` with it and print the results.
+    #       `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
     anytime_astar = AnytimeAStar(MDAMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=50)
-    res = anytime_astar.solve_problem(moderate_delivery_problem_with_distance_cost)
+    res = anytime_astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
 
@@ -322,20 +322,20 @@ def big_mda_problem_with_non_acceptable_heuristic_and_anytime_astar_experiments(
     print('Solve the MDA problem (big input, only distance objective, Anytime-A*, '
           'SumAirDist & MSTAirDist heuristics).')
 
-    big_delivery_problem_with_distance_cost = get_mda_problem('big', MDAOptimizationObjective.Distance)
+    big_mda_problem_with_distance_cost = get_mda_problem('big', MDAOptimizationObjective.Distance)
 
     # Ex.35
-    # TODO: create an instance of `AnytimeAStar` once with the `TruckDeliveriesSumAirDistHeuristic`,
-    #       and then with the `TruckDeliveriesMSTAirDistHeuristic`, both with `max_nr_states_to_expand_per_iteration`
-    #       set to 400, solve the `big_delivery_problem_with_distance_cost` with it and print the results.
+    # TODO: create an instance of `AnytimeAStar` once with the `MDASumAirDistHeuristic`,
+    #       and then with the `MDAMSTAirDistHeuristic`, both with `max_nr_states_to_expand_per_iteration`
+    #       set to 400, solve the `big_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
 
     anytime_astar = AnytimeAStar(MDASumAirDistHeuristic, max_nr_states_to_expand_per_iteration=400)
-    res = anytime_astar.solve_problem(big_delivery_problem_with_distance_cost)
+    res = anytime_astar.solve_problem(big_mda_problem_with_distance_cost)
     print(res)
 
     anytime_astar = AnytimeAStar(MDAMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=400)
-    res = anytime_astar.solve_problem(big_delivery_problem_with_distance_cost)
+    res = anytime_astar.solve_problem(big_mda_problem_with_distance_cost)
     print(res)
 
 
