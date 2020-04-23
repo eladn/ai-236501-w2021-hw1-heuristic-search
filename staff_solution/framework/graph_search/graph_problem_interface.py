@@ -284,7 +284,7 @@ class SearchResult(NamedTuple):
         res_str += f'   total_g_cost: {self.solution_g_cost:11.5f}'
         if not isinstance(self.solution_cost, float):
             res_str += f'   total_cost: {self.solution_cost}'
-        res_str += f'   |path|: {len(self.solution_path): <3}' \
+        res_str += f'   |path|: {len(self.solution_path)-1: <3}' \
                    f'   path: {str(self.solution_path)}'
 
         additional_str = self.problem.solution_additional_str(self)
