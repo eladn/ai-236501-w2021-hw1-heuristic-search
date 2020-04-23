@@ -98,7 +98,7 @@ class MDAState(GraphProblemState):
 
     def get_total_nr_tests_taken_and_stored_on_ambulance(self) -> int:
         """
-        This method returns the total number of packages that are loaded on the truck in this state.
+        This method returns the total number of of tests that are stored on the ambulance in this state.
         TODO [Ex.13]: Implement this method.
          Notice that this method can be implemented using a single line of code - do so!
          Use python's built-it `sum()` function.
@@ -120,16 +120,16 @@ class MDACost(ExtendedCost):
     An instance of this class is returned as an operator cost by the method
      `MDAProblem.expand_state_with_costs()`.
     The `SearchNode`s that will be created during the run of the search algorithm are going
-     to have instances of `MDACost` in SearchNode's `cost` field (instead of float value).
+     to have instances of `MDACost` in SearchNode's `cost` field (instead of float values).
     The reason for using a custom type for the cost (instead of just using a `float` scalar),
      is because we want the cumulative cost (of each search node and particularly of the final
-     node of the solution) to be consisted of 2 objectives: (i) distance, and (ii) time
+     node of the solution) to be consisted of 2 objectives: (i) distance, and (ii) tests-travel.
     The field `optimization_objective` controls the objective of the problem (the cost we want
      the solver to minimize). In order to tell the solver which is the objective to optimize,
      we have the `get_g_cost()` method, which returns a single `float` scalar which is only the
      cost to optimize.
     This way, whenever we get a solution, we can inspect the 2 different costs of that solution,
-     even though the objective was only one of the costs (time for example).
+     even though the objective was only one of the costs.
     Having said that, note that during this assignment we will mostly use the distance objective.
     """
     distance_cost: float = 0.0
@@ -152,8 +152,8 @@ class MDACost(ExtendedCost):
 
     def __repr__(self):
         return f'MDACost(' \
-               f'dist={self.distance_cost:11.3f} meter, ' \
-               f'time={self.tests_travel_distance_cost:11.3f} minutes)'
+               f'dist={self.distance_cost:11.3f}m, ' \
+               f'tests-travel={self.tests_travel_distance_cost:11.3f}m)'
 
 
 class MDAProblem(GraphProblem):
@@ -169,11 +169,11 @@ class MDAProblem(GraphProblem):
                  optimization_objective: MDAOptimizationObjective = MDAOptimizationObjective.Distance):
         self.name += f'({problem_input.input_name}({len(problem_input.reported_apartments)}):{optimization_objective.name})'
         initial_state = MDAState(
-            nr_matoshim_on_ambulance=problem_input.ambulance.initial_nr_matoshim,
-            visited_labs=frozenset(),
+            current_site=problem_input.ambulance.initial_location,
             tests_on_ambulance=frozenset(),
             tests_transferred_to_lab=frozenset(),
-            current_site=problem_input.ambulance.initial_location)
+            nr_matoshim_on_ambulance=problem_input.ambulance.initial_nr_matoshim,
+            visited_labs=frozenset())
         super(MDAProblem, self).__init__(initial_state)
         self.problem_input = problem_input
         self.streets_map = streets_map
@@ -184,9 +184,9 @@ class MDAProblem(GraphProblem):
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
         TODO [Ex.13]: Implement this method!
-        This method represents the `Succ: S -> P(S)` function of the deliveries truck problem.
+        This method represents the `Succ: S -> P(S)` function of the MDA problem.
         The `Succ` function is defined by the problem operators as shown in class.
-        The deliveries truck problem operators are defined in the assignment instructions.
+        The MDA problem operators are defined in the assignment instructions.
         It receives a state and iterates over its successor states.
         Notice that this its return type is an *Iterator*. It means that this function is not
          a regular function, but a `generator function`. Hence, it should be implemented using
@@ -194,18 +194,19 @@ class MDAProblem(GraphProblem):
         For each successor, an object of type `OperatorResult` is yielded. This object describes the
             successor state, the cost of the applied operator and its name. Look for its definition
             and use the correct fields in its c'tor. The operator name should be in the following
-            format: `pick ClientName` (with the correct client name) if a pick operator was applied,
-            or `drop ClientName` if a drop operator was applied. The report object stores its
-            reporter name in one of its fields.
+            format: `visit ReporterName` (with the correct reporter name) if an reported-apartment
+            visit operator was applied (to take tests from the roommates of an apartment), or
+            `go to lab LabName` if a laboratory visit operator was applied.
+            The apartment-report object stores its reporter-name in one of its fields.
         Things you might want to use:
-            - The method `self.get_total_nr_packages_loaded()`.
-            - The field `self.problem_input.delivery_truck.max_nr_loaded_packages`.
-            - The method `self.get_deliveries_waiting_to_pick()` here.
-            - The method `self.map_distance_finder.get_map_cost_between()` to calculate
-              the operator cost. Its returned value is the operator cost (as is).
+            - The method `self.get_total_nr_tests_taken_and_stored_on_ambulance()`.
+            - The field `self.problem_input.laboratories`.
+            - The field `self.problem_input.ambulance.taken_tests_storage_capacity`.
+            - The method `self.get_reported_apartments_waiting_to_visit()` here.
+            - The method `self.get_operator_cost()`.
             - The c'tor for `AmbulanceState` to create the new successor state.
             - Python's built-in method `frozenset()` to create a new frozen set (for fields that
-              expect this type).
+              expect this type) from another collection (set/list/tuple/iterator).
             - Other fields of the state and the problem input.
             - Python's sets union operation (`some_set_or_frozenset | some_other_set_or_frozenset`).
         """
@@ -214,9 +215,10 @@ class MDAProblem(GraphProblem):
         # raise NotImplementedError  # TODO: remove this line!
 
         # go to a reported apartment
-        available_space_in_truck = self.problem_input.ambulance.taken_tests_storage_capacity - state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance()
+        available_space_in_ambulance = self.problem_input.ambulance.taken_tests_storage_capacity - \
+                                       state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance()
         for reported_apartment in self.get_reported_apartments_waiting_to_visit(state_to_expand):
-            if available_space_in_truck < reported_apartment.nr_roommates or \
+            if available_space_in_ambulance < reported_apartment.nr_roommates or \
                     state_to_expand.nr_matoshim_on_ambulance < reported_apartment.nr_roommates:
                 continue
             new_state = MDAState(
@@ -228,7 +230,7 @@ class MDAProblem(GraphProblem):
             yield OperatorResult(
                 successor_state=new_state,
                 operator_cost=self.get_operator_cost(state_to_expand, new_state),
-                operator_name=f'take test from {reported_apartment.reporter_name}')
+                operator_name=f'visit {reported_apartment.reporter_name}')
 
         # Go to lab
         for laboratory in self.problem_input.laboratories:
@@ -249,8 +251,12 @@ class MDAProblem(GraphProblem):
 
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
         """
-        TODO [staff]: instructions!
+        Calculates the operator cost (of type `MDACost`) of an operator (moving from the `prev_state`
+         to the `succ_state`. The `MDACost` type is defined above in this file (with explanations).
+        Use the formal MDA problem's operator costs definition presented in the assignment-instructions.
         TODO [Ex.13]: implement this method!
+        Use the method `self.map_distance_finder.get_map_cost_between()` to calculate the distance
+         between to junctions.
         """
         map_distance = self.map_distance_finder.get_map_cost_between(
             prev_state.current_location, succ_state.current_location)
@@ -280,7 +286,7 @@ class MDAProblem(GraphProblem):
 
     def get_reported_apartments_waiting_to_visit(self, state: MDAState) -> Set[ApartmentWithSymptomsReport]:
         """
-        This method returns a set of all deliveries that haven't been neither picked nor dropped yet.
+        This method returns a set of all reported-apartments that haven't been visited yet.
         TODO [Ex.13]: Implement this method.
             Use sets difference operation (`some_set - some_other_set`).
             Note: Given a collection of items, you can create a new set of these items simply by
