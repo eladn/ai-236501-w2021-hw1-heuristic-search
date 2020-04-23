@@ -74,9 +74,11 @@ def plot_distance_and_expanded_wrt_weight_figure(
 
 
 def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, problem: GraphProblem, n: int = 30,
-                                   max_nr_states_to_expand: Optional[int] = 30_000):
+                                   max_nr_states_to_expand: Optional[int] = 30_000,
+                                   low_heuristic_weight: float = 0.5, high_heuristic_weight: float = 0.95):
     # TODO [Ex.xx]:
-    #  1. Create an array of `n` numbers equally spread in [0.5, 1]
+    #  1. Create an array of `n` numbers equally spread in the segment
+    #     [low_heuristic_weight, high_heuristic_weight]
     #     (including the edges). You can use `np.linspace()` for that.
     #  2. For each weight in that array run the wA* algorithm, with the
     #     given `heuristic_type` over the given problem. For each such run,
@@ -92,7 +94,7 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
     # raise NotImplementedError  # TODO: remove this line!
     total_cost = []
     total_nr_expanded = []
-    weights = np.linspace(0.5, 1, n)
+    weights = np.linspace(low_heuristic_weight, high_heuristic_weight, n)
     weights_with_found_solutions = []
     for w in weights:
         astar = AStar(heuristic_type, w, max_nr_states_to_expand=max_nr_states_to_expand)
