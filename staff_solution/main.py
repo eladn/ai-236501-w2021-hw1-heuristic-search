@@ -240,10 +240,6 @@ def mda_problem_with_weighted_astar_experiments():
     run_astar_for_weights_in_range(MDASumAirDistHeuristic, moderate_mda_problem_with_distance_cost)
 
 
-def two_objectives_eps_solver():
-    pass
-
-
 def multiple_objectives_mda_problem_experiments():
     print()
     print('Solve the MDA problem (small input, time & money objectives).')
@@ -293,10 +289,11 @@ def mda_problem_with_astar_epsilon_experiments():
 
     # Ex.xx
     # Try using A*eps to improve the speed (#dev) with a non-acceptable heuristic.
-    # TODO: create an instance of `AStarEpsilon` with the `MDAMSTAirDistHeuristic`,
-    #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
-    #       use focal_epsilon=0.03, and  max_focal_size=40.
-    #       use within_focal_priority_function=within_focal_h_sum_priority_function
+    # TODO: Create an instance of `AStarEpsilon` with the `MDAMSTAirDistHeuristic`.
+    #       Solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
+    #       Use focal_epsilon=0.03, and max_focal_size=40.
+    #       Use within_focal_priority_function=within_focal_h_sum_priority_function. This function
+    #        (defined just above) is internally using the `MDASumAirDistHeuristic`.
     # exit()  # TODO: remove!
     astar_eps = AStarEpsilon(
         MDAMSTAirDistHeuristic, within_focal_priority_function=within_focal_h_sum_priority_function,
