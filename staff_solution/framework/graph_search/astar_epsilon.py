@@ -46,7 +46,7 @@ class AStarEpsilon(AStar):
          eps is stored under `self.focal_epsilon`.
         Create the FOCAL by popping items from the `open` queue and inserting
          them into a focal list. Don't forget to satisfy the constraint of
-         `self.max_nr_states_to_expand` if it is set (not None).
+         `self.max_focal_size` if it is set (not None).
         Notice: You might want to pop items from the `open` priority queue,
          and then choose an item out of these popped items. Don't forget:
          the other items have to be pushed back into open.
