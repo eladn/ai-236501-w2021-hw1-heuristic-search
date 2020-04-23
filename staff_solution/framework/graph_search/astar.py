@@ -64,11 +64,13 @@ class AStar(BestFirstSearch):
          of another node representing the same state in `self.close`.
 
         TODO [Ex.xx]: implement this method.
+        Have a look at the pseudo-code shown in class for A*. Here you should implement the same in python.
         Have a look at the implementation of `BestFirstSearch` to have better understanding.
         Use `self.open` (SearchNodesPriorityQueue) and `self.close` (SearchNodesCollection) data structures.
         These data structures are implemented in `graph_search/best_first_search.py`.
-        Note: The successor_node's f-score has been already calculated and stored
-              under `successor_node.expanding_priority`.
+        Note: The successor_node's g-score is stored under `node.g_cost`. Use it to test whether a better
+              solution is found, as done in the pseudo-code taught in class (better solution has a strictly
+              smaller g-score).
         Remember: In A*, in contrast to uniform-cost, a successor state might have an already closed node,
                   but still could be improved.
         """
@@ -80,13 +82,13 @@ class AStar(BestFirstSearch):
         if self.close.has_state(successor_node.state):
             already_closed_node_with_same_state = self.close.get_node_by_state(successor_node.state)
             assert already_closed_node_with_same_state is not None
-            if already_closed_node_with_same_state.expanding_priority <= successor_node.expanding_priority:
+            if already_closed_node_with_same_state.g_cost <= successor_node.g_cost:
                 return
             self.close.remove_node(already_closed_node_with_same_state)
 
         if self.open.has_state(successor_node.state):
             already_found_node_with_same_state = self.open.get_node_by_state(successor_node.state)
-            if already_found_node_with_same_state.expanding_priority > successor_node.expanding_priority:
+            if already_found_node_with_same_state.g_cost > successor_node.g_cost:
                 self.open.extract_node(already_found_node_with_same_state)
 
         if not self.open.has_state(successor_node.state):
