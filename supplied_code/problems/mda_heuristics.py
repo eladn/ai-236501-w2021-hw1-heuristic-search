@@ -12,7 +12,7 @@ __all__ = ['MDAMaxAirDistHeuristic', 'MDASumAirDistHeuristic',
 
 
 class MDAMaxAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-MaxAirDist'
+    heuristic_name = 'MDA-Max-AirDist'
 
     def __init__(self, problem: GraphProblem):
         super(MDAMaxAirDistHeuristic, self).__init__(problem)

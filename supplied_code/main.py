@@ -208,7 +208,7 @@ def mda_problem_with_weighted_astar_experiments():
 
 def multiple_objectives_mda_problem_experiments():
     print()
-    print('Solve the MDA problem (small input, distance & tests-travel-distance objectives).')
+    print('Solve the MDA problem (moderate input, distance & tests-travel-distance objectives).')
 
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
     moderate_mda_problem_with_tests_travel_dist_cost = get_mda_problem('moderate', MDAOptimizationObjective.TestsTravelDistance)
