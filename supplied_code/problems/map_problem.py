@@ -32,7 +32,7 @@ class MapProblem(GraphProblem):
     The problem is defined by a source location on the map and a destination.
     """
 
-    name = 'StreetsMap-StaffSol'
+    name = 'StreetsMap'
 
     def __init__(self, streets_map: StreetsMap, source_junction_id: int, target_junction_id: int):
         initial_state = MapState(source_junction_id)
@@ -66,13 +66,7 @@ class MapProblem(GraphProblem):
         #  Note: Generally, in order to check whether a variable is set to None you should use the expression:
         #        `my_variable_to_check is None`, and particularly do NOT use comparison (==).
 
-        # yield OperatorResult(successor_state=MapState(self.target_junction_id), operator_cost=7)  # TODO: remove this line!
-
-        for outgoing_link in junction.outgoing_links:
-            # Create the successor state (it should be an instance of class `MapState`).
-            successor_state = MapState(outgoing_link.target)
-            # Yield the successor state and the cost of the operator we used to get this successor.
-            yield OperatorResult(successor_state=successor_state, operator_cost=outgoing_link.distance)
+        yield OperatorResult(successor_state=MapState(self.target_junction_id), operator_cost=7)  # TODO: remove this line!
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -82,6 +76,4 @@ class MapProblem(GraphProblem):
 
         # TODO [Ex.8]: modify the returned value to indicate whether `state` is a final state.
         # You may use the problem's input parameters (stored as fields of this object by the constructor).
-        # return state.junction_id == 14593  # TODO: modify this!
-        return state.junction_id == self.target_junction_id
-
+        return state.junction_id == 14593  # TODO: modify this!

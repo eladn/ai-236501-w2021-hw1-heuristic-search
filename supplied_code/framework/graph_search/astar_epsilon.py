@@ -12,7 +12,7 @@ class AStarEpsilon(AStar):
     another way to choose the next node to expand from the open queue.
     """
 
-    solver_name = 'A*eps-StaffSol'
+    solver_name = 'A*eps'
 
     def __init__(self,
                  heuristic_function_type: HeuristicFunctionType,
@@ -69,30 +69,4 @@ class AStarEpsilon(AStar):
          for the extracted (and returned) node.
         """
 
-        # raise NotImplementedError  # TODO: remove!
-
-        if self.open.is_empty():
-            return None
-
-        focal = []
-        min_expanding_priority_in_open = self.open.peek_next_node().expanding_priority
-        max_expanding_priority_in_focal = min_expanding_priority_in_open * (1 + self.focal_epsilon)
-        while not self.open.is_empty() and \
-                (self.open.peek_next_node().expanding_priority < max_expanding_priority_in_focal or
-                 math.isclose(self.open.peek_next_node().expanding_priority, max_expanding_priority_in_focal)) and \
-                (self.max_focal_size is None or len(focal) < self.max_focal_size):
-            focal.append(self.open.pop_next_node())
-
-        assert len(focal) > 0
-        focal_priorities = np.array([
-            self.within_focal_priority_function(candidate, problem, self)
-            for candidate in focal
-        ])
-        idx_chosen = int(np.argmin(focal_priorities))
-        chosen_candidate = focal.pop(idx_chosen)
-
-        # Put the others (not chosen) back in the open queue.
-        for node in focal:
-            self.open.push_node(node)
-        self.close.add_node(chosen_candidate)
-        return chosen_candidate
+        raise NotImplementedError  # TODO: remove!
