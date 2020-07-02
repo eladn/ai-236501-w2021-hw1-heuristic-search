@@ -13,7 +13,7 @@ from typing import *
 # print(os.getcwd())
 
 from framework import *
-from deliveries import *
+from problems import *
 from tests_utils import *
 
 # Load the streets map
@@ -29,7 +29,7 @@ def run_tests_and_write_results():
     results_output_file_path = sys.argv[1]
     single_test_idx = int(sys.argv[2]) if len(sys.argv) >= 3 else None
     execution_log_file_path = str(sys.argv[3]) if len(sys.argv) >= 4 else False
-    tests_suit = DeliveriesTestsSuitCreator.create_tests_suit()
+    tests_suit = MDATestsSuitCreator.create_tests_suit()
     if single_test_idx is not None:
         assert 0 <= single_test_idx < len(tests_suit)
         tests_suit = tests_suit.filter_tests_by_idx([single_test_idx])

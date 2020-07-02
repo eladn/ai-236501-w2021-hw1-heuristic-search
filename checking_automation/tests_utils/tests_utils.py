@@ -87,12 +87,12 @@ def dyn_load_module(module_name: str, module_init_file_path: str, sys_module=Non
 
 def get_module_by_name(name: str):
     framework_module = importlib.import_module('framework')
-    deliveries_module = importlib.import_module('deliveries')
-    assert name in framework_module.__dict__ or name in deliveries_module.__dict__
+    problems_module = importlib.import_module('problems')
+    assert name in framework_module.__dict__ or name in problems_module.__dict__
     if name in framework_module.__dict__:
         return framework_module.__dict__[name]
     else:
-        return deliveries_module.__dict__[name]
+        return problems_module.__dict__[name]
 
 
 class HeuristicFactory(NamedTuple):
@@ -141,10 +141,10 @@ class ProblemFactory(NamedTuple):
     inner_problem_solver: Optional[SolverFactory] = None
 
     def create_instance(self, roads):
-        deliveries_module = importlib.import_module('deliveries')
-        problem_ctor = deliveries_module.__dict__[self.name]
-        use_problem_input = self.name == 'DeliveriesTruckProblem'
-        use_roads_in_problem_ctor = self.name == 'MapProblem' or self.name == 'DeliveriesTruckProblem'
+        problems_module = importlib.import_module('problems')
+        problem_ctor = problems_module.__dict__[self.name]
+        use_problem_input = self.name == 'MDAProblem'
+        use_roads_in_problem_ctor = self.name == 'MapProblem' or self.name == 'MDAProblem'
         assert not use_problem_input or self.input_name is not None
         assert use_problem_input or self.input_name is None
         problem_ctor_args = tuple(self.params)
@@ -156,8 +156,8 @@ class ProblemFactory(NamedTuple):
         if use_roads_in_problem_ctor:
             problem_ctor_args = (roads,) + problem_ctor_args
         if use_problem_input:
-            DeliveriesProblemInput = deliveries_module.__dict__['DeliveriesTruckProblemInput']
-            problem_input = DeliveriesProblemInput.load_from_file(self.input_name + '.in', roads)
+            MDAProblemInput = problems_module.__dict__['MDAProblemInput']
+            problem_input = MDAProblemInput.load_from_file(self.input_name + '.in', roads)
             problem_ctor_args = (problem_input,) + problem_ctor_args
         problem_instance = problem_ctor(*problem_ctor_args, **problem_ctor_kwargs)
         return problem_instance
@@ -407,14 +407,15 @@ class Submission:
                                          VITAL_REQUIRED_SUBMISSION_CODE_FILES)
             ]
 
-    def make_clean_tests_environment(self, tests_suit: SubmissionTestsSuit, tests_environment_path: str = None, override_if_exists: bool = True):
+    def make_clean_tests_environment(self, tests_suit: SubmissionTestsSuit, tests_environment_path: str = None,
+                                     override_if_exists: bool = True):
         if tests_environment_path is None:
             tests_environment_path = self.tests_environment_path
         if os.path.exists(tests_environment_path):
             if not override_if_exists:
                 return
             shutil.rmtree(tests_environment_path)
-        os.mkdir(tests_environment_path)
+        os.makedirs(tests_environment_path, exist_ok=True)
 
         if os.path.exists(self.tests_logs_dir_path):
             shutil.rmtree(self.tests_logs_dir_path)
@@ -466,8 +467,8 @@ class Submission:
 
     def run_tests_suit_in_tests_environment(
             self, tests_indices: Tuple[int], store_execution_log: bool = False) -> Dict[int, float]:
-        from .deliveries_tests_creator import DeliveriesTestsSuitCreator
-        tests_suit = DeliveriesTestsSuitCreator.create_tests_suit()
+        from .mda_tests_creator import MDATestsSuitCreator
+        tests_suit = MDATestsSuitCreator.create_tests_suit()
         tests_suit = tests_suit.filter_tests_by_idx(tests_indices)
 
         self.make_clean_tests_environment(tests_suit)
@@ -551,7 +552,7 @@ class Submission:
 
         try:
             framework_path = os.path.join(self.tests_environment_path, "framework/__init__.py")
-            deliveries_path = os.path.join(self.tests_environment_path, "deliveries/__init__.py")
+            problems_path = os.path.join(self.tests_environment_path, "problems/__init__.py")
 
             # make `os`, `sys` packages unusable.
             # local_modules = dict(sys.modules)
@@ -562,10 +563,10 @@ class Submission:
             # del sys
 
             dyn_load_module("framework", framework_path)
-            dyn_load_module("deliveries", deliveries_path)
+            dyn_load_module("problems", problems_path)
 
             # from framework import *
-            # from deliveries import *
+            # from problems import *
 
         except:
             pass  # TODO
@@ -632,6 +633,7 @@ def argparse_dir_path_type(input_path: str):
     if not os.path.isdir(input_path):
         raise argparse.ArgumentError(f'Given `{input_path}` is not a valid path of an existing file.')
     return input_path
+
 
 def copy_staff_solution_as_submission(submission_id: int) -> Submission:
     staff_solution_submission_path = os.path.join(SUBMISSIONS_PATH, str(submission_id))

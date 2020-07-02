@@ -25,10 +25,10 @@ __all__ = [
     'TEST_SCRIPT_FILENAME',
 ]
 
-PYTHON_INTERPRETER_FOR_SUBMISSIONS_TESTS = '/usr/local/Cellar/python/3.7.6_1/bin/python3.7'
-SUBMISSIONS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-all-submissions-unzipped/'
-TESTS_ENVIRONMENTS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-submissions-checking/tests/'
-TESTS_LOGS_PATH = '/Users/eladn/Documents/ai-w2020-hw1-submissions-checking/tests-logs/'
+PYTHON_INTERPRETER_FOR_SUBMISSIONS_TESTS = '/usr/local/bin/python3'
+SUBMISSIONS_PATH = '/Users/eladn/ai-s2020-hw1-all-submissions-unzipped/'
+TESTS_ENVIRONMENTS_PATH = '/Users/eladn/ai-s2020-hw1-submissions-checking/tests/'
+TESTS_LOGS_PATH = '/Users/eladn/ai-s2020-hw1-submissions-checking/tests-logs/'
 CLEAN_SUPPLIED_CODE_ENV_PATH = '../supplied_code/'
 STAFF_SOLUTION_CODE_PATH = '../staff_solution/'
 ADHOC_CODE_FIXES_FOR_CHECKING_PATH = '../adhoc_code_fixes_for_checking/'
@@ -51,24 +51,25 @@ FILES_ASKED_NOT_TO_SUBMIT = [
 ]
 
 VITAL_REQUIRED_SUBMISSION_CODE_FILES = [
-    'deliveries/cached_map_distance_finder.py',
-    'deliveries/deliveries_truck_heuristics.py',
-    'deliveries/deliveries_truck_problem.py',
-    'deliveries/map_heuristics.py',
-    'deliveries/map_problem.py',
+    'problems/cached_map_distance_finder.py',
+    'problems/mda_heuristics.py',
+    'problems/mda_problem.py',
+    'problems/map_heuristics.py',
+    'problems/map_problem.py',
     'framework/graph_search/astar.py',
     'framework/graph_search/astar_epsilon.py',
     'framework/graph_search/anytime_astar.py',
 ]
 
 FILES_TO_COPY_FROM_CLEAN_SUPPLIED_CODE = [
-    'deliveries/__init__.py',
-    'deliveries/cached_air_distance_calculator.py',
-    'deliveries/deliveries_truck_problem_input.py',
+    'problems/__init__.py',
+    'problems/cached_air_distance_calculator.py',
+    'problems/mda_problem_input.py',
     'framework/__init__.py',
     'framework/consts.py',
-    'framework/db/test_deliveries_small.in',
-    'framework/db/test_deliveries_medium.in',
+    'framework/serializable.py',
+    'framework/db/test_mda_small_input.in',
+    'framework/db/test_mda_medium_input.in',
     'framework/db/tlv_streets_map.csv',
     'framework/graph_search/utils/__init__.py',
     'framework/graph_search/utils/heapdict.py',
@@ -84,7 +85,7 @@ FILES_TO_COPY_FROM_CLEAN_SUPPLIED_CODE = [
 
 TEST_SCRIPT_FILES = [
     'submission_test.py',
-    'tests_utils/deliveries_tests_creator.py',
+    'tests_utils/mda_tests_creator.py',
     'tests_utils/tests_utils.py',
     'tests_utils/tests_consts.py',
     'tests_utils/__init__.py',

@@ -260,8 +260,9 @@ if __name__ == '__main__':
                         help='Number of processes in the pool')
     args = parser.parse_args()
 
-    tests_suit = DeliveriesTestsSuitCreator.create_tests_suit()
+    tests_suit = MDATestsSuitCreator.create_tests_suit()
 
+    os.makedirs(TESTS_LOGS_PATH, exist_ok=True)
     with open(os.path.join(TESTS_LOGS_PATH, 'test_names.txt'), 'w') as test_names_file:
         for test in tests_suit:
             test_names_file.write(f'{test.get_full_name()}\n')

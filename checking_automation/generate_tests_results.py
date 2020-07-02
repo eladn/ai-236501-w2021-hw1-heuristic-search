@@ -16,7 +16,7 @@ def generate_tests_results(submissions_ids_filter: Optional[Collection[int]]):
     if submissions_ids_filter:
         submissions_ids_filter = [STAFF_SOLUTION_DUMMY_ID] + list(submissions_ids_filter)
     all_submissions = Submission.load_all_submissions(submissions_ids_filter)
-    tests_suit = DeliveriesTestsSuitCreator.create_tests_suit()
+    tests_suit = MDATestsSuitCreator.create_tests_suit()
 
     print(f'#submissions: {len(all_submissions)} -- #tests_per_submission: {len(tests_suit)}')
 

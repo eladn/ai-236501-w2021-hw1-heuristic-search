@@ -187,22 +187,26 @@ def generate_MDA_problem_inputs_files(roads: StreetsMap):
             nr_free_matoshim_in_lab_probabilities=(0.2, 0.2, 0.3, 0.2, 0.1)),
         generate_MDA_problem_input(
             roads,
-            input_name='test_MDA_small',
+            input_name='test_mda_small_input',  #'test_MDA_small',
             choosing_junctions_seed=0x2484424,
             limit_to_radius=6000,
             nr_reported_apartments=5,
+            nr_laboratories=3,
             ambulance_taken_tests_storage_capacity=9,
-            nr_roommates_options=(2, 3, 4, 5),
-            nr_roommates_probabilities=(0.2, 0.3, 0.2, 0.3)),
+            initial_nr_matoshim_on_ambulance=3,
+            nr_roommates_options=(1, 2, 3, 4),
+            nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2)),
         generate_MDA_problem_input(
             roads,
-            input_name='test_MDA_medium',
+            input_name='test_mda_medium_input',  #'test_MDA_medium',
             choosing_junctions_seed=0x2484424,
             limit_to_radius=6000,
             nr_reported_apartments=8,
-            ambulance_taken_tests_storage_capacity=9,
-            nr_roommates_options=(2, 3, 4, 5),
-            nr_roommates_probabilities=(0.2, 0.3, 0.2, 0.3)),
+            nr_laboratories=4,
+            ambulance_taken_tests_storage_capacity=6,
+            initial_nr_matoshim_on_ambulance=3,
+            nr_roommates_options=(1, 2, 3, 4),
+            nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2)),
     ]
     for problem_input in inputs:
         problem_input.store_to_file(problem_input.input_name + '.in')
