@@ -100,6 +100,8 @@ class MDATestsSuitCreator:
     @staticmethod
     def _create_basic_astar_epsilon_test(tests_suit: SubmissionTestsSuit):
         simple_map_problem_factory = ProblemFactory(name='MapProblem', params=(63, 947))
+        small_mda_problem_factory = ProblemFactory(
+            name='MDAProblem', input_name='test_mda_small_input')
         medium_mda_problem_factory = ProblemFactory(
             name='MDAProblem', input_name='test_mda_medium_input')
 
@@ -127,10 +129,22 @@ class MDATestsSuitCreator:
             execution_timeout=90)
         tests_suit.create_test(
             name='astar_epsilon',
+            problem_factory=small_mda_problem_factory,
+            solver_factory=SolverFactory(
+                name='AStarEpsilon', heuristic=HeuristicFactory('MDAMSTAirDistHeuristic'), ctor_kwargs={
+                    'max_nr_states_to_expand': 2_000, 'max_focal_size': 40, 'focal_epsilon': 0.03,
+                    'within_focal_priority_function': within_focal_mda_h_sum_priority_function}),
+            fn_to_execute_before_solving=fix_mda_problem_method__all_junctions_in_remaining_ambulance_path,
+            files_to_override_from_staff_solution=(
+                'framework/graph_search/astar.py', 'problems/mda_problem.py', 'problems/mda_heuristics.py',
+                'problems/__init__.py', 'problems/cached_map_distance_finder.py'),
+            execution_timeout=200)
+        tests_suit.create_test(
+            name='astar_epsilon',
             problem_factory=medium_mda_problem_factory,
             solver_factory=SolverFactory(
                 name='AStarEpsilon', heuristic=HeuristicFactory('MDAMSTAirDistHeuristic'), ctor_kwargs={
-                    'max_focal_size': 30, 'focal_epsilon': 0.04,
+                    'max_nr_states_to_expand': 31_000, 'max_focal_size': 30, 'focal_epsilon': 0.04,
                     'within_focal_priority_function': within_focal_mda_h_sum_priority_function}),
             fn_to_execute_before_solving=fix_mda_problem_method__all_junctions_in_remaining_ambulance_path,
             files_to_override_from_staff_solution=(
@@ -217,13 +231,13 @@ class MDATestsSuitCreator:
         money_small_mda_problem_factory = ProblemFactory(
             name='MDAProblem', input_name='test_mda_small_input',
             kwargs_builder={
-                'optimization_objective': lambda: get_module_by_name('OptimizationObjective').TestsTravelDistance})
+                'optimization_objective': lambda: get_module_by_name('MDAOptimizationObjective').TestsTravelDistance})
 
         tests_suit.create_test(
             name='tests_travel_distance_objective_mda_problem',
             problem_factory=money_small_mda_problem_factory,
             solver_factory=SolverFactory(
-                name='AStar', heuristic=HeuristicFactory('MDASumAirDistHeuristicForTests')),
+                name='AStar', heuristic=HeuristicFactory('MDATestsTravelDistToNearestLabHeuristic')),
             fn_to_execute_before_solving=fix_mda_problem_method__all_junctions_in_remaining_ambulance_path,
             files_to_override_from_staff_solution=(
             'framework/graph_search/astar.py', 'problems/mda_heuristics.py', 'problems/__init__.py',
