@@ -3,7 +3,7 @@ import sys
 import argparse
 from itertools import zip_longest
 from collections import Counter
-from checking_automation.tests_utils import *
+from tests_utils import *
 import numpy as np
 from typing import *
 from warnings import warn
@@ -12,7 +12,9 @@ from warnings import warn
 ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
 
 
-def generate_tests_results(submissions_ids_filter: Optional[Collection[int]]):
+def generate_tests_results(
+        submissions_ids_filter: Optional[Collection[int]] = None,
+        exclude_tests_idxs: Optional[Collection[int]] = None):
     if submissions_ids_filter:
         submissions_ids_filter = [STAFF_SOLUTION_DUMMY_ID] + list(submissions_ids_filter)
     all_submissions = Submission.load_all_submissions(submissions_ids_filter)
@@ -66,6 +68,8 @@ def generate_tests_results(submissions_ids_filter: Optional[Collection[int]]):
             tests_results_file.write('\n')
             tests_results_file.write('\n')
             for test, test_binary_result in zip(tests_suit, submission_tests_results.pass_vector):
+                if exclude_tests_idxs is not None and test.index in exclude_tests_idxs:
+                    continue
                 tests_results_file.write(test.get_full_name())
                 tests_results_file.write('\n')
                 tests_results_file.write('PASS' if test_binary_result else 'FAIL')
@@ -108,6 +112,8 @@ def generate_tests_results(submissions_ids_filter: Optional[Collection[int]]):
     ]
 
     for test, test_distr in zip(tests_suit, results_distr_per_test):
+        if test.index in exclude_tests_idxs:
+            continue
         print('Test: {}'.format(test.get_full_name()))
         print([(freq,) + ('staff' if solution == staff_solution_tests_results[test.index].path else ('TIMEOUT' if solution is None else 'other'),)
                for solution, freq in test_distr.most_common()])
@@ -117,6 +123,9 @@ def generate_tests_results(submissions_ids_filter: Optional[Collection[int]]):
     sys.stderr.flush()
 
     for test, test_distr in zip(tests_suit, results_distr_per_test):
+        if test.index in exclude_tests_idxs:
+            continue
+
         solutions_with_freq_ordered_by_freq = test_distr.most_common()
         if len(solutions_with_freq_ordered_by_freq) < 2:
             continue
@@ -181,5 +190,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--submissions-ids", dest="submissions_ids", type=int, nargs='+', required=False,
                         help="IDs of submissions to check (if not specified runs on all submissions in dir)")
+    parser.add_argument("--exclude-tests-idxs", dest="exclude_tests_idxs", type=int, nargs='+', required=False,
+                        help="indices of tests to exclude (if not specified runs on all tests in tests-suit)")
     args = parser.parse_args()
-    generate_tests_results(args.submissions_ids)
+    generate_tests_results(submissions_ids_filter=args.submissions_ids, exclude_tests_idxs=args.exclude_tests_idxs)
