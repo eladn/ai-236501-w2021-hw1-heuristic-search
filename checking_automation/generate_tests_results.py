@@ -112,7 +112,7 @@ def generate_tests_results(
     ]
 
     for test, test_distr in zip(tests_suit, results_distr_per_test):
-        if test.index in exclude_tests_idxs:
+        if exclude_tests_idxs is not None and test.index in exclude_tests_idxs:
             continue
         print('Test: {}'.format(test.get_full_name()))
         print([(freq,) + ('staff' if solution == staff_solution_tests_results[test.index].path else ('TIMEOUT' if solution is None else 'other'),)
@@ -123,7 +123,7 @@ def generate_tests_results(
     sys.stderr.flush()
 
     for test, test_distr in zip(tests_suit, results_distr_per_test):
-        if test.index in exclude_tests_idxs:
+        if exclude_tests_idxs is not None and test.index in exclude_tests_idxs:
             continue
 
         solutions_with_freq_ordered_by_freq = test_distr.most_common()
