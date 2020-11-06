@@ -160,7 +160,7 @@ class MDACost(ExtendedCost):
     def __repr__(self):
         return f'MDACost(' \
                f'dist={self.distance_cost:11.3f}m, ' \
-               f'money={self.monetary_cost:11.3f}l, ' \
+               f'money={self.monetary_cost:11.3f}NIS, ' \
                f'tests-travel={self.tests_travel_distance_cost:11.3f}m)'
 
 
