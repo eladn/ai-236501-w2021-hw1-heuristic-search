@@ -1,3 +1,4 @@
+import math
 from typing import *
 from dataclasses import dataclass
 from enum import Enum
@@ -111,6 +112,7 @@ class MDAState(GraphProblemState):
 
 class MDAOptimizationObjective(Enum):
     Distance = 'Distance'
+    Monetary = 'Monetary'
     TestsTravelDistance = 'TestsTravelDistance'
 
 
@@ -123,7 +125,8 @@ class MDACost(ExtendedCost):
      to have instances of `MDACost` in SearchNode's `cost` field (instead of float values).
     The reason for using a custom type for the cost (instead of just using a `float` scalar),
      is because we want the cumulative cost (of each search node and particularly of the final
-     node of the solution) to be consisted of 2 objectives: (i) distance, and (ii) tests-travel.
+     node of the solution) to be consisted of 3 objectives:
+     (i) distance, (ii) money, and (iii) tests-travel.
     The field `optimization_objective` controls the objective of the problem (the cost we want
      the solver to minimize). In order to tell the solver which is the objective to optimize,
      we have the `get_g_cost()` method, which returns a single `float` scalar which is only the
@@ -133,8 +136,9 @@ class MDACost(ExtendedCost):
     Having said that, note that during this assignment we will mostly use the distance objective.
     """
     distance_cost: float = 0.0
+    monetary_cost: float = 0.0
     tests_travel_distance_cost: float = 0.0
-    optimization_objective: MDAOptimizationObjective = MDAOptimizationObjective.Distance
+    optimization_objective: MDAOptimizationObjective = MDAOptimizationObjective.Monetary
 
     def __add__(self, other):
         assert isinstance(other, MDACost)
@@ -142,17 +146,21 @@ class MDACost(ExtendedCost):
         return MDACost(
             optimization_objective=self.optimization_objective,
             distance_cost=self.distance_cost + other.distance_cost,
+            monetary_cost=self.monetary_cost + other.monetary_cost,
             tests_travel_distance_cost=self.tests_travel_distance_cost + other.tests_travel_distance_cost)
 
     def get_g_cost(self) -> float:
         if self.optimization_objective == MDAOptimizationObjective.Distance:
             return self.distance_cost
+        elif self.optimization_objective == MDAOptimizationObjective.Monetary:
+            return self.monetary_cost
         assert self.optimization_objective == MDAOptimizationObjective.TestsTravelDistance
         return self.tests_travel_distance_cost
 
     def __repr__(self):
         return f'MDACost(' \
                f'dist={self.distance_cost:11.3f}m, ' \
+               f'money={self.monetary_cost:11.3f}l, ' \
                f'tests-travel={self.tests_travel_distance_cost:11.3f}m)'
 
 
@@ -201,7 +209,7 @@ class MDAProblem(GraphProblem):
         Things you might want to use:
             - The method `self.get_total_nr_tests_taken_and_stored_on_ambulance()`.
             - The field `self.problem_input.laboratories`.
-            - The field `self.problem_input.ambulance.taken_tests_storage_capacity`.
+            - The field `self.problem_input.ambulance.total_fridges_capacity`.
             - The method `self.get_reported_apartments_waiting_to_visit()` here.
             - The method `self.get_operator_cost()`.
             - The c'tor for `AmbulanceState` to create the new successor state.
@@ -215,7 +223,7 @@ class MDAProblem(GraphProblem):
         # raise NotImplementedError  # TODO: remove this line!
 
         # go to a reported apartment
-        available_space_in_ambulance = self.problem_input.ambulance.taken_tests_storage_capacity - \
+        available_space_in_ambulance = self.problem_input.ambulance.total_fridges_capacity - \
                                        state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance()
         for reported_apartment in self.get_reported_apartments_waiting_to_visit(state_to_expand):
             if available_space_in_ambulance < reported_apartment.nr_roommates or \
@@ -260,8 +268,27 @@ class MDAProblem(GraphProblem):
         """
         map_distance = self.map_distance_finder.get_map_cost_between(
             prev_state.current_location, succ_state.current_location)
-        time_cost = map_distance * len(prev_state.tests_on_ambulance)
-        return MDACost(distance_cost=map_distance, tests_travel_distance_cost=time_cost,
+        assert map_distance is not None
+
+        tests_travel_distance_cost = map_distance * prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
+
+        nr_active_fridges = math.ceil(
+            prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() /
+            self.problem_input.ambulance.fridge_capacity)
+        fridge_gas_consumption = \
+            sum(self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:nr_active_fridges])
+        monetary_cost = self.problem_input.gas_liter_price * map_distance * \
+                   (self.problem_input.ambulance.drive_gas_consumption_liter_per_meter + fridge_gas_consumption)
+        if isinstance(succ_state.current_site, Laboratory):
+            laboratory = succ_state.current_site
+            if prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() > 0:
+                monetary_cost += laboratory.tests_transfer_cost
+            if laboratory in prev_state.visited_labs:
+                monetary_cost += laboratory.additional_tests_transfer_extra_cost
+
+        return MDACost(distance_cost=map_distance,
+                       monetary_cost=monetary_cost,
+                       tests_travel_distance_cost=tests_travel_distance_cost,
                        optimization_objective=self.optimization_objective)
 
     def is_goal(self, state: GraphProblemState) -> bool:

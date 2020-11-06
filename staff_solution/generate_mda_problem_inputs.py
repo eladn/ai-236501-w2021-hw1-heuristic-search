@@ -99,7 +99,9 @@ def generate_MDA_problem_input(
         nr_roommates_options: Tuple[int, ...] = (2, 3, 4, 5),
         nr_roommates_probabilities: Tuple[float, ...] = (0.2, 0.3, 0.2, 0.3),
         nr_free_matoshim_in_lab_options: Tuple[int, ...] = (4, 5, 6, 7, 8),
-        nr_free_matoshim_in_lab_probabilities: Tuple[float, ...] = (0.2, 0.3, 0.2, 0.2, 0.1)) -> MDAProblemInput:
+        nr_free_matoshim_in_lab_probabilities: Tuple[float, ...] = (0.2, 0.3, 0.2, 0.2, 0.1),
+        tests_transfer_cost_bounds: Tuple[float, float] = (20_000, 30_000),
+        additional_tests_transfer_extra_cost_bounds: Tuple[float, float] = (1_500, 2_500)) -> MDAProblemInput:
 
     random_state = np.random.RandomState(choosing_junctions_seed)
     all_sampled_junctions = get_rand_input_junctions(
@@ -138,17 +140,32 @@ def generate_MDA_problem_input(
             in enumerate(reported_apartments_junctions)),
         ambulance=Ambulance(
             initial_nr_matoshim=initial_nr_matoshim_on_ambulance,
-            taken_tests_storage_capacity=ambulance_taken_tests_storage_capacity,
+            nr_fridges=5,
+            fridge_capacity=3,
+            # gas_consumption_liter_per_meter=0.00006,
+            drive_gas_consumption_liter_per_meter=1.0,
+            fridges_gas_consumption_liter_per_meter=(2.0, 1.0, 3.0, 3.0, 4.0),
             initial_location=initial_truck_location),
         laboratories=tuple(
             Laboratory(
                 lab_id=lab_id, name=labs_names[lab_id % len(labs_names)], location=junction,
                 max_nr_matoshim=random_state.choice(
-                    nr_free_matoshim_in_lab_options, p=nr_free_matoshim_in_lab_probabilities))
-            for lab_id, junction in enumerate(laboratories_junctions)))
+                    nr_free_matoshim_in_lab_options, p=nr_free_matoshim_in_lab_probabilities),
+                tests_transfer_cost=round(
+                    tests_transfer_cost_bounds[0] +
+                    random_state.random() *
+                    (tests_transfer_cost_bounds[1] - tests_transfer_cost_bounds[0]), 2),
+                additional_tests_transfer_extra_cost=round(
+                    additional_tests_transfer_extra_cost_bounds[0] +
+                    random_state.random() *
+                    (additional_tests_transfer_extra_cost_bounds[1] -
+                     additional_tests_transfer_extra_cost_bounds[0]), 2))
+            for lab_id, junction in enumerate(laboratories_junctions)),
+        gas_liter_price=5.45)
 
 
 def generate_MDA_problem_inputs_files(roads: StreetsMap):
+    seed_hash_common_salt = 'w2021-mda-problem'
     inputs = [
         generate_MDA_problem_input(
             roads,
@@ -160,18 +177,22 @@ def generate_MDA_problem_inputs_files(roads: StreetsMap):
             ambulance_taken_tests_storage_capacity=9,
             initial_nr_matoshim_on_ambulance=3,
             nr_roommates_options=(1, 2, 3, 4),
-            nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2)),
+            nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2),
+            tests_transfer_cost_bounds=(109_000, 163_500),
+            additional_tests_transfer_extra_cost_bounds=(9_265, 12_535)),
         generate_MDA_problem_input(
             roads,
             input_name='moderate_MDA',
             choosing_junctions_seed=0x5739574,
-            limit_to_radius=6000,
+            limit_to_radius=6300,
             nr_reported_apartments=8,
             nr_laboratories=4,
             ambulance_taken_tests_storage_capacity=6,
             initial_nr_matoshim_on_ambulance=3,
             nr_roommates_options=(1, 2, 3, 4),
-            nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2)),
+            nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2),
+            tests_transfer_cost_bounds=(109_000, 163_500),
+            additional_tests_transfer_extra_cost_bounds=(5_450, 16_350)),
         generate_MDA_problem_input(
             roads,
             input_name='big_MDA',
