@@ -142,9 +142,8 @@ def generate_MDA_problem_input(
             initial_nr_matoshim=initial_nr_matoshim_on_ambulance,
             nr_fridges=5,
             fridge_capacity=3,
-            # gas_consumption_liter_per_meter=0.00006,
-            drive_gas_consumption_liter_per_meter=1.0,
-            fridges_gas_consumption_liter_per_meter=(2.0, 1.0, 3.0, 3.0, 4.0),
+            drive_gas_consumption_liter_per_meter=0.00006,
+            fridges_gas_consumption_liter_per_meter=(0.00012, 0.00006, 0.00018, 0.00018, 0.00024),
             initial_location=initial_truck_location),
         laboratories=tuple(
             Laboratory(
@@ -178,8 +177,8 @@ def generate_MDA_problem_inputs_files(roads: StreetsMap):
             initial_nr_matoshim_on_ambulance=3,
             nr_roommates_options=(1, 2, 3, 4),
             nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2),
-            tests_transfer_cost_bounds=(109_000, 163_500),
-            additional_tests_transfer_extra_cost_bounds=(9_265, 12_535)),
+            tests_transfer_cost_bounds=(6.54, 9.81),
+            additional_tests_transfer_extra_cost_bounds=(0.5559, 0.7521)),
         generate_MDA_problem_input(
             roads,
             input_name='moderate_MDA',
@@ -191,8 +190,8 @@ def generate_MDA_problem_inputs_files(roads: StreetsMap):
             initial_nr_matoshim_on_ambulance=3,
             nr_roommates_options=(1, 2, 3, 4),
             nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2),
-            tests_transfer_cost_bounds=(109_000, 163_500),
-            additional_tests_transfer_extra_cost_bounds=(5_450, 16_350)),
+            tests_transfer_cost_bounds=(6.54, 9.81),
+            additional_tests_transfer_extra_cost_bounds=(0.327, 0.981)),
         generate_MDA_problem_input(
             roads,
             input_name='big_MDA',
