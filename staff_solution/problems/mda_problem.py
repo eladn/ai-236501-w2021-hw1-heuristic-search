@@ -260,19 +260,32 @@ class MDAProblem(GraphProblem):
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
         """
         Calculates the operator cost (of type `MDACost`) of an operator (moving from the `prev_state`
-         to the `succ_state`. The `MDACost` type is defined above in this file (with explanations).
+         to the `succ_state`). The `MDACost` type is defined above in this file (with explanations).
         Use the formal MDA problem's operator costs definition presented in the assignment-instructions.
         TODO [Ex.xx13]: implement this method!
         Use the method `self.map_distance_finder.get_map_cost_between()` to calculate the distance
-         between to junctions.
+         between to junctions. This distance is used for calculating the 3 costs.
         If the location of the next state is not reachable (on the streets-map) from the location of
          the previous state, use the value of `float('inf')` for all costs.
+        You might want to use the method `MDAState::get_total_nr_tests_taken_and_stored_on_ambulance()`
+         both for the tests-travel and the monetary costs.
         For the monetary cost you might want to use the following fields:
          `self.problem_input.ambulance.drive_gas_consumption_liter_per_meter`
          `self.problem_input.gas_liter_price`
          `self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter`
          `self.problem_input.ambulance.fridge_capacity`
          `MDAState::get_total_nr_tests_taken_and_stored_on_ambulance()`
+        For calculating the #active-fridges (the monetary cost) you might want to use the
+         function `math.ceil(some_float_value)`.
+        Note: For calculating sum of a collection (list/tuple/set) in python, you can simply
+         use `sum(some_collection)`.
+        Note: For getting a slice of an tuple/list in python you can use slicing indexing. examples:
+            `some_tuple[:k]` - would create a new tuple with the first `k` elements of `some_tuple`.
+            `some_tuple[k:]` - would create a new tuple that is based on `some_tuple` but without
+                               its first `k` items.
+            `some_tuple[k:n]` - would create a new tuple that is based on `some_tuple` but without
+                                its first `k` items and until the `n`-th item.
+            You might find this tip useful for summing a slice of a collection.
         """
         map_distance = self.map_distance_finder.get_map_cost_between(
             prev_state.current_location, succ_state.current_location)
@@ -290,7 +303,7 @@ class MDAProblem(GraphProblem):
             (self.problem_input.ambulance.drive_gas_consumption_liter_per_meter + fridge_gas_consumption)
         if isinstance(succ_state.current_site, Laboratory):
             laboratory = succ_state.current_site
-            if prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() > 0:
+            if len(prev_state.tests_on_ambulance) > 0:
                 monetary_cost += laboratory.tests_transfer_cost
             if laboratory in prev_state.visited_labs:
                 monetary_cost += laboratory.revisit_extra_cost
