@@ -320,18 +320,28 @@ class MDAProblem(GraphProblem):
         """
         return MDACost(optimization_objective=self.optimization_objective)
 
-    def get_reported_apartments_waiting_to_visit(self, state: MDAState) -> Set[ApartmentWithSymptomsReport]:
+    def get_reported_apartments_waiting_to_visit(self, state: MDAState) -> List[ApartmentWithSymptomsReport]:
         """
-        This method returns a set of all reported-apartments that haven't been visited yet.
+        This method returns a list of all reported-apartments that haven't been visited yet.
+        For the sake of determinism considerations, the returned list has to be sorted by
+         the apartment's report id in an ascending order.
         TODO [Ex.13]: Implement this method.
             Use sets difference operation (`some_set - some_other_set`).
+            Use `list(some_set)` to create a list from some given set, and then use
+                `some_list_instance.sort(key=...)` to sort this list. Use a `lambda`
+                function for the sorting `key` parameter. You can read about it and
+                see examples in the internet.
             Note: Given a collection of items, you can create a new set of these items simply by
                 `set(my_collection_of_items)`. Then you can use set operations over this newly
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
         # raise NotImplementedError  # TODO: remove this line!
-        return (set(self.problem_input.reported_apartments) - state.tests_transferred_to_lab) - state.tests_on_ambulance
+        apartments = \
+            (set(self.problem_input.reported_apartments) - state.tests_transferred_to_lab) - state.tests_on_ambulance
+        apartments = list(apartments)
+        apartments.sort(key=lambda apartment: apartment.report_id)
+        return apartments
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
