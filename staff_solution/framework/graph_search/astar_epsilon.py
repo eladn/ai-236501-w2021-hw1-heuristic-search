@@ -54,6 +54,9 @@ class AStarEpsilon(AStar):
          the field `open`. Then find the definition of this type and find
          the right methods to use (you might want to peek the head node, to
          pop/push nodes and to query whether the queue is empty).
+        Remember that `open` is a priority-queue sorted by `f` in an ascending
+         order (small to big). Popping / peeking `open` returns the node with
+         the smallest `f`.
         For each node (candidate) in the created focal, calculate its priority
          by callingthe function `self.within_focal_priority_function` on it.
          This function expects to get 3 values: the node, the problem and the
