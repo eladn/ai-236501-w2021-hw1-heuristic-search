@@ -14,10 +14,6 @@ streets_map = StreetsMap.load_from_csv(Consts.get_data_file_path("tlv_streets_ma
 Consts.set_seed()
 
 
-# --------------------------------------------------------------------
-# ------------------------ StreetsMap Problem ------------------------
-# --------------------------------------------------------------------
-
 def plot_distance_and_expanded_wrt_weight_figure(
         problem_name: str,
         weights: Union[np.ndarray, List[float]],
@@ -74,7 +70,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
 
 
 def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, problem: GraphProblem, n: int = 30,
-                                   max_nr_states_to_expand: Optional[int] = 30_000,
+                                   max_nr_states_to_expand: Optional[int] = 40_000,
                                    low_heuristic_weight: float = 0.5, high_heuristic_weight: float = 0.95):
     # TODO [Ex.12]:
     #  1. Create an array of `n` numbers equally spread in the segment
@@ -104,8 +100,13 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
             total_cost.append(res.solution_g_cost)
             total_nr_expanded.append(res.nr_expanded_states)
             weights_with_found_solutions.append(w)
-    plot_distance_and_expanded_wrt_weight_figure(problem.name, weights_with_found_solutions, total_cost, total_nr_expanded)
+    plot_distance_and_expanded_wrt_weight_figure(
+        problem.name, weights_with_found_solutions, total_cost, total_nr_expanded)
 
+
+# --------------------------------------------------------------------
+# ------------------------ StreetsMap Problem ------------------------
+# --------------------------------------------------------------------
 
 def toy_map_problem_experiments():
     print()
@@ -191,7 +192,8 @@ def basic_mda_problem_experiments():
 
 def mda_problem_with_astar_experiments():
     print()
-    print('Solve the MDA problem (moderate input, only distance objective, A*, MaxAirDist & SumAirDist & MSTAirDist heuristics).')
+    print('Solve the MDA problem (moderate input, only distance objective, A*, '
+          'MaxAirDist & SumAirDist & MSTAirDist heuristics).')
 
     moderate_mda_problem_with_distance_cost = get_mda_problem('moderate', MDAOptimizationObjective.Distance)
 
@@ -240,6 +242,30 @@ def mda_problem_with_weighted_astar_experiments():
     #       over the `moderate_mda_problem_with_distance_cost`.
     # exit()  # TODO: remove!
     run_astar_for_weights_in_range(MDASumAirDistHeuristic, moderate_mda_problem_with_distance_cost)
+
+
+def monetary_cost_objectives_mda_problem_experiments():
+    print()
+    print('Solve the MDA problem (monetary objectives).')
+
+    small_mda_problem_with_monetary_cost = get_mda_problem('small', MDAOptimizationObjective.Monetary)
+    moderate_mda_problem_with_monetary_cost = get_mda_problem('moderate', MDAOptimizationObjective.Monetary)
+
+    # Ex.xx
+    # TODO: create an instance of `UniformCost`
+    #       solve the `small_mda_problem_with_monetary_cost` with it and print the results.
+    # exit()  # TODO: remove!
+    uc = UniformCost()
+    res = uc.solve_problem(small_mda_problem_with_monetary_cost)
+    print(res)
+
+    # Ex.xx
+    # TODO: create an instance of `UniformCost`
+    #       solve the `moderate_mda_problem_with_monetary_cost` with it and print the results.
+    # exit()  # TODO: remove!
+    uc = UniformCost()
+    res = uc.solve_problem(moderate_mda_problem_with_monetary_cost)
+    print(res)
 
 
 def multiple_objectives_mda_problem_experiments():
@@ -324,10 +350,10 @@ def mda_problem_anytime_astar_experiments():
 
     # Ex.41
     # TODO: create an instance of `AnytimeAStar` once with the `MDAMSTAirDistHeuristic`, with
-    #       `max_nr_states_to_expand_per_iteration` set to 150, solve the
+    #       `max_nr_states_to_expand_per_iteration` set to 1000, solve the
     #       `moderate_mda_problem_with_distance_cost` with it and print the results.
     # exit()  # TODO: remove!
-    anytime_astar = AnytimeAStar(MDAMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=150)
+    anytime_astar = AnytimeAStar(MDAMSTAirDistHeuristic, max_nr_states_to_expand_per_iteration=1000)
     res = anytime_astar.solve_problem(moderate_mda_problem_with_distance_cost)
     print(res)
 
@@ -338,6 +364,7 @@ def run_all_experiments():
     basic_mda_problem_experiments()
     mda_problem_with_astar_experiments()
     mda_problem_with_weighted_astar_experiments()
+    monetary_cost_objectives_mda_problem_experiments()
     multiple_objectives_mda_problem_experiments()
     mda_problem_with_astar_epsilon_experiments()
     mda_problem_anytime_astar_experiments()
