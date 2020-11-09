@@ -287,7 +287,7 @@ class MDAProblem(GraphProblem):
         fridge_gas_consumption = \
             sum(self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:nr_active_fridges])
         monetary_cost = self.problem_input.gas_liter_price * map_distance * \
-                   (self.problem_input.ambulance.drive_gas_consumption_liter_per_meter + fridge_gas_consumption)
+            (self.problem_input.ambulance.drive_gas_consumption_liter_per_meter + fridge_gas_consumption)
         if isinstance(succ_state.current_site, Laboratory):
             laboratory = succ_state.current_site
             if prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() > 0:
