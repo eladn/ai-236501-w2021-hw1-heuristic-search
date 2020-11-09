@@ -330,13 +330,13 @@ def mda_problem_with_astar_epsilon_experiments():
     # Try using A*eps to improve the speed (#dev) with a non-acceptable heuristic.
     # TODO: Create an instance of `AStarEpsilon` with the `MDAMSTAirDistHeuristic`.
     #       Solve the `small_mda_problem_with_distance_cost` with it and print the results.
-    #       Use focal_epsilon=0.03, and max_focal_size=40.
+    #       Use focal_epsilon=0.23, and max_focal_size=40.
     #       Use within_focal_priority_function=within_focal_h_sum_priority_function. This function
     #        (defined just above) is internally using the `MDASumAirDistHeuristic`.
     # exit()  # TODO: remove!
     astar_eps = AStarEpsilon(
         MDAMSTAirDistHeuristic, within_focal_priority_function=within_focal_h_sum_priority_function,
-        max_nr_states_to_expand=8_000, max_focal_size=40, focal_epsilon=0.03)
+        max_nr_states_to_expand=8_000, max_focal_size=40, focal_epsilon=0.23)
     res = astar_eps.solve_problem(small_mda_problem_with_distance_cost)
     print(res)
 
@@ -360,14 +360,14 @@ def mda_problem_anytime_astar_experiments():
 
 def run_all_experiments():
     print('Running all experiments')
-    toy_map_problem_experiments()
-    basic_mda_problem_experiments()
-    mda_problem_with_astar_experiments()
-    mda_problem_with_weighted_astar_experiments()
-    monetary_cost_objectives_mda_problem_experiments()
-    multiple_objectives_mda_problem_experiments()
+    # toy_map_problem_experiments()
+    # basic_mda_problem_experiments()
+    # mda_problem_with_astar_experiments()
+    # mda_problem_with_weighted_astar_experiments()
+    # monetary_cost_objectives_mda_problem_experiments()
+    # multiple_objectives_mda_problem_experiments()
     mda_problem_with_astar_epsilon_experiments()
-    mda_problem_anytime_astar_experiments()
+    # mda_problem_anytime_astar_experiments()
 
 
 if __name__ == '__main__':
