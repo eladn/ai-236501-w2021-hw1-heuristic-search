@@ -292,8 +292,11 @@ def multiple_objectives_mda_problem_experiments():
     #       Create another instance of `AStar` with the `MDATestsTravelDistToNearestLabHeuristic`, and specify the
     #          param `open_criterion` (to AStar c'tor) to be the criterion mentioned in the A_2 algorithm in the
     #          assignment instructions. Use a lambda function for that. This function should receive a `node` and
-    #          has to return whether to add this just-created-node to the `open` queue. Remember that in python
-    #          you can pass an argument to a function by its name `some_func(argument_name=some_value)`.
+    #          has to return whether to add this just-created-node to the `open` queue.
+    #          Remember that in python you can pass an argument to a function's parameter by the parameter's name
+    #          `some_func(argument_name=some_value)`. This becomes especially relevant when you want to leave some
+    #          previous parameters with their default values and pass an argument to a parameter that is positioned
+    #          elsewhere next.
     #       Solve the `moderate_mda_problem_with_tests_travel_dist_cost` with it and print the results.
     # exit()  # TODO: remove!
     eps = 0.6
