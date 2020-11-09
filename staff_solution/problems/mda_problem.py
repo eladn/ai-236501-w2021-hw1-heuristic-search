@@ -265,10 +265,19 @@ class MDAProblem(GraphProblem):
         TODO [Ex.13]: implement this method!
         Use the method `self.map_distance_finder.get_map_cost_between()` to calculate the distance
          between to junctions.
+        If the location of the next state is not reachable (on the streets-map) from the location of
+         the previous state, use the value of `float('inf')` for all costs.
+        For the monetary cost you might want to use the following fields:
+         `self.problem_input.ambulance.drive_gas_consumption_liter_per_meter`
+         `self.problem_input.gas_liter_price`
+         `self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter`
+         `self.problem_input.ambulance.fridge_capacity`
+         `MDAState::get_total_nr_tests_taken_and_stored_on_ambulance()`
         """
         map_distance = self.map_distance_finder.get_map_cost_between(
             prev_state.current_location, succ_state.current_location)
-        assert map_distance is not None
+        if map_distance is None:
+            map_distance = float('inf')
 
         tests_travel_distance_cost = map_distance * prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
 
@@ -284,7 +293,7 @@ class MDAProblem(GraphProblem):
             if prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() > 0:
                 monetary_cost += laboratory.tests_transfer_cost
             if laboratory in prev_state.visited_labs:
-                monetary_cost += laboratory.additional_tests_transfer_extra_cost
+                monetary_cost += laboratory.revisit_extra_cost
 
         return MDACost(distance_cost=map_distance,
                        monetary_cost=monetary_cost,

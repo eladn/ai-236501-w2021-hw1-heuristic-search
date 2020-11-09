@@ -46,8 +46,8 @@ class Laboratory(Serializable):
     name: str
     max_nr_matoshim: int
     location: Junction
-    tests_transfer_cost: int
-    additional_tests_transfer_extra_cost: int
+    tests_transfer_cost: float
+    revisit_extra_cost: float
 
     # note: We explicitly define the hash method because we want to
     #       avoid non-deterministic hashing of a string field.

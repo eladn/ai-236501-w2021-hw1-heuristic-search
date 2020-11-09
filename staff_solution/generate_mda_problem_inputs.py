@@ -101,7 +101,7 @@ def generate_MDA_problem_input(
         nr_free_matoshim_in_lab_options: Tuple[int, ...] = (4, 5, 6, 7, 8),
         nr_free_matoshim_in_lab_probabilities: Tuple[float, ...] = (0.2, 0.3, 0.2, 0.2, 0.1),
         tests_transfer_cost_bounds: Tuple[float, float] = (20_000, 30_000),
-        additional_tests_transfer_extra_cost_bounds: Tuple[float, float] = (1_500, 2_500)) -> MDAProblemInput:
+        revisit_extra_cost_bounds: Tuple[float, float] = (1_500, 2_500)) -> MDAProblemInput:
 
     random_state = np.random.RandomState(choosing_junctions_seed)
     all_sampled_junctions = get_rand_input_junctions(
@@ -154,11 +154,9 @@ def generate_MDA_problem_input(
                     tests_transfer_cost_bounds[0] +
                     random_state.random() *
                     (tests_transfer_cost_bounds[1] - tests_transfer_cost_bounds[0]), 2),
-                additional_tests_transfer_extra_cost=round(
-                    additional_tests_transfer_extra_cost_bounds[0] +
-                    random_state.random() *
-                    (additional_tests_transfer_extra_cost_bounds[1] -
-                     additional_tests_transfer_extra_cost_bounds[0]), 2))
+                revisit_extra_cost=round(
+                    revisit_extra_cost_bounds[0] + random_state.random() *
+                    (revisit_extra_cost_bounds[1] - revisit_extra_cost_bounds[0]), 2))
             for lab_id, junction in enumerate(laboratories_junctions)),
         gas_liter_price=5.45)
 
@@ -178,7 +176,7 @@ def generate_MDA_problem_inputs_files(roads: StreetsMap):
             nr_roommates_options=(1, 2, 3, 4),
             nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2),
             tests_transfer_cost_bounds=(6.54, 9.81),
-            additional_tests_transfer_extra_cost_bounds=(0.5559, 0.7521)),
+            revisit_extra_cost_bounds=(0.5559, 0.7521)),
         generate_MDA_problem_input(
             roads,
             input_name='moderate_MDA',
@@ -191,7 +189,7 @@ def generate_MDA_problem_inputs_files(roads: StreetsMap):
             nr_roommates_options=(1, 2, 3, 4),
             nr_roommates_probabilities=(0.2, 0.3, 0.3, 0.2),
             tests_transfer_cost_bounds=(6.54, 9.81),
-            additional_tests_transfer_extra_cost_bounds=(0.327, 0.981)),
+            revisit_extra_cost_bounds=(0.327, 0.981)),
         generate_MDA_problem_input(
             roads,
             input_name='big_MDA',
