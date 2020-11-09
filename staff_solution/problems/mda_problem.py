@@ -351,7 +351,7 @@ class MDAProblem(GraphProblem):
         The list should be ordered by the junctions index ascendingly (small to big).
         TODO [Ex.xx16]: Implement this method.
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
-            Use python's `sorted(..., key=...)` function.
+            Use python's `sorted(some_list, key=...)` function.
         """
         # raise NotImplementedError  # TODO: remove this line!
         return sorted(

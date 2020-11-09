@@ -88,7 +88,6 @@ class MDASumAirDistHeuristic(HeuristicFunction):
 
         all_certain_junctions_in_remaining_ambulance_path = \
             self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
-        all_certain_junctions_in_remaining_ambulance_path = set(all_certain_junctions_in_remaining_ambulance_path)
 
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
