@@ -74,7 +74,7 @@ class MDAState(GraphProblemState):
         """
         assert isinstance(other, MDAState)
 
-        # TODO [Ex.xx13]: Complete the implementation of this method!
+        # TODO [Ex.17]: Complete the implementation of this method!
         #  Note that you can simply compare two instances of `Junction` type
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
@@ -100,7 +100,7 @@ class MDAState(GraphProblemState):
     def get_total_nr_tests_taken_and_stored_on_ambulance(self) -> int:
         """
         This method returns the total number of of tests that are stored on the ambulance in this state.
-        TODO [Ex.xx13]: Implement this method.
+        TODO [Ex.17]: Implement this method.
          Notice that this method can be implemented using a single line of code - do so!
          Use python's built-it `sum()` function.
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
@@ -191,7 +191,7 @@ class MDAProblem(GraphProblem):
 
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
-        TODO [Ex.xx13]: Implement this method!
+        TODO [Ex.17]: Implement this method!
         This method represents the `Succ: S -> P(S)` function of the MDA problem.
         The `Succ` function is defined by the problem operators as shown in class.
         The MDA problem operators are defined in the assignment instructions.
@@ -262,7 +262,7 @@ class MDAProblem(GraphProblem):
         Calculates the operator cost (of type `MDACost`) of an operator (moving from the `prev_state`
          to the `succ_state`). The `MDACost` type is defined above in this file (with explanations).
         Use the formal MDA problem's operator costs definition presented in the assignment-instructions.
-        TODO [Ex.xx13]: implement this method!
+        TODO [Ex.17]: implement this method!
         Use the method `self.map_distance_finder.get_map_cost_between()` to calculate the distance
          between to junctions. This distance is used for calculating the 3 costs.
         If the location of the next state is not reachable (on the streets-map) from the location of
@@ -316,7 +316,7 @@ class MDAProblem(GraphProblem):
     def is_goal(self, state: GraphProblemState) -> bool:
         """
         This method receives a state and returns whether this state is a goal.
-        TODO [Ex.xx13]: implement this method using a single `return` line!
+        TODO [Ex.17]: implement this method using a single `return` line!
          Use sets/frozensets comparison (`some_set == some_other_set`).
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
@@ -338,7 +338,7 @@ class MDAProblem(GraphProblem):
         This method returns a list of all reported-apartments that haven't been visited yet.
         For the sake of determinism considerations, the returned list has to be sorted by
          the apartment's report id in an ascending order.
-        TODO [Ex.xx13]: Implement this method.
+        TODO [Ex.17]: Implement this method.
             Use sets difference operation (`some_set - some_other_set`).
             Use `list(some_set)` to create a list from some given set, and then use
                 `some_list_instance.sort(key=...)` to sort this list. Use a `lambda`
@@ -362,7 +362,7 @@ class MDAProblem(GraphProblem):
         This includes the ambulance's current location, and the locations of the reported apartments
          that hasn't been visited yet.
         The list should be ordered by the junctions index ascendingly (small to big).
-        TODO [Ex.xx16]: Implement this method.
+        TODO [Ex.21]: Implement this method.
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
             Use python's `sorted(some_list, key=...)` function.
         """

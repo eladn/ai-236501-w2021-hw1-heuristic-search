@@ -28,7 +28,7 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
          junctions in the remaining ambulance path. We don't consider laboratories here because we
          do not know what laboratories would be visited in an optimal solution.
 
-        TODO [Ex.xx16]:
+        TODO [Ex.21]:
             Calculate the `total_distance_lower_bound` by taking the maximum over the group
                 {airDistanceBetween(j1,j2) | j1,j2 in CertainJunctionsInRemainingAmbulancePath s.t. j1 != j2}
             Notice: The problem is accessible via the `self.problem` field.
@@ -78,7 +78,7 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         Note that we ignore here the problem constraints (like enforcing the #matoshim and free
          space in the ambulance's fridge). We only make sure to visit all certain junctions in
          `all_certain_junctions_in_remaining_ambulance_path`.
-        TODO [Ex.xx19]:
+        TODO [Ex.24]:
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
              distance calculations.
@@ -173,7 +173,7 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
 
     def _calculate_junctions_mst_weight_using_air_distance(self, junctions: List[Junction]) -> float:
         """
-        TODO [Ex.xx22]: Implement this method.
+        TODO [Ex.27]: Implement this method.
               Use `networkx` (nx) package (already imported in this file) to calculate the weight
                of the minimum-spanning-tree of the graph in which the vertices are the given junctions
                and there is an edge between each pair of distinct junctions (no self-loops) for which
@@ -219,7 +219,7 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
         The rest part of the total remained cost includes the distance between each non-visited reported-apartment
          and the closest lab (to this apartment) times the roommates in this apartment (as we take tests for all
          roommates).
-        TODO [Ex.xx29]:
+        TODO [Ex.33]:
             Complete the implementation of this method.
             Use `self.problem.get_reported_apartments_waiting_to_visit(state)`.
         """
