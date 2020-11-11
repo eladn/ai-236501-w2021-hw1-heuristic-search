@@ -38,7 +38,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # See documentation here:
     # https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html
     # You can also Google for additional examples.
-    # raise NotImplementedError  # TODO: remove this line!
+    raise NotImplementedError  # TODO: remove this line!
     p1, = ax1.plot(...)  # TODO: pass the relevant params instead of `...`.
 
     # ax1: Make the y-axis label, ticks and tick labels match the line color.
