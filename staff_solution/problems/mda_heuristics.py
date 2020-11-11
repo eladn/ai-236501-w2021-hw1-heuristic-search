@@ -82,6 +82,12 @@ class MDASumAirDistHeuristic(HeuristicFunction):
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
              distance calculations.
+            For determinism, while building the path, when searching for the next nearest junction,
+             use the junction's index as a secondary grading factor. So that if there are 2 different
+             junctions with the same distance to the last junction of the so-far-built path, the
+             junction to be chosen is the one with the minimal index.
+            You might want to use python's tuples comparing to that end.
+             Example: (a1, a2) < (b1, b2) iff a1 < b1 or (a1 == b1 and a2 < b2).
         """
         assert isinstance(self.problem, MDAProblem)
         assert isinstance(state, MDAState)
@@ -98,12 +104,20 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         total_cost_of_greedily_built_path = 0
         while len(all_certain_junctions_in_remaining_ambulance_path) > 1:
             all_certain_junctions_in_remaining_ambulance_path.remove(last_location)
-            locs_and_dist = [
-                (loc, self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc))
-                for loc in all_certain_junctions_in_remaining_ambulance_path]
-            min_dist_idx = np.argmin(np.array([dist for _, dist in locs_and_dist]))
-            next_location = locs_and_dist[min_dist_idx][0]
-            total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
+
+            # locs_and_dist = [
+            #     (loc, (self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc), loc.index))
+            #     for loc in all_certain_junctions_in_remaining_ambulance_path]
+            # min_dist_idx = np.argmin(np.array([dist for _, dist in locs_and_dist]))
+            # next_location = locs_and_dist[min_dist_idx][0]
+
+            next_location = min(
+                all_certain_junctions_in_remaining_ambulance_path,
+                key=lambda loc: (
+                self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc), loc.index))
+
+            total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(
+                last_location, next_location)
             last_location = next_location
 
         return total_cost_of_greedily_built_path

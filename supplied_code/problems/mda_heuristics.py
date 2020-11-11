@@ -82,6 +82,12 @@ class MDASumAirDistHeuristic(HeuristicFunction):
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
              distance calculations.
+            For determinism, while building the path, when searching for the next nearest junction,
+             use the junction's index as a secondary grading factor. So that if there are 2 different
+             junctions with the same distance to the last junction of the so-far-built path, the
+             junction to be chosen is the one with the minimal index.
+            You might want to use python's tuples comparing to that end.
+             Example: (a1, a2) < (b1, b2) iff a1 < b1 or (a1 == b1 and a2 < b2).
         """
         assert isinstance(self.problem, MDAProblem)
         assert isinstance(state, MDAState)
