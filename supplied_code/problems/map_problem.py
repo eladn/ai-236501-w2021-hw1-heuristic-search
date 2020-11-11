@@ -32,7 +32,7 @@ class MapProblem(GraphProblem):
     The problem is defined by a source location on the map and a destination.
     """
 
-    name = 'StreetsMap-StaffSol'
+    name = 'StreetsMap'
 
     def __init__(self, streets_map: StreetsMap, source_junction_id: int, target_junction_id: int):
         initial_state = MapState(source_junction_id)

@@ -8,12 +8,11 @@ from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
 
 __all__ = ['MDAMaxAirDistHeuristic', 'MDASumAirDistHeuristic',
-           'MDAMSTAirDistHeuristic', 'MDASumAirDistHeuristicForTests',
-           'MDATestsTravelDistToNearestLabHeuristic']
+           'MDAMSTAirDistHeuristic', 'MDATestsTravelDistToNearestLabHeuristic']
 
 
 class MDAMaxAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-Max-AirDist-StaffSol'
+    heuristic_name = 'MDA-Max-AirDist'
 
     def __init__(self, problem: GraphProblem):
         super(MDAMaxAirDistHeuristic, self).__init__(problem)
@@ -59,7 +58,7 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
 
 
 class MDASumAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-Sum-AirDist-StaffSol'
+    heuristic_name = 'MDA-Sum-AirDist'
 
     def __init__(self, problem: GraphProblem):
         super(MDASumAirDistHeuristic, self).__init__(problem)
@@ -115,48 +114,8 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         return total_cost_of_greedily_built_path
 
 
-class MDASumAirDistHeuristicForTests(HeuristicFunction):
-    """
-    Used for tests only (for determinism).
-    """
-    heuristic_name = 'MDA-Sum-AirDist-ForTests-StaffSol'
-
-    def __init__(self, problem: GraphProblem):
-        super(MDASumAirDistHeuristicForTests, self).__init__(problem)
-        assert isinstance(self.problem, MDAProblem)
-        assert self.problem.optimization_objective == MDAOptimizationObjective.Distance
-        self.cached_air_distance_calculator = CachedAirDistanceCalculator()
-
-    def estimate(self, state: GraphProblemState) -> float:
-        """
-        Used for tests only (for determinism).
-        """
-        assert isinstance(self.problem, MDAProblem)
-        assert isinstance(state, MDAState)
-
-        all_certain_junctions_in_remaining_ambulance_path = \
-            self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
-        all_certain_junctions_in_remaining_ambulance_path = list(all_certain_junctions_in_remaining_ambulance_path)
-        all_certain_junctions_in_remaining_ambulance_path.sort(key=lambda junction: junction.index)
-
-        if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
-            return 0
-
-        last_location = state.current_location
-        total_cost_of_greedily_built_path = 0
-        while len(all_certain_junctions_in_remaining_ambulance_path) > 1:
-            all_certain_junctions_in_remaining_ambulance_path.remove(last_location)
-            next_location = min(
-                all_certain_junctions_in_remaining_ambulance_path,
-                key=lambda loc: (self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc), loc.index))
-            total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
-            last_location = next_location
-
-        return total_cost_of_greedily_built_path
-
-
 class MDAMSTAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-MST-AirDist-StaffSol'
+    heuristic_name = 'MDA-MST-AirDist'
 
     def __init__(self, problem: GraphProblem):
         super(MDAMSTAirDistHeuristic, self).__init__(problem)
@@ -206,7 +165,7 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
 
 
 class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-TimeObjectiveSumOfMinAirDistFromLab-StaffSol'
+    heuristic_name = 'MDA-TimeObjectiveSumOfMinAirDistFromLab'
 
     def __init__(self, problem: GraphProblem):
         super(MDATestsTravelDistToNearestLabHeuristic, self).__init__(problem)

@@ -12,7 +12,7 @@ class AStarEpsilon(AStar):
     another way to choose the next node to expand from the open queue.
     """
 
-    solver_name = 'A*eps-StaffSol'
+    solver_name = 'A*eps'
 
     def __init__(self,
                  heuristic_function_type: HeuristicFunctionType,

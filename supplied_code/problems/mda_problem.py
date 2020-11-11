@@ -169,7 +169,7 @@ class MDAProblem(GraphProblem):
     An instance of this class represents an MDA problem.
     """
 
-    name = 'MDA-StaffSol'
+    name = 'MDA'
 
     def __init__(self,
                  problem_input: MDAProblemInput,

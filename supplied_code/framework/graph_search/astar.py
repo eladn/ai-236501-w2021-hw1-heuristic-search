@@ -9,7 +9,7 @@ class AStar(BestFirstSearch):
     A* algorithm is in the Best First Search algorithms family.
     """
 
-    solver_name = 'A*-StaffSol'
+    solver_name = 'A*'
 
     def __init__(self, heuristic_function_type: HeuristicFunctionType, heuristic_weight: float = 0.5,
                  max_nr_states_to_expand: Optional[int] = None,
