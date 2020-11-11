@@ -8,11 +8,12 @@ from .cached_air_distance_calculator import CachedAirDistanceCalculator
 
 
 __all__ = ['MDAMaxAirDistHeuristic', 'MDASumAirDistHeuristic',
-           'MDAMSTAirDistHeuristic', 'MDATestsTravelDistToNearestLabHeuristic']
+           'MDAMSTAirDistHeuristic', 'MDASumAirDistHeuristicForTests',
+           'MDATestsTravelDistToNearestLabHeuristic']
 
 
 class MDAMaxAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-Max-AirDist'
+    heuristic_name = 'MDA-Max-AirDist-StaffSol'
 
     def __init__(self, problem: GraphProblem):
         super(MDAMaxAirDistHeuristic, self).__init__(problem)
@@ -27,7 +28,7 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
          junctions in the remaining ambulance path. We don't consider laboratories here because we
          do not know what laboratories would be visited in an optimal solution.
 
-        TODO [Ex.16]:
+        TODO [Ex.21]:
             Calculate the `total_distance_lower_bound` by taking the maximum over the group
                 {airDistanceBetween(j1,j2) | j1,j2 in CertainJunctionsInRemainingAmbulancePath s.t. j1 != j2}
             Notice: The problem is accessible via the `self.problem` field.
@@ -49,11 +50,16 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
 
-        return 10  # TODO: modify this line.
+        # return 10  # TODO: modify this line.
+        return max(
+            self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2)
+            for junction1 in all_certain_junctions_in_remaining_ambulance_path
+            for junction2 in all_certain_junctions_in_remaining_ambulance_path
+            if junction1 != junction2)
 
 
 class MDASumAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-Sum-AirDist'
+    heuristic_name = 'MDA-Sum-AirDist-StaffSol'
 
     def __init__(self, problem: GraphProblem):
         super(MDASumAirDistHeuristic, self).__init__(problem)
@@ -72,7 +78,7 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         Note that we ignore here the problem constraints (like enforcing the #matoshim and free
          space in the ambulance's fridge). We only make sure to visit all certain junctions in
          `all_certain_junctions_in_remaining_ambulance_path`.
-        TODO [Ex.19]:
+        TODO [Ex.24]:
             Complete the implementation of this method.
             Use `self.cached_air_distance_calculator.get_air_distance_between_junctions()` for air
              distance calculations.
@@ -82,16 +88,69 @@ class MDASumAirDistHeuristic(HeuristicFunction):
 
         all_certain_junctions_in_remaining_ambulance_path = \
             self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
-        all_certain_junctions_in_remaining_ambulance_path = set(all_certain_junctions_in_remaining_ambulance_path)
 
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
 
-        raise NotImplementedError  # TODO: remove this line and complete the missing part here!
+        # raise NotImplementedError  # TODO: remove this line and complete the missing part here!
+
+        last_location = state.current_location
+        total_cost_of_greedily_built_path = 0
+        while len(all_certain_junctions_in_remaining_ambulance_path) > 1:
+            all_certain_junctions_in_remaining_ambulance_path.remove(last_location)
+            locs_and_dist = [
+                (loc, self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc))
+                for loc in all_certain_junctions_in_remaining_ambulance_path]
+            min_dist_idx = np.argmin(np.array([dist for _, dist in locs_and_dist]))
+            next_location = locs_and_dist[min_dist_idx][0]
+            total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
+            last_location = next_location
+
+        return total_cost_of_greedily_built_path
+
+
+class MDASumAirDistHeuristicForTests(HeuristicFunction):
+    """
+    Used for tests only (for determinism).
+    """
+    heuristic_name = 'MDA-Sum-AirDist-ForTests-StaffSol'
+
+    def __init__(self, problem: GraphProblem):
+        super(MDASumAirDistHeuristicForTests, self).__init__(problem)
+        assert isinstance(self.problem, MDAProblem)
+        assert self.problem.optimization_objective == MDAOptimizationObjective.Distance
+        self.cached_air_distance_calculator = CachedAirDistanceCalculator()
+
+    def estimate(self, state: GraphProblemState) -> float:
+        """
+        Used for tests only (for determinism).
+        """
+        assert isinstance(self.problem, MDAProblem)
+        assert isinstance(state, MDAState)
+
+        all_certain_junctions_in_remaining_ambulance_path = \
+            self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state)
+        all_certain_junctions_in_remaining_ambulance_path = list(all_certain_junctions_in_remaining_ambulance_path)
+        all_certain_junctions_in_remaining_ambulance_path.sort(key=lambda junction: junction.index)
+
+        if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
+            return 0
+
+        last_location = state.current_location
+        total_cost_of_greedily_built_path = 0
+        while len(all_certain_junctions_in_remaining_ambulance_path) > 1:
+            all_certain_junctions_in_remaining_ambulance_path.remove(last_location)
+            next_location = min(
+                all_certain_junctions_in_remaining_ambulance_path,
+                key=lambda loc: (self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, loc), loc.index))
+            total_cost_of_greedily_built_path += self.cached_air_distance_calculator.get_air_distance_between_junctions(last_location, next_location)
+            last_location = next_location
+
+        return total_cost_of_greedily_built_path
 
 
 class MDAMSTAirDistHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-MST-AirDist'
+    heuristic_name = 'MDA-MST-AirDist-StaffSol'
 
     def __init__(self, problem: GraphProblem):
         super(MDAMSTAirDistHeuristic, self).__init__(problem)
@@ -114,7 +173,7 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
 
     def _calculate_junctions_mst_weight_using_air_distance(self, junctions: List[Junction]) -> float:
         """
-        TODO [Ex.22]: Implement this method.
+        TODO [Ex.27]: Implement this method.
               Use `networkx` (nx) package (already imported in this file) to calculate the weight
                of the minimum-spanning-tree of the graph in which the vertices are the given junctions
                and there is an edge between each pair of distinct junctions (no self-loops) for which
@@ -125,11 +184,23 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
               Use `nx.minimum_spanning_tree()` to get an MST. Calculate the MST size using the method
               `.size(weight='weight')`. Do not manually sum the edges' weights.
         """
-        raise NotImplementedError  # TODO: remove this line!
+        # raise NotImplementedError  # TODO: remove this line!
+
+        junctions_graph = nx.Graph()
+        for junction1 in junctions:
+            for junction2 in junctions:
+                if junction1 == junction2:
+                    continue
+                junctions_graph.add_edge(
+                    junction1, junction2,
+                    weight=self.cached_air_distance_calculator.get_air_distance_between_junctions(junction1, junction2))
+        junctions_mst = nx.minimum_spanning_tree(junctions_graph)
+        return junctions_mst.size(weight='weight')
+        # return sum(d['weight'] for (u, v, d) in junctions_mst.edges(data=True))
 
 
 class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
-    heuristic_name = 'MDA-TimeObjectiveSumOfMinAirDistFromLab'
+    heuristic_name = 'MDA-TimeObjectiveSumOfMinAirDistFromLab-StaffSol'
 
     def __init__(self, problem: GraphProblem):
         super(MDATestsTravelDistToNearestLabHeuristic, self).__init__(problem)
@@ -148,7 +219,7 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
         The rest part of the total remained cost includes the distance between each non-visited reported-apartment
          and the closest lab (to this apartment) times the roommates in this apartment (as we take tests for all
          roommates).
-        TODO [Ex.29]:
+        TODO [Ex.33]:
             Complete the implementation of this method.
             Use `self.problem.get_reported_apartments_waiting_to_visit(state)`.
         """
@@ -159,6 +230,13 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
             """
             Returns the distance between `junction` and the laboratory that is closest to `junction`.
             """
-            return min(...)  # TODO: replace `...` with the relevant implementation.
+            # return min(...)  # TODO: replace `...` with the relevant implementation.
+            return min(
+                self.cached_air_distance_calculator.get_air_distance_between_junctions(junction, lab.location)
+                for lab in self.problem.problem_input.laboratories)
 
-        raise NotImplementedError
+        # raise NotImplementedError
+        dist_for_cur_state = state.get_total_nr_tests_taken_and_stored_on_ambulance() * air_dist_to_closest_lab(state.current_location)
+        return dist_for_cur_state + sum(
+            air_dist_to_closest_lab(reported_apartment.location) * reported_apartment.nr_roommates
+            for reported_apartment in self.problem.get_reported_apartments_waiting_to_visit(state))

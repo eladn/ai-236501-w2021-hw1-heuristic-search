@@ -12,7 +12,7 @@ __all__ = [
     'ApartmentWithSymptomsReport', 'Ambulance', 'Laboratory', 'MDAState', 'MDAOptimizationObjective',
     'MDAProblemInput', 'MDAProblem',
     'MDAMaxAirDistHeuristic', 'MDAMSTAirDistHeuristic',
-    'MDASumAirDistHeuristic',
+    'MDASumAirDistHeuristic', 'MDASumAirDistHeuristicForTests',
     'MDATestsTravelDistToNearestLabHeuristic',
     'CachedMapDistanceFinder', 'CachedAirDistanceCalculator'
 ]

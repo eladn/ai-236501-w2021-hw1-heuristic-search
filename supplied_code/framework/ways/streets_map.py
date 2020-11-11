@@ -85,11 +85,14 @@ class Junction:
     def coordinates(self) -> Coordinates:
         return Coordinates(lat=self.lat, lon=self.lon)
 
+    # note: We explicitly define equals because we want to avoid comparing floats
     def __eq__(self, other):
         if not isinstance(other, Junction):
             return False
         return self.index == other.index
 
+    # note: We explicitly define the hash method because we want to
+    #       avoid non-deterministic hashing of a float field.
     def __hash__(self):
         return hash(self.index)
 

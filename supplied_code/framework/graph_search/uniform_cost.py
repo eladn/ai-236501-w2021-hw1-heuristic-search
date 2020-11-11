@@ -1,6 +1,6 @@
 from .graph_problem_interface import *
 from .best_first_search import BestFirstSearch
-from typing import Optional
+from typing import Optional, Callable
 
 
 class UniformCost(BestFirstSearch):
@@ -11,9 +11,11 @@ class UniformCost(BestFirstSearch):
 
     solver_name = 'UniformCost'
 
-    def __init__(self, max_nr_states_to_expand: Optional[int] = None):
+    def __init__(self, max_nr_states_to_expand: Optional[int] = None,
+                 open_criterion: Optional[Callable[[SearchNode], bool]] = None):
         # Uniform Cost is a graph search algorithm. Hence, we use close set.
-        super(UniformCost, self).__init__(use_close=True, max_nr_states_to_expand=max_nr_states_to_expand)
+        super(UniformCost, self).__init__(
+            use_close=True, max_nr_states_to_expand=max_nr_states_to_expand, open_criterion=open_criterion)
 
     def _open_successor_node(self, problem: GraphProblem, successor_node: SearchNode):
         if self.close.has_state(successor_node.state):

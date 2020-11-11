@@ -9,7 +9,7 @@ class AStar(BestFirstSearch):
     A* algorithm is in the Best First Search algorithms family.
     """
 
-    solver_name = 'A*'
+    solver_name = 'A*-StaffSol'
 
     def __init__(self, heuristic_function_type: HeuristicFunctionType, heuristic_weight: float = 0.5,
                  max_nr_states_to_expand: Optional[int] = None,
@@ -45,12 +45,15 @@ class AStar(BestFirstSearch):
         Should calculate and return the f-score of the given node.
         This score is used as a priority of this node in the open priority queue.
 
-        TODO [Ex.9]: implement this method.
+        TODO [Ex.11]: implement this method.
         Remember: In Weighted-A* the f-score is defined by ((1-w) * cost) + (w * h(state)).
         Notice: You may use `search_node.g_cost`, `self.heuristic_weight`, and `self.heuristic_function`.
         """
 
-        raise NotImplementedError  # TODO: remove this line!
+        # raise NotImplementedError  # TODO: remove this line!
+
+        return (1 - self.heuristic_weight) * search_node.g_cost \
+                + self.heuristic_weight * self.heuristic_function.estimate(search_node.state)
 
     def _open_successor_node(self, problem: GraphProblem, successor_node: SearchNode):
         """
@@ -60,7 +63,7 @@ class AStar(BestFirstSearch):
          node into the `self.open` priority queue, and may check the existence
          of another node representing the same state in `self.close`.
 
-        TODO [Ex.9]: implement this method.
+        TODO [Ex.11]: implement this method.
         Have a look at the pseudo-code shown in class for A*. Here you should implement the same in python.
         Have a look at the implementation of `BestFirstSearch` to have better understanding.
         Use `self.open` (SearchNodesPriorityQueue) and `self.close` (SearchNodesCollection) data structures.
@@ -72,4 +75,21 @@ class AStar(BestFirstSearch):
                   but still could be improved.
         """
 
-        raise NotImplementedError  # TODO: remove this line!
+        # raise NotImplementedError  # TODO: remove this line!
+
+        # In A*, in contrast to uniform-cost, a successor state might have an already closed node,
+        # but still could be improved.
+        if self.close.has_state(successor_node.state):
+            already_closed_node_with_same_state = self.close.get_node_by_state(successor_node.state)
+            assert already_closed_node_with_same_state is not None
+            if already_closed_node_with_same_state.g_cost <= successor_node.g_cost:
+                return
+            self.close.remove_node(already_closed_node_with_same_state)
+
+        if self.open.has_state(successor_node.state):
+            already_found_node_with_same_state = self.open.get_node_by_state(successor_node.state)
+            if already_found_node_with_same_state.g_cost > successor_node.g_cost:
+                self.open.extract_node(already_found_node_with_same_state)
+
+        if not self.open.has_state(successor_node.state):
+            self.open.push_node(successor_node)
